@@ -1,0 +1,23 @@
+# Population sentiment and decision benchmark, v1.
+# Run from the repository root: popbench run --config configs/v1.yaml
+
+# decision, sentiment, or both.
+suite: both
+
+# Persona text shown to the model.
+#   full_twin2k       waves 1–3 profile, which is the paper protocol
+#   demographics_only demographic items only
+#   nemotron_usa      stratified sample of nvidia/Nemotron-Personas-USA
+persona_condition: full_twin2k
+
+# People drawn for one run. full_n uses all 2,058 Twin-2K respondents.
+n_people: 50
+full_n: false
+
+# Cap closed-ended items per suite. null keeps every closed-ended item.
+item_cap: null
+
+seed: 0
+
+# Gitignored cache. Twin-2K files land in data/twin2k/.
+data_dir: data

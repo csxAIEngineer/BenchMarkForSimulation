@@ -1,0 +1,22 @@
+# Local benchmark inputs and outputs. Do not commit survey microdata.
+data/
+runs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tools/
+
+# Secrets and local environment
+.env
+
+# OS
+.DS_Store
