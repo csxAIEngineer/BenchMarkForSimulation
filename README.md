@@ -1,35 +1,29 @@
 # popbench
 
-A small benchmark that asks an LLM to answer as a population, then scores those answers against real human response shares. **Twin-2K-500** is the labeled U.S. sample. **Nemotron-Personas** is a synthetic population with demographics and personality narratives, and no survey answers, so it can be simulated but not scored on its own.
+An LLM answers as a person drawn from interview or persona data, then those answers are scored against real human response shares. **Twin-2K-500** is the labeled U.S. sample. **Nemotron-Personas** is a synthetic population with demographics and personality narratives, and no survey answers, so it can be simulated and compared only in aggregate.
 
-v1 has two suites and one runner:
+The benchmark that runs now is **twin-2k-50**: the 44-item Big Five Inventory plus six green-consumption items. The code is three packages:
 
-- **Decision.** Persona context is waves 1–3 except the heuristics-and-biases items. Held-out items are those experiments plus the pricing and purchase choices. Wave 4 on the same items is the human test-retest ceiling. The report includes individual accuracy and whether simulated choice shares recover the human average treatment effect.
-- **Sentiment.** Held-out items are closed-ended value and attitude batteries. Context is demographics plus the rest of the profile. The score is the distribution of answers, overall and inside age, sex, education, party, and income, not only the majority label.
+- **dao** builds one record per person: persona card, 50 turns, and gold answers where the source has them.
+- **simulate** has the model answer as that person, one question per turn, keeping earlier answers in the thread.
+- **evaluate** scores the saved answers. Nemotron panels are compared to the Twin-2K option shares. Twin-2K panels are also scored person by person, because those records hold the human choice.
 
-Persona conditions, so a report can show what the population text is worth:
+Persona conditions:
 
-- `full_twin2k` — waves 1–3 profile (the paper protocol)
-- `demographics_only` — demographic items only
-- `nemotron_usa` — a stratified Nemotron-USA sample asked the same items
+- `full_twin2k` and `demographics_only` — the Twin-2K panel. The persona card is demographics only, so the 50 answers stay out of the prompt.
+- `nemotron_usa` — a stratified Nemotron-USA sample asked the same 50 items.
 
-Nemotron personas are not Twin-2K respondents, so they are scored only in aggregate. Open-ended items (the selves questionnaire, forward-flow associations) are out of scope. Scored answers are multiple choice, Likert, binary, and numeric.
-
-A uniform random chooser is the floor. The published Twin-2K split is the default so later runs can be compared with the paper. A good score is not evidence that the model can replace a human study. Reports state the sample size, the persona condition, and the distance to the wave-4 test-retest ceiling.
+Open-ended items are out of scope. A good score is not evidence that the model can replace a human study.
 
 ```mermaid
 flowchart LR
-  personas[Persona pool]
-  items[Closed-ended items]
-  llm[LLM simulator]
-  agg[Weighted response shares]
+  dao[dao interview records]
+  sim[simulate twin-2k-50]
+  ev[evaluate]
   human[Twin-2K human shares]
-  score[Distribution and accuracy scores]
-  personas --> llm
-  items --> llm
-  llm --> agg
-  human --> score
-  agg --> score
+  dao --> sim
+  sim --> ev
+  human --> ev
 ```
 
 ## Install
@@ -48,15 +42,18 @@ pip install -e ".[dev]"
 
 ```bash
 popbench fetch
-popbench run --config configs/v1.yaml
-popbench score --run runs/<id>
+popbench build
+popbench simulate --panel nemotron
+popbench evaluate --run runs/interview-v0
 ```
+
+`popbench run --config configs/v1.yaml` does those three steps for the persona condition in the config. `nemotron_usa` answers as the Nemotron panel. `full_twin2k` and `demographics_only` answer as the Twin-2K panel. The Twin-2K persona card is demographics only, so the 50 answers stay out of the prompt.
 
 `popbench fetch` downloads the Twin-2K question catalog and wave response tables, then the first parquet shard of Nemotron-Personas-USA. Pass `--nemotron-shards N` (1–11) to cache more shards. The loader checks the published shapes: 2,058 respondents, 256 catalog entries, 761 wave 1–3 columns, and 127 wave 4 columns. It does not read every Nemotron persona text into memory.
 
-`popbench run` loads `configs/v1.yaml` and that cache. The default run uses 50 people. Set `full_n: true` for all 2,058 Twin-2K respondents. The model client is not wired yet, so `run` does not make API calls. `score` will read saved raw model strings from a run directory once scoring is implemented, which means a scoring change does not require new calls.
+`popbench build` writes the twin-2k-50 records under `data/interview/v0/`: one Twin-2K panel, one Nemotron panel, and the human answer shares. The instrument is the 44-item Big Five Inventory plus six green-consumption items.
 
-The client calls DeepSeek. Put `DEEPSEEK_API_KEY` in `.env` (see `.env.example`). `DEEPSEEK_BASE_URL` defaults to `https://api.deepseek.com` and `DEEPSEEK_MODEL` defaults to `deepseek-flash`. Each call is cached by model, persona id, and item id.
+`popbench simulate` asks the model those 50 questions, one turn at a time, as each person in the panel. Earlier answers stay in the chat. `evaluate` scores the saved strings and does not call the model again. The client calls DeepSeek. Put `DEEPSEEK_API_KEY` in `.env` (see `.env.example`). `DEEPSEEK_BASE_URL` defaults to `https://api.deepseek.com` and `DEEPSEEK_MODEL` defaults to `deepseek-flash`. Each call is cached by model, persona id, and item id.
 
 ## Dataset map
 
@@ -86,12 +83,13 @@ These are the benchmark datasets.
 
 ## Layout
 
-- `configs/v1.yaml` — suite, persona condition, `n_people`, `full_n`, item cap, seed
-- `src/popbench/schema.py` — one item type: id, prompt, options, kind, wave, suite, subgroup columns
-- `src/popbench/twin2k.py` — cache and load Twin-2K-500
-- `src/popbench/personas.py` — Nemotron shard cache; profile rendering comes next
-- `src/popbench/simulate.py` — cache key and model settings; the chat client comes next
-- `src/popbench/metrics.py`, `src/popbench/report.py` — accuracy, TVD, JS, ordinal MAE, subgroup TVD, treatment-effect error, then a JSON and Markdown report
+The benchmark code is three packages:
+
+- `src/popbench/dao` — interview and persona datasets become records. Twin-2K-50 is one person, a persona card, and 50 turns. Gold answers stay on the record and out of the prompt.
+- `src/popbench/simulate` — the model answers as that person, one twin-2k-50 question per turn, with earlier answers kept in the thread.
+- `src/popbench/evaluate` — closeness of simulated personalities to Twin-2K humans: exact match and ordinal accuracy, Pearson correlations, quadratic weighted kappa, total variation, Jensen-Shannon, 1-Wasserstein and OpinionQA alignment, Kolmogorov-Smirnov, scale-score error, variance ratio, and Cronbach's alpha. A saved run can be scored again without new model calls.
+
+`configs/v1.yaml` chooses the persona condition, `n_people`, `full_n`, and seed. `src/popbench/cli.py` runs fetch, build, simulate, and evaluate.
 
 ## License notes
 

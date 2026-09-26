@@ -14,7 +14,7 @@ from typing import Any
 
 import pandas as pd
 
-from popbench.schema import TWIN2K_N
+from popbench.dao.schema import TWIN2K_N
 
 TWIN2K_REPO = "LLM-Digital-Twin/Twin-2K-500"
 # Hugging Face `main` as of the dataset card used for v1.

@@ -37,6 +37,13 @@ class Choice:
     raw: str
 
 
+def configured_model() -> str:
+    """Model name from `DEEPSEEK_MODEL` or the project `.env`. No API key required."""
+    load_env_file(_default_env_path())
+    model = os.environ.get(ENV_MODEL, DEFAULT_MODEL).strip()
+    return model or DEFAULT_MODEL
+
+
 def model_settings_from_env() -> ModelSettings:
     """Read DeepSeek settings from the process environment and the project `.env`."""
     load_env_file(_default_env_path())
@@ -44,12 +51,20 @@ def model_settings_from_env() -> ModelSettings:
     if not api_key:
         raise RuntimeError("missing environment variable: DEEPSEEK_API_KEY")
     base_url = os.environ.get(ENV_BASE_URL, DEFAULT_BASE_URL).strip().rstrip("/")
-    model = os.environ.get(ENV_MODEL, DEFAULT_MODEL).strip()
     return ModelSettings(
         base_url=base_url or DEFAULT_BASE_URL,
         api_key=api_key,
-        model=model or DEFAULT_MODEL,
+        model=configured_model(),
     )
+
+
+def model_from_run(meta: dict[str, object] | None) -> str:
+    """Prefer the model stored with a run, then the configured model name."""
+    if meta:
+        recorded = meta.get("model")
+        if isinstance(recorded, str) and recorded.strip() and recorded.strip().casefold() != "unknown":
+            return recorded.strip()
+    return configured_model()
 
 
 def load_env_file(path: Path) -> None:
@@ -162,3 +177,33 @@ def _match_option(answer: str, options: tuple[str, ...]) -> str:
     if len(contained) == 1:
         return contained[0]
     raise ValueError(f"answer is not one of the options: {answer}")
+
+
+class ModelError(RuntimeError):
+    """A model call failed after retries."""
+
+
+def chat_with_retry(
+    settings: ModelSettings,
+    messages: list[dict[str, str]],
+    *,
+    attempts: int = 6,
+) -> str:
+    """Call the chat model, retrying rate limits and server errors."""
+    import time
+
+    import httpx
+
+    last_error: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            return chat(settings, messages)
+        except httpx.HTTPStatusError as exc:
+            last_error = exc
+            code = exc.response.status_code
+            if code != 429 and code < 500:
+                raise ModelError(f"model request failed: {exc}") from exc
+        except httpx.HTTPError as exc:
+            last_error = exc
+        time.sleep(min(60, 2**attempt))
+    raise ModelError(f"model request failed after retries: {last_error}")

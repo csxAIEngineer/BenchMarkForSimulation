@@ -4,10 +4,10 @@ from pathlib import Path
 import pytest
 
 from popbench.config import ConfigError, load_config
-from popbench.report import render_markdown
-from popbench.schema import Item
-from popbench.simulate import model_settings_from_env, response_cache_key
-import popbench.simulate as simulate
+from popbench.dao.schema import Item
+from popbench.evaluate.report import render_markdown
+from popbench.simulate.client import configured_model, model_from_run, model_settings_from_env, response_cache_key
+import popbench.simulate.client as simulate
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -98,6 +98,19 @@ def test_deepseek_settings_come_from_the_env_file(tmp_path, monkeypatch):
     assert settings.model == "deepseek-flash"
     for name in ("DEEPSEEK_API_KEY", "DEEPSEEK_BASE_URL", "DEEPSEEK_MODEL"):
         os.environ.pop(name, None)
+
+
+def test_configured_model_does_not_require_an_api_key(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env"
+    env_file.write_text("DEEPSEEK_MODEL=deepseek-flash\n")
+    monkeypatch.setattr(simulate, "_default_env_path", lambda: env_file)
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("DEEPSEEK_MODEL", raising=False)
+    assert configured_model() == "deepseek-flash"
+    assert model_from_run({}) == "deepseek-flash"
+    assert model_from_run({"model": "unknown"}) == "deepseek-flash"
+    assert model_from_run({"model": "other-model"}) == "other-model"
+    os.environ.pop("DEEPSEEK_MODEL", None)
 
 
 def test_missing_deepseek_key_is_reported(tmp_path, monkeypatch):

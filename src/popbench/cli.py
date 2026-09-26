@@ -1,4 +1,8 @@
-"""Command line: fetch the cache, run a config, or score a saved run."""
+"""Command line for the twin-2k-50 benchmark.
+
+`dao` builds interview records, `simulate` answers them, `evaluate` scores
+the saved answers. `run` does those three steps for the persona in the config.
+"""
 
 from __future__ import annotations
 
@@ -8,27 +12,25 @@ from pathlib import Path
 
 from popbench import __version__
 from popbench.config import ConfigError, load_config
-from popbench.fullsurvey import run_full_survey
-from popbench.interview import InterviewError, build_interview, run_nemotron_interview
-from popbench.personas import NEMOTRON_SHARD_COUNT, PersonaError, cache_nemotron_shards
-from popbench.twin2k import DatasetError, load_twin2k
+from popbench.dao.interview import InterviewError, build_interview
+from popbench.dao.personas import NEMOTRON_SHARD_COUNT, PersonaError, cache_nemotron_shards
+from popbench.dao.twin2k import DatasetError, load_twin2k
+from popbench.evaluate.interview import evaluate_interview
+from popbench.evaluate.survey import evaluate_survey
+from popbench.simulate.interview import run_interview
+from popbench.simulate.survey import answer_survey
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="popbench",
-        description="Simulate population answers and score them against Twin-2K-500.",
+        description="Build interview records, simulate twin-2k-50 answers, and score them.",
     )
     parser.add_argument("--version", action="version", version=f"popbench {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
     fetch = sub.add_parser("fetch", help="download Twin-2K-500 and a Nemotron-USA shard")
-    fetch.add_argument(
-        "--data-dir",
-        type=Path,
-        default=Path("data"),
-        help="cache root (default: data/)",
-    )
+    _add_data_dir(fetch)
     fetch.add_argument(
         "--nemotron-shards",
         type=int,
@@ -37,43 +39,82 @@ def main(argv: list[str] | None = None) -> int:
     )
     fetch.set_defaults(func=cmd_fetch)
 
-    run = sub.add_parser("run", help="load a config and the cached human data")
-    run.add_argument("--config", type=Path, required=True)
-    run.set_defaults(func=cmd_run)
-
-    score = sub.add_parser("score", help="score a saved run directory")
-    score.add_argument("--run", type=Path, required=True, dest="run_dir")
-    score.set_defaults(func=cmd_score)
-
-    build = sub.add_parser("build-interview", help="export the 50-turn Twin-2K interview")
-    build.add_argument("--data-dir", type=Path, default=Path("data"))
+    build = sub.add_parser("build", help="build twin-2k-50 interview records")
+    _add_data_dir(build)
     build.add_argument("--n", type=int, default=50)
     build.add_argument("--seed", type=int, default=0)
-    build.set_defaults(func=cmd_build_interview)
+    build.set_defaults(func=cmd_build)
 
-    answer = sub.add_parser("answer-interview", help="answer the Nemotron panel and score it")
-    answer.add_argument("--data-dir", type=Path, default=Path("data"))
-    answer.add_argument("--run", type=Path, default=Path("runs/interview-v0"), dest="run_dir")
-    answer.add_argument("--workers", type=int, default=4)
-    answer.add_argument(
+    legacy_build = sub.add_parser("build-interview", help="alias of build")
+    _add_data_dir(legacy_build)
+    legacy_build.add_argument("--n", type=int, default=50)
+    legacy_build.add_argument("--seed", type=int, default=0)
+    legacy_build.set_defaults(func=cmd_build)
+
+    simulate = sub.add_parser("simulate", help="answer twin-2k-50 as each person in a panel")
+    _add_data_dir(simulate)
+    _add_run_dir(simulate, Path("runs/interview-v0"))
+    simulate.add_argument("--panel", choices=("nemotron", "twin2k"), default="nemotron")
+    simulate.add_argument("--workers", type=int, default=4)
+    simulate.add_argument(
         "--full",
         action="store_true",
-        help="ask every closed-ended Twin-2K item, not the 50-item interview",
+        help="ask the longer closed-ended Twin-2K form instead of twin-2k-50",
     )
-    answer.set_defaults(func=cmd_answer_interview)
+    simulate.add_argument("--n", type=int, default=50)
+    simulate.add_argument("--seed", type=int, default=0)
+    simulate.set_defaults(func=cmd_simulate)
+
+    evaluate = sub.add_parser("evaluate", help="score a saved run against Twin-2K")
+    _add_data_dir(evaluate)
+    _add_run_dir(evaluate, Path("runs/interview-v0"))
+    evaluate.add_argument("--panel", choices=("nemotron", "twin2k"), default=None)
+    evaluate.add_argument(
+        "--full",
+        action="store_true",
+        help="score the longer closed-ended form",
+    )
+    evaluate.set_defaults(func=cmd_evaluate)
+
+    score = sub.add_parser("score", help="alias of evaluate")
+    _add_data_dir(score)
+    _add_run_dir(score, Path("runs/interview-v0"))
+    score.add_argument("--panel", choices=("nemotron", "twin2k"), default=None)
+    score.add_argument("--full", action="store_true")
+    score.set_defaults(func=cmd_evaluate)
+
+    answer = sub.add_parser("answer-interview", help="simulate a panel, then evaluate it")
+    _add_data_dir(answer)
+    _add_run_dir(answer, Path("runs/interview-v0"))
+    answer.add_argument("--panel", choices=("nemotron", "twin2k"), default="nemotron")
+    answer.add_argument("--workers", type=int, default=4)
+    answer.add_argument("--full", action="store_true")
+    answer.add_argument("--n", type=int, default=50)
+    answer.add_argument("--seed", type=int, default=0)
+    answer.set_defaults(func=cmd_answer)
+
+    run = sub.add_parser("run", help="build, simulate, and evaluate twin-2k-50 from a config")
+    run.add_argument("--config", type=Path, required=True)
+    run.add_argument("--workers", type=int, default=4)
+    run.add_argument(
+        "--run",
+        type=Path,
+        default=None,
+        dest="run_dir",
+        help="output directory (default: runs/twin2k50-<panel>-n<n>-seed<seed>)",
+    )
+    run.set_defaults(func=cmd_run)
 
     args = parser.parse_args(argv)
     try:
         return args.func(args)
-    except (ConfigError, DatasetError, PersonaError, InterviewError) as exc:
+    except (ConfigError, DatasetError, PersonaError, InterviewError, FileNotFoundError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
 
 def cmd_fetch(args: argparse.Namespace) -> int:
-    data_dir = args.data_dir
-    if not data_dir.is_absolute():
-        data_dir = Path.cwd() / data_dir
+    data_dir = _resolve(args.data_dir)
     data = load_twin2k(data_dir)
     print(
         "Twin-2K-500 "
@@ -91,53 +132,93 @@ def cmd_fetch(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_build(args: argparse.Namespace) -> int:
+    out = build_interview(_resolve(args.data_dir), n=args.n, seed=args.seed)
+    print(f"Wrote twin-2k-50 interview records to {out}")
+    return 0
+
+
+def cmd_simulate(args: argparse.Namespace) -> int:
+    data_dir = _resolve(args.data_dir)
+    run_dir = _run_dir(args)
+    if args.full:
+        _simulate_full(data_dir, run_dir, n=args.n, seed=args.seed, workers=args.workers)
+    else:
+        run_interview(data_dir, run_dir, panel=args.panel, workers=args.workers)
+    print(f"Wrote model answers to {run_dir / 'responses.jsonl'}")
+    return 0
+
+
+def cmd_evaluate(args: argparse.Namespace) -> int:
+    data_dir = _resolve(args.data_dir)
+    run_dir = _run_dir(args)
+    if args.full:
+        evaluate_survey(data_dir, run_dir)
+    else:
+        evaluate_interview(data_dir, run_dir, panel=args.panel)
+    print(f"Wrote the comparison to {run_dir / 'report.md'}")
+    return 0
+
+
+def cmd_answer(args: argparse.Namespace) -> int:
+    data_dir = _resolve(args.data_dir)
+    run_dir = _run_dir(args)
+    if args.full:
+        _simulate_full(data_dir, run_dir, n=args.n, seed=args.seed, workers=args.workers)
+        evaluate_survey(data_dir, run_dir)
+    else:
+        run_interview(data_dir, run_dir, panel=args.panel, workers=args.workers)
+        evaluate_interview(data_dir, run_dir, panel=args.panel)
+    print(f"Wrote the comparison to {run_dir / 'report.md'}")
+    return 0
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     config = load_config(args.config)
-    data = load_twin2k(config.data_dir)
+    n = config.effective_n_people
+    panel = "nemotron" if config.persona_condition == "nemotron_usa" else "twin2k"
+    build_interview(config.data_dir, n=n, seed=config.seed)
+    if args.run_dir is None:
+        run_dir = Path.cwd() / "runs" / f"twin2k50-{panel}-n{n}-seed{config.seed}"
+    else:
+        run_dir = _resolve(args.run_dir)
     print(
-        "Loaded Twin-2K-500 "
-        f"({data.n_respondents} respondents, {len(data.catalog)} catalog entries) "
-        f"from {data.root}"
-    )
-    print(
-        "Config: "
-        f"suite={config.suite} "
+        "Twin-2K-50 "
+        f"panel={panel} "
         f"persona={config.persona_condition} "
-        f"n_people={config.effective_n_people} "
-        f"item_cap={config.item_cap} "
+        f"n_people={n} "
         f"seed={config.seed}"
     )
-    print("Model simulation is not implemented yet. No API calls were made.")
+    run_interview(config.data_dir, run_dir, panel=panel, workers=args.workers)
+    evaluate_interview(config.data_dir, run_dir, panel=panel)
+    print(f"Wrote the comparison to {run_dir / 'report.md'}")
     return 0
 
 
-def cmd_build_interview(args: argparse.Namespace) -> int:
-    data_dir = args.data_dir if args.data_dir.is_absolute() else Path.cwd() / args.data_dir
-    out = build_interview(data_dir, n=args.n, seed=args.seed)
-    print(f"Wrote the 50-turn interview to {out}")
-    return 0
+def _simulate_full(data_dir: Path, run_dir: Path, *, n: int, seed: int, workers: int) -> None:
+    from popbench.dao.survey import prepare_survey
 
-
-def cmd_answer_interview(args: argparse.Namespace) -> int:
-    data_dir = args.data_dir if args.data_dir.is_absolute() else Path.cwd() / args.data_dir
-    run_dir = args.run_dir if args.run_dir.is_absolute() else Path.cwd() / args.run_dir
-    if args.full:
-        if args.run_dir == Path("runs/interview-v0"):
-            run_dir = Path.cwd() / "runs" / "interview-full"
-        out = run_full_survey(data_dir, run_dir, workers=args.workers)
-    else:
-        out = run_nemotron_interview(data_dir, run_dir, workers=args.workers)
-    print(f"Wrote the comparison to {out / 'report.md'}")
-    return 0
-
-
-def cmd_score(args: argparse.Namespace) -> int:
-    run_dir = args.run_dir
-    if not run_dir.is_dir():
-        print(f"error: no run directory at {run_dir}", file=sys.stderr)
-        return 1
+    prepared = prepare_survey(data_dir, n_people=n, seed=seed)
     print(
-        "Scoring is not implemented yet. "
-        f"Saved files in {run_dir} were left untouched."
+        f"asking {len(prepared['items'])} of {prepared['n_closed']} closed items",
+        flush=True,
     )
-    return 0
+    answer_survey(prepared["records"], run_dir, workers=workers)
+
+
+def _add_data_dir(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--data-dir", type=Path, default=Path("data"))
+
+
+def _add_run_dir(parser: argparse.ArgumentParser, default: Path) -> None:
+    parser.add_argument("--run", type=Path, default=default, dest="run_dir")
+
+
+def _resolve(path: Path) -> Path:
+    return path if path.is_absolute() else Path.cwd() / path
+
+
+def _run_dir(args: argparse.Namespace) -> Path:
+    if getattr(args, "full", False) and args.run_dir == Path("runs/interview-v0"):
+        return Path.cwd() / "runs" / "interview-full"
+    return _resolve(args.run_dir)

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from popbench.schema import TWIN2K_N
+from popbench.dao.schema import TWIN2K_N
 
 SUITES = ("decision", "sentiment", "both")
 PERSONA_CONDITIONS = ("full_twin2k", "demographics_only", "nemotron_usa")

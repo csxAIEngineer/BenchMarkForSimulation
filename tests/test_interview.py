@@ -1,14 +1,23 @@
 import pytest
 
-from popbench.interview import (
-    SCALE_ZH,
-    allocate_quotas,
-    keyed_score,
-    scale_means,
-    score_simulation,
+from popbench.dao.interview import SCALE_ZH, keyed_score, scale_means
+from popbench.dao.personas import allocate_quotas
+from popbench.dao.schema import InterviewRecord
+from popbench.evaluate.interview import score_simulation
+from popbench.evaluate.metrics import (
+    closeness_score,
+    cronbach_alpha,
+    jensen_shannon,
+    kolmogorov_smirnov,
+    opinion_alignment,
+    ordinal_accuracy,
+    pearson,
+    quadratic_weighted_kappa,
+    total_variation_distance,
+    wasserstein_1d,
 )
-from popbench.metrics import jensen_shannon, total_variation_distance
-from popbench.simulate import parse_choice
+from popbench.simulate.client import parse_choice
+from popbench.simulate.interview import turns_user_message
 
 
 def test_reverse_keyed_score_flips_the_agreement_scale():
@@ -34,6 +43,33 @@ def test_identical_shares_have_zero_distance():
     shares = [0.2, 0.2, 0.2, 0.2, 0.2]
     assert total_variation_distance(shares, shares) == 0
     assert jensen_shannon(shares, shares) == 0
+    assert wasserstein_1d(shares, shares) == 0
+    assert kolmogorov_smirnov(shares, shares) == 0
+    assert opinion_alignment(shares, shares) == 1
+
+
+def test_closeness_score_is_100_for_humans_and_0_for_random_answers():
+    assert closeness_score(0, perfect=0, random_floor=0.4) == 100
+    assert closeness_score(0.4, perfect=0, random_floor=0.4) == 0
+    assert closeness_score(1, perfect=1, random_floor=0.2) == 100
+    assert closeness_score(0.2, perfect=1, random_floor=0.2) == 0
+    assert closeness_score(0.6, perfect=1, random_floor=0.2) == pytest.approx(50)
+
+
+def test_ordinal_metrics_treat_a_far_miss_as_worse_than_a_near_miss():
+    far = [1.0, 0.0, 0.0, 0.0, 0.0]
+    near = [0.0, 1.0, 0.0, 0.0, 0.0]
+    end = [0.0, 0.0, 0.0, 0.0, 1.0]
+    assert wasserstein_1d(near, far) == pytest.approx(1)
+    assert wasserstein_1d(end, far) == pytest.approx(4)
+    assert opinion_alignment(end, far) == pytest.approx(0)
+    assert kolmogorov_smirnov(end, far) == pytest.approx(1)
+    assert ordinal_accuracy([5], [1], span=4) == 0
+    assert ordinal_accuracy([5], [4], span=4) == pytest.approx(0.75)
+    assert pearson([1, 2, 3], [1, 2, 3]) == pytest.approx(1)
+    assert quadratic_weighted_kappa([1, 2, 3, 4, 5], [1, 2, 3, 4, 5], categories=5) == pytest.approx(1)
+    alpha = cronbach_alpha([[1, 1], [2, 2], [3, 3], [4, 4]])
+    assert alpha == pytest.approx(1)
 
 
 def test_parse_choice_accepts_the_option_text_and_its_number():
@@ -72,6 +108,8 @@ def test_simulation_matches_human_shares_when_the_panel_copies_them():
     ]
     summary = score_simulation(responses, baseline, items)
     assert summary["mean_tvd"] == pytest.approx(0)
+    assert summary["points"]["tvd"] == pytest.approx(100)
+    assert summary["points"]["alignment"] == pytest.approx(100)
     assert summary["scales"]["extraversion"]["absolute_error"] == pytest.approx(0)
     assert set(summary["scales"]) == set(SCALE_ZH)
 
@@ -79,3 +117,44 @@ def test_simulation_matches_human_shares_when_the_panel_copies_them():
 def test_parse_choice_rejects_non_json():
     with pytest.raises(ValueError):
         parse_choice("I agree", ("Agree strongly",))
+
+
+def test_turn_prompt_does_not_carry_the_gold_answer():
+    message = turns_user_message(
+        {
+            "turn": 3,
+            "prompt": "I see myself as someone who is talkative.",
+            "options": ["Disagree strongly", "Agree strongly"],
+            "gold_answer": "SECRET GOLD",
+            "gold_code": 5,
+        }
+    )
+    assert "Question 3 of 50." in message
+    assert "SECRET GOLD" not in message
+    assert "gold" not in message.casefold()
+
+
+def test_interview_record_round_trip():
+    raw = {
+        "id": "twin2k:p1",
+        "region": "US",
+        "language": "en",
+        "source": "LLM-Digital-Twin/Twin-2K-500",
+        "instrument": "bfi44_plus_green6",
+        "persona": {"id": "p1", "condition": "demographics_only", "text": "Age: 40"},
+        "turns": [
+            {
+                "turn": 1,
+                "item_id": "QID25_1",
+                "scale": "extraversion",
+                "prompt": "I see myself as someone who is talkative.",
+                "options": ["Disagree strongly", "Agree strongly"],
+                "gold_answer": "Agree strongly",
+                "gold_code": 2,
+                "label_text": None,
+                "reverse": False,
+            }
+        ],
+        "scale_scores": {"extraversion": 2.0},
+    }
+    assert InterviewRecord.from_dict(raw).to_dict() == raw
