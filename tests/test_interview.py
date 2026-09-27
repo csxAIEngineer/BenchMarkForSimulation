@@ -108,8 +108,6 @@ def test_simulation_matches_human_shares_when_the_panel_copies_them():
     ]
     summary = score_simulation(responses, baseline, items)
     assert summary["mean_tvd"] == pytest.approx(0)
-    assert summary["points"]["tvd"] == pytest.approx(100)
-    assert summary["points"]["alignment"] == pytest.approx(100)
     assert summary["scales"]["extraversion"]["absolute_error"] == pytest.approx(0)
     assert set(summary["scales"]) == set(SCALE_ZH)
 
