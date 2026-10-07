@@ -1,10 +1,10 @@
 ---
 name: simulate-persona-prompting
 description: >-
-  Persona prompt engineering for popbench simulate: expand ACS/ATUS base
-  demographics into a seeded random life history, then send the full persona
-  card to the LLM for visit Q&A. Use when running or changing simulate,
-  visitors, 人设, persona prompt, background story, or visit interviews.
+  Persona prompt engineering for popbench simulate: expand ATUS or ACS base
+  demographics into a seeded life history, then send the full persona card
+  to the LLM. Use when running or changing simulate, compare, visitors, 人设,
+  persona prompt, background story, or interview questions.
 ---
 
 # Simulate 人设提示工程
@@ -22,18 +22,21 @@ description: >-
 ## 工作流
 
 ```
-基本条件 (ACS/ATUS)
+基本条件 (ATUS 受访者，或 ACS 访问者)
     → 人设扩写 (seeded random background)
     → system prompt
-    → 多轮访问问答 (DeepSeek)
-    → responses.jsonl（含 background 字段）
+    → 多轮选择题
+    → responses.jsonl
 ```
+
+`popbench compare` 走 ATUS 人物卡，题目是 6 道 Twin-2K 选择题。访问者命令仍走 8 道时间利用题。
 
 代码入口：
 
 - 扩写：`popbench.simulate.persona_background.expand_persona`
+- ATUS 人物卡 + Twin-2K 题：`popbench.dao.atus_twin2k.build_atus_twin2k`，作答 `popbench.simulate.interview.run_records`
+- CLI：`popbench compare --n 50 --seed 0`
 - 访问模拟：`popbench.simulate.visitors.run_visitors`
-- CLI：`popbench simulate --panel visitors` 或 `popbench run-visitors`
 
 改人设逻辑时优先改 `persona_background.py`，不要在 CLI 里临时拼 prompt。
 
@@ -60,7 +63,7 @@ description: >-
 - [ ] 同一 `seed + visitor_id` 重跑背景不变
 - [ ] system 里同时有基本条件、过往经历、ATUS 作息
 - [ ] 响应里保存了 `background` 便于审计
-- [ ] 访问题仍走既有 `VISIT_TURNS`，人设扩写不改题目文本
+- [ ] 人设扩写不改题目文本。`compare` 用固定的 6 道 Twin-2K 选择题；访问访谈仍用 `VISIT_TURNS`
 
 ## 反模式
 

@@ -158,6 +158,89 @@ def pearson(left: list[float], right: list[float]) -> float | None:
     return covariance / (scale_left * scale_right)
 
 
+def mean_squared_error(left: list[float], right: list[float]) -> float:
+    """Mean squared error between two equal-length series."""
+    if len(left) != len(right) or not left:
+        raise ValueError("MSE needs two equal-length non-empty series")
+    return sum((a - b) ** 2 for a, b in zip(left, right)) / len(left)
+
+
+def distribution_correlation(
+    simulated_shares: list[float],
+    human_shares: list[float],
+) -> float | None:
+    """Pearson correlation between two answer-share (or score) vectors.
+
+    Used for behavioral fit: how closely the simulated distribution tracks the
+    human / ATUS baseline shape.
+    """
+    if len(simulated_shares) != len(human_shares):
+        raise ValueError("share vectors must have the same length")
+    left = _as_shares(simulated_shares)
+    right = _as_shares(human_shares)
+    return pearson(left, right)
+
+
+def response_amplitude_coverage(
+    simulated_codes: list[float],
+    human_codes: list[float],
+) -> float:
+    """Fraction of distinct human response codes also produced by simulation.
+
+    On an ordinal scale this is support coverage of the human response
+    amplitude: ``|sim ∩ human| / |human|`` over the observed code sets.
+    """
+    if not simulated_codes or not human_codes:
+        raise ValueError("amplitude coverage needs non-empty code lists")
+    human_set = {int(round(value)) for value in human_codes}
+    sim_set = {int(round(value)) for value in simulated_codes}
+    if not human_set:
+        return 1.0 if not sim_set else 0.0
+    return len(human_set & sim_set) / len(human_set)
+
+
+def response_amplitude_ratio(
+    simulated_codes: list[float],
+    human_codes: list[float],
+) -> float:
+    """How much of the human ordinal span the simulation spans (capped at 1)."""
+    if not simulated_codes or not human_codes:
+        raise ValueError("amplitude ratio needs non-empty code lists")
+    human_span = max(human_codes) - min(human_codes)
+    sim_span = max(simulated_codes) - min(simulated_codes)
+    if human_span <= 0:
+        return 1.0 if sim_span <= 0 else 0.0
+    return min(1.0, sim_span / human_span)
+
+
+def cross_model_variance(series_by_model: list[list[float]]) -> dict[str, float | None]:
+    """Robustness audit across models on one aligned metric series.
+
+    Each inner list is one model's values (e.g. per-item mean codes or flattened
+    shares). Returns mean per-position variance, mean std, and the max std.
+    """
+    if len(series_by_model) < 2:
+        raise ValueError("cross-model variance needs at least two model series")
+    width = len(series_by_model[0])
+    if width == 0 or any(len(series) != width for series in series_by_model):
+        raise ValueError("model series must be rectangular and non-empty")
+    variances: list[float] = []
+    stds: list[float] = []
+    for column in range(width):
+        values = [series[column] for series in series_by_model]
+        mean = sum(values) / len(values)
+        var = sum((value - mean) ** 2 for value in values) / len(values)
+        variances.append(var)
+        stds.append(math.sqrt(var))
+    return {
+        "n_models": float(len(series_by_model)),
+        "n_positions": float(width),
+        "mean_variance": sum(variances) / len(variances),
+        "mean_std": sum(stds) / len(stds),
+        "max_std": max(stds),
+    }
+
+
 def population_std(values: list[float]) -> float | None:
     """Standard deviation with the same divisor the human baseline uses."""
     if not values:

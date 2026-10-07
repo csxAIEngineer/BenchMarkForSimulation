@@ -17,9 +17,11 @@ from popbench.dao.interview import InterviewError
 from popbench.dao.io import write_jsonl
 from popbench.simulate.client import (
     ModelError,
+    ModelSettings,
     chat_with_retry,
     model_settings_from_env,
     parse_choice,
+    request_record,
     response_cache_key,
 )
 from popbench.simulate.interview import system_message
@@ -46,10 +48,16 @@ def question_message(item: dict[str, Any], n_items: int, previous: list[str]) ->
     return "\n".join(lines)
 
 
-def answer_survey(records: list[dict[str, Any]], run_dir: Path, workers: int = 4) -> list[dict[str, Any]]:
+def answer_survey(
+    records: list[dict[str, Any]],
+    run_dir: Path,
+    workers: int = 4,
+    settings: ModelSettings | None = None,
+) -> list[dict[str, Any]]:
     """Write one response row per persona. Does not score."""
     try:
-        settings = model_settings_from_env()
+        if settings is None:
+            settings = model_settings_from_env()
     except RuntimeError as exc:
         raise InterviewError(str(exc)) from exc
     run_dir = Path(run_dir)
@@ -76,6 +84,7 @@ def answer_survey(records: list[dict[str, Any]], run_dir: Path, workers: int = 4
         "panel": "nemotron-full",
         "n_people": len(records),
         "n_turns": len(records[0]["turns"]) if records else 0,
+        "request": request_record(settings),
     }
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
     return responses

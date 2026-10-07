@@ -1,8 +1,9 @@
-"""DeepSeek chat client.
+"""Chat client for the models under test.
 
-DeepSeek speaks the Chat Completions format. Calls are cached on disk by
-model, persona id, and item id. Scoring reads the raw response strings back
-from that cache.
+Calls use the Chat Completions shape. The compare models share the CR API.
+Calls are cached on disk by model,
+persona id, and item id. Scoring reads the raw response strings back from
+that cache.
 """
 
 from __future__ import annotations
@@ -11,8 +12,10 @@ import hashlib
 import json
 import os
 import re
-from dataclasses import dataclass
+import sys
+from dataclasses import dataclass, field, replace
 from pathlib import Path
+from typing import Any
 
 ENV_BASE_URL = "DEEPSEEK_BASE_URL"
 ENV_API_KEY = "DEEPSEEK_API_KEY"
@@ -20,12 +23,40 @@ ENV_MODEL = "DEEPSEEK_MODEL"
 DEFAULT_BASE_URL = "https://api.deepseek.com"
 DEFAULT_MODEL = "deepseek-flash"
 
+# Fixed set for `popbench compare`. These ids must exist in cr_api.TEXT_MODELS.
+COMPARE_MODELS = ("gpt-5.5", "glm-5.3", "deepseek-v4-pro")
+
+
+def _prefer_repo_cr_api() -> None:
+    """Import the checkout's cr_api package, not a copy installed elsewhere."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "cr_api" / "client.py").is_file():
+            root = str(parent)
+            if root not in sys.path:
+                sys.path.insert(0, root)
+            return
+
+
+_prefer_repo_cr_api()
+from cr_api.client import BASE_URL as CR_BASE_URL
+from cr_api.client import CRClient, CRError, TEXT_MODELS
+
+
+class SettingsError(RuntimeError):
+    """Model API settings are missing or the model id is unknown."""
+
 
 @dataclass(frozen=True)
 class ModelSettings:
     base_url: str
     api_key: str
     model: str
+    temperature: float | None = 0
+    max_tokens: int | None = None
+    token_field: str = "max_tokens"
+    extra_body: dict[str, Any] = field(default_factory=dict)
+    transport: str = "deepseek"
 
 
 @dataclass(frozen=True)
@@ -49,13 +80,116 @@ def model_settings_from_env() -> ModelSettings:
     load_env_file(_default_env_path())
     api_key = os.environ.get(ENV_API_KEY, "").strip()
     if not api_key:
-        raise RuntimeError("missing environment variable: DEEPSEEK_API_KEY")
+        raise SettingsError("missing environment variable: DEEPSEEK_API_KEY")
     base_url = os.environ.get(ENV_BASE_URL, DEFAULT_BASE_URL).strip().rstrip("/")
     return ModelSettings(
         base_url=base_url or DEFAULT_BASE_URL,
         api_key=api_key,
         model=configured_model(),
+        temperature=0,
+        extra_body={"thinking": {"type": "disabled"}},
+        transport="deepseek",
     )
+
+
+def _cr_text_models() -> set[str]:
+    return {model for models in TEXT_MODELS.values() for model in models}
+
+
+def model_catalog() -> dict[str, dict[str, Any]]:
+    """gpt-5.5, glm-5.3, and deepseek-v4-pro are called through cr_api.CRClient.
+
+    The client posts to `{BASE_URL}/v1/chat/completions` with the model id.
+    GLM and DeepSeek think before answering, so max_tokens stays unset.
+    """
+    known = _cr_text_models()
+    missing = [model for model in COMPARE_MODELS if model not in known]
+    if missing:
+        raise SettingsError("cr_api has no text model: " + ", ".join(missing))
+    shared = {
+        "key_envs": ("CR_API_KEY",),
+        "base_url_env": "CR_BASE_URL",
+        "default_base_url": CR_BASE_URL,
+        "temperature": None,
+        "max_tokens": None,
+        "token_field": "max_tokens",
+        "extra_body": {},
+        "transport": "cr",
+    }
+    return {model: {**shared, "model": model} for model in COMPARE_MODELS}
+
+
+def canonical_compare_model(name: str) -> str | None:
+    """Map a user label onto a compare-model slug, or None if it is not one."""
+    text = name.strip().lower().replace(" ", "").replace("_", "-")
+    compact = text.replace("-", "").replace(".", "")
+    aliases = {
+        "gpt55": "gpt-5.5",
+        "glm53": "glm-5.3",
+        "deepseekv4pro": "deepseek-v4-pro",
+    }
+    if compact in aliases:
+        return aliases[compact]
+    if text in model_catalog():
+        return text
+    return None
+
+
+def run_slug(model: str) -> str:
+    """Filesystem-safe run directory name for a model id."""
+    slug = canonical_compare_model(model) or model.strip()
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", slug).strip("-")
+    return cleaned or "model"
+
+
+def model_settings_for(name: str) -> ModelSettings:
+    """Settings for one named model.
+
+    The three compare models use cr_api.CRClient. Any other name is sent to
+    the DeepSeek endpoint, with that name as the model id.
+    """
+    load_env_file(_default_env_path())
+    text = name.strip()
+    if not text:
+        raise SettingsError("model name is empty")
+    slug = canonical_compare_model(text)
+    if slug is None:
+        base = model_settings_from_env()
+        return replace(base, model=text)
+    spec = model_catalog()[slug]
+    api_key = ""
+    for env_name in spec["key_envs"]:
+        api_key = os.environ.get(env_name, "").strip()
+        if api_key:
+            break
+    if not api_key:
+        names = " or ".join(spec["key_envs"])
+        raise SettingsError(f"missing environment variable: {names}")
+    if spec["transport"] == "cr":
+        base_url = CR_BASE_URL
+    else:
+        base_url = os.environ.get(spec["base_url_env"], "").strip().rstrip("/") or spec["default_base_url"]
+    return ModelSettings(
+        base_url=base_url,
+        api_key=api_key,
+        model=spec["model"],
+        temperature=spec["temperature"],
+        max_tokens=spec["max_tokens"],
+        token_field=spec["token_field"],
+        extra_body=dict(spec["extra_body"]),
+        transport=spec["transport"],
+    )
+
+
+def request_record(settings: ModelSettings) -> dict[str, Any]:
+    """Request fields stored in a run. The API key stays out."""
+    return {
+        "transport": settings.transport,
+        "temperature": settings.temperature,
+        "max_tokens": settings.max_tokens,
+        "token_field": settings.token_field,
+        "extra_body": settings.extra_body,
+    }
 
 
 def model_from_run(meta: dict[str, object] | None) -> str:
@@ -102,24 +236,84 @@ def response_cache_key(model: str, persona_id: str, item_id: str) -> str:
     return hashlib.sha256(material.encode()).hexdigest()
 
 
+def completion_payload(settings: ModelSettings, messages: list[dict[str, str]]) -> dict[str, Any]:
+    """Chat Completions body for one model. Provider-specific fields come from settings."""
+    body: dict[str, Any] = {"model": settings.model, "messages": messages}
+    if settings.temperature is not None:
+        body["temperature"] = settings.temperature
+    if settings.max_tokens is not None:
+        body[settings.token_field] = settings.max_tokens
+    body.update(settings.extra_body)
+    return body
+
+
+def assistant_text(payload: dict[str, Any]) -> str:
+    """Final answer string from a Chat Completions payload."""
+    try:
+        message = payload["choices"][0]["message"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ModelError("model response has no choices") from exc
+    if not isinstance(message, dict):
+        raise ModelError("model response has no message")
+    text = _coerce_content(message.get("content"))
+    if text.strip():
+        return text
+    if message.get("reasoning_content"):
+        raise ModelError("model returned reasoning without an answer; increase max tokens")
+    raise ModelError("model response has no content")
+
+
+def _coerce_content(content: Any) -> str:
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for part in content:
+            if isinstance(part, str):
+                parts.append(part)
+            elif isinstance(part, dict):
+                parts.append(str(part.get("text") or part.get("content") or ""))
+        return "".join(parts)
+    return str(content)
+
+
 def chat(settings: ModelSettings, messages: list[dict[str, str]]) -> str:
     """Send one chat completion and return the raw assistant string."""
+    if settings.transport == "cr":
+        return _chat_via_cr(settings, messages)
     import httpx
 
     response = httpx.post(
         f"{settings.base_url}/chat/completions",
         headers={"Authorization": f"Bearer {settings.api_key}"},
-        json={
-            "model": settings.model,
-            "temperature": 0,
-            "messages": messages,
-            "thinking": {"type": "disabled"},
-        },
+        json=completion_payload(settings, messages),
         timeout=180,
     )
     response.raise_for_status()
-    payload = response.json()
-    return payload["choices"][0]["message"]["content"]
+    return assistant_text(response.json())
+
+
+def _chat_via_cr(settings: ModelSettings, messages: list[dict[str, str]]) -> str:
+    """Call gpt-5.5, glm-5.3, or deepseek-v4-pro through cr_api.CRClient."""
+    client = CRClient(api_key=settings.api_key)
+    try:
+        result = client.chat(
+            messages,
+            model=settings.model,
+            max_tokens=settings.max_tokens,
+            timeout=300,
+        )
+    except CRError as exc:
+        retryable = exc.status is None or exc.status == 429 or exc.status >= 500
+        raise ModelError(str(exc), status=exc.status, retryable=retryable) from exc
+    text = result.content or ""
+    if text.strip():
+        return text
+    if result.reasoning_content:
+        raise ModelError("model returned reasoning without an answer; increase max tokens")
+    raise ModelError("model response has no content")
 
 
 def complete(settings: ModelSettings, persona_prompt: str, item_prompt: str) -> str:
@@ -135,7 +329,7 @@ def complete(settings: ModelSettings, persona_prompt: str, item_prompt: str) -> 
 
 def parse_choice(raw: str, options: tuple[str, ...]) -> Choice:
     """Pull `answer` out of a model string and match it to one option."""
-    text = raw.strip()
+    text = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL | re.IGNORECASE).strip()
     fenced = re.search(r"```(?:json)?\s*(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
     if fenced:
         text = fenced.group(1).strip()
@@ -180,7 +374,12 @@ def _match_option(answer: str, options: tuple[str, ...]) -> str:
 
 
 class ModelError(RuntimeError):
-    """A model call failed after retries."""
+    """A model call failed."""
+
+    def __init__(self, message: str, *, status: int | None = None, retryable: bool = False) -> None:
+        super().__init__(message)
+        self.status = status
+        self.retryable = retryable
 
 
 def chat_with_retry(
@@ -198,12 +397,17 @@ def chat_with_retry(
     for attempt in range(attempts):
         try:
             return chat(settings, messages)
+        except ModelError as exc:
+            if not exc.retryable:
+                raise
+            last_error = exc
         except httpx.HTTPStatusError as exc:
             last_error = exc
             code = exc.response.status_code
             if code != 429 and code < 500:
-                raise ModelError(f"model request failed: {exc}") from exc
+                detail = exc.response.text[:500].replace("\n", " ")
+                raise ModelError(f"model request failed ({code}): {detail}") from exc
         except httpx.HTTPError as exc:
             last_error = exc
         time.sleep(min(60, 2**attempt))
-    raise ModelError(f"model request failed after retries: {last_error}")
+    raise ModelError(f"model request failed after retries: {last_error}", retryable=True)

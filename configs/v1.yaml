@@ -1,5 +1,5 @@
-# Population sentiment and decision benchmark.
-# popbench run builds twin-2k-50 records, simulates the persona below, and scores the answers.
+# twin-2k-50 slice of the benchmark.
+# The dataset stays fixed; popbench run builds it, simulates one model, and scores the answers.
 
 # decision, sentiment, or both. The implemented instrument is twin-2k-50.
 suite: both

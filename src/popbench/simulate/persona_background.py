@@ -105,6 +105,7 @@ def expand_persona(
     routine: dict[str, float] | None,
     base_text: str,
     seed: int = 0,
+    diary_day: bool = False,
 ) -> dict[str, Any]:
     """Return background slots plus a full persona card for the system prompt."""
     rng = _rng(seed, visitor_id)
@@ -125,7 +126,7 @@ def expand_persona(
     moves = _pick(rng, _MOVES)
     if state:
         moves = f"{moves} Current home state: {state}."
-    turning_point = _turning_line(rng, routine)
+    turning_point = _turning_line(rng, routine, diary_day=diary_day)
 
     background = {
         "seed": seed,
@@ -149,6 +150,7 @@ def expand_persona(
         work_hours=work_hours,
         background=background,
         routine=routine or {},
+        diary_day=diary_day,
     )
     return {"background": background, "persona_text": persona_text}
 
@@ -184,7 +186,12 @@ def _work_line(
     return line
 
 
-def _turning_line(rng: np.random.Generator, routine: dict[str, float] | None) -> str:
+def _turning_line(
+    rng: np.random.Generator,
+    routine: dict[str, float] | None,
+    *,
+    diary_day: bool = False,
+) -> str:
     base = _pick(rng, _TURNING)
     if not routine:
         return base
@@ -192,6 +199,11 @@ def _turning_line(rng: np.random.Generator, routine: dict[str, float] | None) ->
     if not ranked:
         return base
     top_key, top_minutes = ranked[0]
+    if diary_day:
+        return (
+            f"{base} Time-use note: {top_key} was about {top_minutes:.0f} "
+            "minutes on this diary day."
+        )
     return (
         f"{base} Time-use note: {top_key} averages about {top_minutes:.0f} "
         "minutes on a diary day."
@@ -211,6 +223,7 @@ def _compose_card(
     work_hours: float | None,
     background: dict[str, Any],
     routine: dict[str, float],
+    diary_day: bool = False,
 ) -> str:
     income = "over $50,000" if income_over_50k else "$50,000 or less"
     hours = "unknown" if work_hours is None else f"{float(work_hours):.0f}"
@@ -233,7 +246,7 @@ def _compose_card(
         f"Moves: {background['moves']}",
         f"Turning point: {background['turning_point']}",
         "",
-        "## Typical day (ATUS minutes)",
+        "## Diary day (ATUS minutes)" if diary_day else "## Typical day (ATUS minutes)",
     ]
     for key, minutes in sorted(routine.items(), key=lambda item: -item[1]):
         lines.append(f"- {key}: {minutes:.0f} minutes")

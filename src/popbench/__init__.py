@@ -1,4 +1,4 @@
-"""Benchmark LLM population simulations against human response shares."""
+"""Benchmark that compares LLM population simulations on a fixed dataset."""
 
 __version__ = "0.1.0"
 

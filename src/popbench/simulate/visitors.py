@@ -22,9 +22,11 @@ from popbench.dao.visitors import (
 )
 from popbench.simulate.client import (
     ModelError,
+    ModelSettings,
     chat_with_retry,
     model_settings_from_env,
     parse_choice,
+    request_record,
     response_cache_key,
 )
 from popbench.simulate.persona_background import expand_persona
@@ -156,10 +158,12 @@ def run_visitors(
     seed: int = 0,
     workers: int = 4,
     rebuild: bool = False,
+    settings: ModelSettings | None = None,
 ) -> Path:
     """Simulate a visit interview as each ACS/ATUS visitor. Does not score."""
     try:
-        settings = model_settings_from_env()
+        if settings is None:
+            settings = model_settings_from_env()
     except RuntimeError as exc:
         raise VisitorError(str(exc)) from exc
 
@@ -219,6 +223,7 @@ def run_visitors(
         "data_dir": str(Path(data_dir)),
         "panel_path": str(path),
         "seed": seed,
+        "request": request_record(settings),
     }
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
     (run_dir / "report.md").write_text(_visit_report(meta, shares, rows[0]))

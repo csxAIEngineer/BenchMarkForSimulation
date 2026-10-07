@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "popbench"
 version = "0.1.0"
-description = "Score LLM simulations of population sentiment and decisions against Twin-2K-500."
+description = "Benchmark that compares how well different LLMs simulate people on a fixed survey dataset and human baseline."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -22,6 +22,9 @@ dev = ["pytest>=8.2"]
 
 [project.scripts]
 popbench = "popbench.cli:main"
+
+[tool.hatch.build.targets.wheel.force-include]
+"cr_api" = "cr_api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
