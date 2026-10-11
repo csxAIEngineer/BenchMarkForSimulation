@@ -188,7 +188,7 @@ def render_personality_age_report(report: dict[str, Any]) -> str:
         f"- 模型：`{report['model']}`，经 {report.get('api') or 'CR API'}。",
         "- 人物卡：ATUS 2023 成年人。每个年龄段按 `TUFINLWGT` 不放回抽"
         f" {report['n_per_age_band']} 人，种子 {report['seed']}。性别不再分层。",
-        "- 题目：Twin-2K 人格类全部闭卷选择题。同一量表里还没答过的题合成一次请求，选项只写一次，不要求解释。",
+        _question_line(report),
         "- 人类基线：Twin-2K 前三波，年龄用 QID13，四档与 ATUS 的年龄段相同。",
         f"- 模拟人数：{report['n_people']}。人类人数：{report['n_human']}。",
         f"- 无效回答：{report['n_invalid']} / {report['n_answers']}。",
@@ -253,6 +253,19 @@ def render_personality_age_report(report: dict[str, Any]) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+def _question_line(report: dict[str, Any]) -> str:
+    """Name the scales actually scored, not the whole personality battery."""
+    instruments = report.get("instruments") or []
+    n_items = report["overall"]["n_tested"]
+    if len(instruments) == 1:
+        topic = f"{instruments[0]['label']} {n_items} 道闭卷选择题"
+    else:
+        topic = f"人格类闭卷选择题 {n_items} 道"
+    return (
+        f"- 题目：{topic}。同一量表里还没答过的题合成一次请求，选项只写一次，不要求解释。"
+    )
 
 
 def _api_label(run_dir: Path) -> str:
@@ -742,7 +755,7 @@ def _verdict(report: dict[str, Any]) -> list[str]:
         f"人类 Holm 显著 {age['n_human_holm']} 道，模拟 Holm 显著 {age['n_sim_holm']} 道，"
         f"两边都显著的有 {age['n_both_holm']} 道。"
         f"未校正时人类 {age['n_human_raw']} 道、模拟 {age['n_sim_raw']} 道"
-        f"（275 道题在 0.05 下大约会有 {0.05 * age['n_items']:.0f} 道假阳性）。"
+        f"（{age['n_items']} 道题在 0.05 下大约会有 {0.05 * age['n_items']:.0f} 道假阳性）。"
     )
     if age["gradient_r"] is None:
         lines.append("年龄梯度相关没有算出来。")
