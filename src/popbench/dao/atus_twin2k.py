@@ -1,10 +1,10 @@
-"""ATUS adults as persona cards, answering a short Twin-2K multiple-choice set.
+"""ATUS adults answering Twin-2K items from written persona cards.
 
-People are drawn from the ATUS 2023 activity summary. The persona card uses
-that respondent's demographics and diary minutes, plus a seeded life history.
-The questions are six Twin-2K agreement items. Scoring uses Twin-2K option
-shares on those same items. ATUS respondents are a different sample, so the
-panel carries no per-person gold answer.
+People are drawn from the ATUS 2023 activity summary. The persona text is the
+card already written for that TUCASEID in ``adults/personas.jsonl``. The
+six-item probe and the seven paper categories both use this draw. Scoring uses
+Twin-2K response shares. ATUS respondents are a different sample, so the panel
+carries no per-person gold answer.
 """
 
 from __future__ import annotations
@@ -23,10 +23,13 @@ from popbench.dao.interview import (
     build_instrument,
     human_baseline,
 )
-from popbench.dao.io import write_jsonl
-from popbench.dao.personas import age_band
+from popbench.dao.io import read_jsonl, write_jsonl
+from popbench.dao.personas import AGE_BANDS, age_band
+
+# Same four bands as Twin-2K QID13 and the ATUS age split.
+AGE_BAND_ORDER = tuple(name for _low, _high, name in AGE_BANDS)
 from popbench.dao.schema import InterviewRecord, InterviewTurn, PersonaCard
-from popbench.dao.visitors import ATUS_MAJOR, SEX_LABEL, VisitorError, atus_dir
+from popbench.dao.visitors import SEX_LABEL, VisitorError, atus_dir, visitors_dir
 
 # One forward BFI-44 item per Big Five scale, in scale order, then the first
 # green-consumption item. Numbers are 1-based positions inside QID25.
@@ -40,31 +43,7 @@ PEEDUCA_BANDS = (
     (40, 42, "some_college"),
     (43, 46, "bachelor_or_higher"),
 )
-RACE_LABEL = {
-    1: "White",
-    2: "Black",
-    3: "American Indian or Alaska Native",
-    4: "Asian",
-    5: "Native Hawaiian or Other Pacific Islander",
-}
-LABOR_LABEL = {
-    1: "Employed, at work",
-    2: "Employed, absent",
-    3: "Unemployed, on layoff",
-    4: "Unemployed, looking",
-    5: "Not in labor force",
-}
-PARTNER_LABEL = {1: "spouse", 2: "unmarried partner", 3: "none"}
-METRO_LABEL = {1: "metropolitan", 2: "nonmetropolitan", 3: "not identified"}
-WEEKDAY = {
-    1: "Sunday",
-    2: "Monday",
-    3: "Tuesday",
-    4: "Wednesday",
-    5: "Thursday",
-    6: "Friday",
-    7: "Saturday",
-}
+_CARD_COMMAND = "popbench simulate-population-personas"
 
 
 def probe_dir(data_dir: Path) -> Path:
@@ -94,43 +73,16 @@ def select_probe_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return chosen
 
 
-def diary_minutes(row: pd.Series) -> dict[str, float]:
-    """This respondent's diary minutes on each major activity."""
-    values: dict[str, float] = {}
-    for code, label in ATUS_MAJOR.items():
-        columns = [
-            column
-            for column in row.index
-            if isinstance(column, str)
-            and column.startswith("t")
-            and len(column) >= 3
-            and column[1:3] == code
-            and column[1:].isdigit()
-        ]
-        if not columns:
-            continue
-        total = pd.to_numeric(row[columns], errors="coerce").fillna(0).sum()
-        values[label] = float(total)
-    return values
+def adult_persona_cards_path(data_dir: Path) -> Path:
+    """Written life-history cards, one row per ATUS adult."""
+    return visitors_dir(data_dir) / "by_population" / "adults" / "personas.jsonl"
 
 
 def sample_atus_adults(frame: pd.DataFrame, *, n: int, seed: int) -> pd.DataFrame:
     """Stratified ATUS adults, age band × sex, weighted by TUFINLWGT."""
     if n < 1:
         raise ValueError("n must be positive")
-    required = {"TUCASEID", "TEAGE", "TESEX", "TUFINLWGT"}
-    missing = required - set(frame.columns)
-    if missing:
-        raise ValueError(f"ATUS summary is missing columns: {', '.join(sorted(missing))}")
-    adults = frame.loc[pd.to_numeric(frame["TEAGE"], errors="coerce") >= 18].copy()
-    adults["TEAGE"] = pd.to_numeric(adults["TEAGE"], errors="coerce")
-    adults["age_band"] = adults["TEAGE"].map(lambda age: age_band(int(age)))
-    adults["sex"] = pd.to_numeric(adults["TESEX"], errors="coerce").map(
-        lambda value: None if pd.isna(value) else SEX_LABEL.get(int(value))
-    )
-    adults = adults.loc[adults["age_band"].notna() & adults["sex"].notna()]
-    if adults.empty:
-        raise ValueError("ATUS summary has no adults")
+    adults = _labeled_adults(frame)
     adults["stratum"] = adults["age_band"].astype(str) + "|" + adults["sex"].astype(str)
     adults = adults.sort_values(["stratum", "TUCASEID"])
     weights = {
@@ -149,6 +101,145 @@ def sample_atus_adults(frame: pd.DataFrame, *, n: int, seed: int) -> pd.DataFram
     return pd.concat(picked, ignore_index=True)
 
 
+def sample_atus_age_bands(frame: pd.DataFrame, *, n_per_band: int, seed: int) -> pd.DataFrame:
+    """Draw ``n_per_band`` adults from each age band, weighted by TUFINLWGT.
+
+    Bands are 18–29, 30–49, 50–64, and 65+. Sampling is without replacement
+    inside a band. The same seed returns the same people. Sex is not a stratum.
+    """
+    if n_per_band < 1:
+        raise ValueError("n_per_band must be positive")
+    adults = _labeled_adults(frame)
+    adults = adults.sort_values(["age_band", "TUCASEID"])
+    rng = np.random.default_rng(seed)
+    picked: list[pd.DataFrame] = []
+    for band in AGE_BAND_ORDER:
+        group = adults.loc[adults["age_band"] == band]
+        if len(group) < n_per_band:
+            raise ValueError(
+                f"age band {band} has {len(group)} adults, fewer than {n_per_band}"
+            )
+        weight = pd.to_numeric(group["TUFINLWGT"], errors="coerce").fillna(0).clip(lower=0)
+        indices = _pps_indices(weight.to_numpy(dtype=float), n_per_band, rng)
+        picked.append(group.iloc[indices])
+    return pd.concat(picked, ignore_index=True)
+
+
+def _labeled_adults(frame: pd.DataFrame) -> pd.DataFrame:
+    """ATUS respondents age 18+ with an age band and a sex label."""
+    required = {"TUCASEID", "TEAGE", "TESEX", "TUFINLWGT"}
+    missing = required - set(frame.columns)
+    if missing:
+        raise ValueError(f"ATUS summary is missing columns: {', '.join(sorted(missing))}")
+    adults = frame.loc[pd.to_numeric(frame["TEAGE"], errors="coerce") >= 18].copy()
+    adults["TEAGE"] = pd.to_numeric(adults["TEAGE"], errors="coerce")
+    adults["age_band"] = adults["TEAGE"].map(lambda age: age_band(int(age)))
+    adults["sex"] = pd.to_numeric(adults["TESEX"], errors="coerce").map(
+        lambda value: None if pd.isna(value) else SEX_LABEL.get(int(value))
+    )
+    adults = adults.loc[adults["age_band"].notna() & adults["sex"].notna()]
+    if adults.empty:
+        raise ValueError("ATUS summary has no adults")
+    return adults
+
+
+def load_all_adult_personas(data_dir: Path) -> list[dict[str, Any]]:
+    """Every written ATUS adult card, in file order. Does not sample."""
+    path = adult_persona_cards_path(data_dir)
+    if not path.is_file():
+        raise VisitorError(
+            f"ATUS adult persona cards are missing: {path}. Run `{_CARD_COMMAND}`."
+        )
+    personas: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for card in read_jsonl(path):
+        person_id = str(card.get("id") or "").strip()
+        if not person_id:
+            person_id = f"visitor-atus-{_case_key(card.get('TUCASEID'))}"
+        if person_id in seen:
+            raise VisitorError(f"duplicate persona id {person_id} in {path}")
+        seen.add(person_id)
+        text = card.get("persona_text")
+        if not isinstance(text, str) or not text.strip():
+            raise VisitorError(f"{person_id} has no persona card text in {path}")
+        demo = card.get("demographics") if isinstance(card.get("demographics"), dict) else {}
+        personas.append(
+            {
+                "id": person_id,
+                "TUCASEID": card.get("TUCASEID"),
+                "demographics": {
+                    "age": demo.get("age"),
+                    "age_band": demo.get("age_band"),
+                    "sex": demo.get("sex"),
+                    "education": demo.get("education_level") or demo.get("education"),
+                    "marital_status": demo.get("partner") or demo.get("marital_status"),
+                    "employment": demo.get("employment"),
+                },
+                "text": text,
+            }
+        )
+    if not personas:
+        raise VisitorError(f"no persona cards in {path}")
+    return personas
+
+
+def build_atus_personas(
+    data_dir: Path,
+    *,
+    n: int = 50,
+    seed: int = 0,
+    n_per_age_band: int | None = None,
+) -> list[dict[str, Any]]:
+    """Sample ATUS adults and attach the written persona card for each TUCASEID.
+
+    The same ``n`` and ``seed`` always return the same people. With
+    ``n_per_age_band``, each age band contributes that many adults and ``n``
+    is ignored. Card text is ``persona_text`` from ``adults/personas.jsonl``.
+    """
+    if n_per_age_band is None and n < 1:
+        raise InterviewError("n must be positive")
+    if n_per_age_band is not None and n_per_age_band < 1:
+        raise InterviewError("n_per_age_band must be positive")
+    summary_path = atus_dir(data_dir) / "sum" / "atussum_2023.dat"
+    if not summary_path.is_file():
+        raise VisitorError(
+            f"ATUS activity summary is missing: {summary_path}. "
+            "Run `popbench fetch --visitors-only`."
+        )
+    cards_path = adult_persona_cards_path(data_dir)
+    cards = _load_adult_cards(cards_path)
+    atus = pd.read_csv(summary_path)
+    try:
+        if n_per_age_band is None:
+            sampled = sample_atus_adults(atus, n=n, seed=seed)
+        else:
+            sampled = sample_atus_age_bands(atus, n_per_band=n_per_age_band, seed=seed)
+    except ValueError as exc:
+        raise VisitorError(str(exc)) from exc
+    personas: list[dict[str, Any]] = []
+    for _, row in sampled.iterrows():
+        case = _case_key(row["TUCASEID"])
+        card = cards.get(case)
+        text = None if card is None else card.get("persona_text")
+        if card is None or not isinstance(text, str) or not text.strip():
+            raise VisitorError(
+                f"ATUS adult {case} has no persona card in {cards_path}. "
+                f"Run `{_CARD_COMMAND}`."
+            )
+        person_id = f"visitor-atus-{case}"
+        demographics = _card_demographics(card, row)
+        personas.append(
+            {
+                "id": person_id,
+                "TUCASEID": int(case) if case.isdigit() else case,
+                "demographics": demographics,
+                "household": {"labor_force": demographics.get("employment")},
+                "text": text,
+            }
+        )
+    return personas
+
+
 def build_atus_twin2k(
     data_dir: Path,
     *,
@@ -158,16 +249,7 @@ def build_atus_twin2k(
 ) -> dict[str, Any]:
     """Write the ATUS persona panel, the six Twin-2K items, and the human shares."""
     from popbench.dao.twin2k import DatasetError, load_twin2k
-    from popbench.simulate.persona_background import expand_persona
 
-    if n < 1:
-        raise InterviewError("n must be positive")
-    summary_path = atus_dir(data_dir) / "sum" / "atussum_2023.dat"
-    if not summary_path.is_file():
-        raise VisitorError(
-            f"ATUS activity summary is missing: {summary_path}. "
-            "Run `popbench fetch --visitors-only`."
-        )
     try:
         dataset = load_twin2k(data_dir, download=False)
     except DatasetError as exc:
@@ -175,56 +257,31 @@ def build_atus_twin2k(
 
     items = select_probe_items(build_instrument(dataset.catalog))
     baseline, _pids = human_baseline(dataset.wave1_3, items)
-    atus = pd.read_csv(summary_path)
-    try:
-        sampled = sample_atus_adults(atus, n=n, seed=seed)
-    except ValueError as exc:
-        raise VisitorError(str(exc)) from exc
-
-    personas: list[dict[str, Any]] = []
+    personas = build_atus_personas(data_dir, n=n, seed=seed)
     records: list[InterviewRecord] = []
     turns = _probe_turns(items)
-    for index, row in sampled.iterrows():
-        person_id = f"atus-{seed}-{index:04d}"
-        demographics, household = _demographics(row)
-        routine = diary_minutes(row)
-        expanded = expand_persona(
-            visitor_id=person_id,
-            demographics=demographics,
-            routine=routine,
-            base_text="",
-            seed=seed,
-            diary_day=True,
-        )
-        text = expanded["persona_text"] + "\n\n" + _household_block(household)
-        personas.append(
-            {
-                "id": person_id,
-                "demographics": demographics,
-                "household": household,
-                "routine": routine,
-                "background": expanded["background"],
-                "text": text,
-            }
-        )
+    for person in personas:
+        demographics = person["demographics"]
+        household = person.get("household") or {}
+        age = demographics.get("age")
         records.append(
             InterviewRecord(
-                id=person_id,
+                id=person["id"],
                 region="US",
                 language="en",
                 source="ATUS-2023",
                 instrument=PROBE_INSTRUMENT,
                 persona=PersonaCard(
-                    id=person_id,
+                    id=person["id"],
                     condition="atus_life_history",
-                    text=text,
-                    age=int(demographics["age"]),
-                    age_band=str(demographics["age_band"]),
-                    sex=str(demographics["sex"]),
+                    text=person["text"],
+                    age=None if age is None else int(age),
+                    age_band=demographics.get("age_band"),
+                    sex=demographics.get("sex"),
                     state=None,
-                    education_level=str(demographics["education"]),
+                    education_level=demographics.get("education"),
                     occupation=household.get("labor_force"),
-                    marital_status=str(demographics["marital_status"]),
+                    marital_status=demographics.get("marital_status"),
                 ),
                 turns=turns,
             )
@@ -242,7 +299,10 @@ def build_atus_twin2k(
         "n_turns": PROBE_N_TURNS,
         "n_people": n,
         "seed": seed,
-        "people": "ATUS 2023 adults, stratified by age band and sex, weighted by TUFINLWGT",
+        "people": (
+            "ATUS 2023 adults, stratified by age band and sex, weighted by TUFINLWGT. "
+            "Persona text is the written adult card for that TUCASEID."
+        ),
         "questions": "One forward BFI-44 item per Big Five scale, plus the first green-consumption item",
         "baseline": "Twin-2K option shares on these items. No per-person gold; ATUS respondents are not Twin-2K respondents.",
         "panel": panel_path.name,
@@ -274,101 +334,67 @@ def _probe_turns(items: list[dict[str, Any]]) -> tuple[InterviewTurn, ...]:
     )
 
 
-def _demographics(row: pd.Series) -> tuple[dict[str, Any], dict[str, Any]]:
-    age = int(row["TEAGE"])
-    sex = str(row["sex"])
-    education = _education(row.get("PEEDUCA"))
-    race = _race(row.get("PTDTRACE"))
-    hours = _nonnegative(row.get("TEHRUSLT"))
-    weekly_cents = _nonnegative(row.get("TRERNWA"))
-    weekly_dollars = None if weekly_cents is None else weekly_cents / 100
-    income_over_50k = bool(weekly_dollars is not None and weekly_dollars * 52 >= 50_000)
-    partner = _coded(row.get("TRSPPRES"), PARTNER_LABEL)
-    marital = "Married" if partner == "spouse" else "Unknown"
-    demographics = {
+def _load_adult_cards(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.is_file():
+        raise VisitorError(
+            f"ATUS adult persona cards are missing: {path}. Run `{_CARD_COMMAND}`."
+        )
+    cards: dict[str, dict[str, Any]] = {}
+    for row in read_jsonl(path):
+        case = row.get("TUCASEID")
+        if case is None:
+            person_id = str(row.get("id") or "")
+            prefix = "visitor-atus-"
+            if person_id.startswith(prefix):
+                case = person_id[len(prefix) :]
+        if case is None:
+            continue
+        cards[_case_key(case)] = row
+    return cards
+
+
+def _card_demographics(card: dict[str, Any], row: pd.Series) -> dict[str, Any]:
+    demo = card.get("demographics") if isinstance(card.get("demographics"), dict) else {}
+    persona = card.get("persona") if isinstance(card.get("persona"), dict) else {}
+    age = demo.get("age", persona.get("age"))
+    if age is None:
+        age = int(row["TEAGE"])
+    else:
+        age = int(age)
+    education = demo.get("education_level") or persona.get("education_level") or demo.get("education")
+    marital = persona.get("marital_status") or demo.get("marital_status") or demo.get("partner")
+    employment = demo.get("employment") or persona.get("occupation")
+    return {
         "age": age,
-        "age_band": str(row["age_band"]),
-        "sex": sex,
-        "education": education,
-        "marital_status": marital,
-        "race": race,
-        "income_over_50k": income_over_50k,
-        "work_hours": hours,
+        "age_band": str(demo.get("age_band") or persona.get("age_band") or row["age_band"]),
+        "sex": str(demo.get("sex") or persona.get("sex") or row["sex"]),
+        "education": None if education in (None, "") else str(education),
+        "marital_status": None if marital in (None, "") else str(marital),
+        "employment": None if employment in (None, "") else str(employment),
     }
-    children = _nonnegative(row.get("TRCHILDNUM"))
-    household = {
-        "labor_force": _coded(row.get("TELFS"), LABOR_LABEL),
-        "spouse_or_partner": partner,
-        "children": None if children is None else int(children),
-        "metropolitan": _coded(row.get("GTMETSTA"), METRO_LABEL),
-        "diary_day": _coded(row.get("TUDIARYDAY"), WEEKDAY),
-        "weekly_earnings_dollars": weekly_dollars,
-    }
-    return demographics, household
 
 
-def _household_block(household: dict[str, Any]) -> str:
-    earnings = household.get("weekly_earnings_dollars")
-    earnings_text = "unknown" if earnings is None else f"${earnings:.0f}"
-    children = household.get("children")
-    children_text = "unknown" if children is None else str(children)
-    lines = [
-        "## Household (ATUS respondent)",
-        f"Labor force: {household.get('labor_force') or 'unknown'}",
-        f"Spouse or partner in household: {household.get('spouse_or_partner') or 'unknown'}",
-        f"Children in household: {children_text}",
-        f"Weekly earnings: {earnings_text}",
-        f"Metropolitan status: {household.get('metropolitan') or 'unknown'}",
-        f"Diary day: {household.get('diary_day') or 'unknown'}",
-    ]
-    return "\n".join(lines)
-
-
-def _education(value: Any) -> str:
-    code = _nonnegative(value)
-    if code is None:
-        return "unknown"
-    number = int(code)
-    for low, high, name in PEEDUCA_BANDS:
-        if low <= number <= high:
-            return name
-    return "unknown"
-
-
-def _race(value: Any) -> str:
-    code = _nonnegative(value)
-    if code is None:
-        return "Unknown"
-    number = int(code)
-    if number in RACE_LABEL:
-        return RACE_LABEL[number]
-    if number >= 6:
-        return "Two or more races"
-    return "Unknown"
-
-
-def _coded(value: Any, labels: dict[int, str]) -> str | None:
-    code = _nonnegative(value)
-    if code is None:
-        return None
-    return labels.get(int(code))
-
-
-def _nonnegative(value: Any) -> float | None:
-    if value is None or (isinstance(value, float) and math.isnan(value)):
-        return None
+def _case_key(value: Any) -> str:
+    if isinstance(value, str):
+        text = value.strip()
+        if text.endswith(".0") and text[:-2].isdigit():
+            return text[:-2]
+        return text
     try:
         if pd.isna(value):
-            return None
+            raise VisitorError("ATUS row is missing TUCASEID")
     except TypeError:
         pass
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return None
-    if number < 0:
-        return None
-    return number
+    if isinstance(value, (int, np.integer)):
+        return str(int(value))
+    if isinstance(value, float):
+        if not value.is_integer():
+            raise VisitorError(f"ATUS TUCASEID is not an integer: {value}")
+        return str(int(value))
+    text = str(value).strip()
+    if text.endswith(".0") and text[:-2].isdigit():
+        return text[:-2]
+    return text
 
 
 def _quotas(weights: dict[str, float], caps: dict[str, int], n: int) -> dict[str, int]:

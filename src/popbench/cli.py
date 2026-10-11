@@ -1,8 +1,9 @@
 """Command line for the population-simulation benchmark.
 
-The dataset (people, items, human baseline) stays fixed. `dao` builds that
-panel, `simulate` answers it with the model under test, and `evaluate` scores
-the saved answers. `run` does those three steps for the twin-2k-50 config.
+The main path is five steps: fetch ATUS and Twin-2K, split populations and
+question categories, reuse written adult persona cards, answer each paper
+category, and score against Twin-2K shares. Visitor interviews, twin-2k-50,
+and the six-item probe stay available after those commands.
 """
 
 from __future__ import annotations
@@ -14,13 +15,22 @@ from pathlib import Path
 
 from popbench import __version__
 from popbench.config import ConfigError, load_config
-from popbench.dao.atus_twin2k import build_atus_twin2k
+from popbench.dao.atus_categories import (
+    build_atus_category_panels,
+    category_families,
+    category_records,
+)
+from popbench.dao.atus_populations import build_population_visitors, split_atus_populations
+from popbench.dao.atus_twin2k import build_atus_twin2k, load_all_adult_personas
 from popbench.dao.interview import InterviewError, build_interview
 from popbench.dao.io import write_jsonl
 from popbench.dao.personas import NEMOTRON_SHARD_COUNT, PersonaError, cache_nemotron_shards
-from popbench.dao.twin2k import DatasetError, load_twin2k
+from popbench.dao.survey import PAPER_FAMILIES, build_closed_items, items_by_family, write_category_splits
+from popbench.dao.twin2k import DatasetError, load_twin2k, twin2k_dir
 from popbench.dao.visitors import VisitorError, build_visitors, fetch_visitors, visitors_built_dir
 from popbench.evaluate.atus_twin2k import evaluate_atus_twin2k, write_atus_twin2k_comparison
+from popbench.evaluate.categories import evaluate_category_run, write_category_comparison
+from popbench.evaluate.significance import render_personality_age_report, write_personality_age_evaluation
 from popbench.evaluate.compare import CompareError
 from popbench.evaluate.interview import evaluate_interview
 from popbench.evaluate.robustness import RobustnessError, audit_cross_model_variance
@@ -36,15 +46,16 @@ from popbench.simulate.client import (
 )
 from popbench.simulate.interview import run_interview, run_records
 from popbench.simulate.survey import answer_survey
-from popbench.simulate.visitors import run_visitors
+from popbench.simulate.visitors import run_visitors, simulate_population_personas
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="popbench",
         description=(
-            "Compare LLMs on a fixed population dataset: build the panel, "
-            "simulate answers, and score them against the human baseline."
+            "Score LLMs on written ATUS persona cards. Fetch the surveys, "
+            "split populations and Twin-2K categories, then compare-categories "
+            "against Twin-2K shares."
         ),
     )
     parser.add_argument("--version", action="version", version=f"popbench {__version__}")
@@ -72,6 +83,94 @@ def main(argv: list[str] | None = None) -> int:
         help="download only the simulate-visitor sources",
     )
     fetch.set_defaults(func=cmd_fetch)
+
+    split_populations = sub.add_parser(
+        "split-populations",
+        help="split ATUS adults into population groups that differ in time use",
+    )
+    _add_data_dir(split_populations)
+    split_populations.set_defaults(func=cmd_split_populations)
+
+    build_population_visitors_cmd = sub.add_parser(
+        "build-population-visitors",
+        help="write a persona card for every adult in each ATUS population group",
+    )
+    _add_data_dir(build_population_visitors_cmd)
+    build_population_visitors_cmd.set_defaults(func=cmd_build_population_visitors)
+
+    split_categories = sub.add_parser(
+        "split-categories",
+        help="split Twin-2K responses into one folder per paper category",
+    )
+    _add_data_dir(split_categories)
+    split_categories.set_defaults(func=cmd_split_categories)
+
+    simulate_population_personas_cmd = sub.add_parser(
+        "simulate-population-personas",
+        help="write one life history per ATUS adult via the DeepSeek API",
+    )
+    _add_data_dir(simulate_population_personas_cmd)
+    simulate_population_personas_cmd.set_defaults(func=cmd_simulate_population_personas)
+
+    answer_population = sub.add_parser(
+        "answer-population",
+        help="every written ATUS adult card answers Twin-2K closed items; saves under data/twin2k-sim",
+    )
+    _add_data_dir(answer_population)
+    answer_population.add_argument("--workers", type=int, default=8)
+    answer_population.add_argument(
+        "--families",
+        nargs="+",
+        choices=PAPER_FAMILIES,
+        default=None,
+        help="paper categories to answer (default: all seven)",
+    )
+    answer_population.set_defaults(func=cmd_answer_population)
+
+    compare_categories = sub.add_parser(
+        "compare-categories",
+        help="answer each Twin-2K paper category using written ATUS adult persona cards",
+    )
+    _add_data_dir(compare_categories)
+    compare_categories.add_argument(
+        "--models",
+        nargs="+",
+        default=list(COMPARE_MODELS),
+        help="models to compare (default: gpt-5.5 glm-5.3 deepseek-v4-pro)",
+    )
+    compare_categories.add_argument("--n", type=int, default=50)
+    compare_categories.add_argument(
+        "--per-age-band",
+        type=int,
+        default=None,
+        dest="per_age_band",
+        help=(
+            "sample this many ATUS adults from each age band "
+            "(18-29, 30-49, 50-64, 65+), weighted by TUFINLWGT; replaces --n"
+        ),
+    )
+    compare_categories.add_argument("--seed", type=int, default=0)
+    compare_categories.add_argument("--workers", type=int, default=4)
+    compare_categories.add_argument(
+        "--families",
+        nargs="+",
+        choices=PAPER_FAMILIES,
+        default=None,
+        help="paper categories to run (default: all seven)",
+    )
+    compare_categories.add_argument(
+        "--score-only",
+        action="store_true",
+        help="score responses already saved under the compare directory",
+    )
+    compare_categories.add_argument(
+        "--run",
+        type=Path,
+        default=None,
+        dest="run_dir",
+        help="output directory (default: runs/compare/atus-categories-n<n>-seed<seed>)",
+    )
+    compare_categories.set_defaults(func=cmd_compare_categories)
 
     build = sub.add_parser("build", help="build twin-2k-50 interview records")
     _add_data_dir(build)
@@ -212,7 +311,7 @@ def main(argv: list[str] | None = None) -> int:
 
     compare = sub.add_parser(
         "compare",
-        help="answer Twin-2K items as ATUS personas and rank models against Twin-2K shares",
+        help="answer six Twin-2K items using written ATUS adult persona cards",
     )
     _add_data_dir(compare)
     compare.add_argument(
@@ -282,6 +381,53 @@ def cmd_fetch(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_split_categories(args: argparse.Namespace) -> int:
+    data_dir = _resolve(args.data_dir)
+    data = load_twin2k(data_dir, download=False)
+    dest = twin2k_dir(data_dir) / "by_category"
+    summary = write_category_splits(data, dest)
+    print(f"Wrote {len(summary['categories'])} Twin-2K categories to {dest}")
+    for row in summary["categories"]:
+        wave4 = f", wave4 columns {row['wave4_columns']}" if row["wave4_columns"] else ""
+        print(
+            f"  {row['dir']} ({row['label']}): "
+            f"{row['n_questions']} catalog entries, "
+            f"wave1_3 columns {row['wave1_3_columns']}{wave4}"
+        )
+    return 0
+
+
+def cmd_split_populations(args: argparse.Namespace) -> int:
+    data_dir = _resolve(args.data_dir)
+    summary = split_atus_populations(data_dir)
+    kept = [row for row in summary["factors"] if row["kept"]]
+    print(
+        f"Wrote {len(kept)} ATUS population factors "
+        f"({summary['n_adults']} adults) to {summary['dir']}"
+    )
+    for row in summary["factors"]:
+        groups = ", ".join(f"{group['level']} {group['n']}" for group in row["groups"])
+        status = "kept" if row["kept"] else "dropped"
+        print(f"  {row['factor']} ({row['label']}, {status}): joint p={_format_p(row['p_value'])}; {groups}")
+        if row["levels_omitted"]:
+            omitted = ", ".join(
+                f"{item['level']} {item['n']}" for item in row["levels_omitted"]
+            )
+            print(f"    omitted: {omitted}")
+        if row["kept"]:
+            named = [item["activity"] for item in row["activities"] if item["significant"]]
+            print(f"    significant activities: {', '.join(named)}")
+    return 0
+
+
+def _format_p(p_value: float | None) -> str:
+    if p_value is None:
+        return "n/a"
+    if p_value == 0:
+        return "<1e-300"
+    return f"{p_value:.3g}"
+
+
 def cmd_build(args: argparse.Namespace) -> int:
     out = build_interview(_resolve(args.data_dir), n=args.n, seed=args.seed)
     print(f"Wrote twin-2k-50 interview records to {out}")
@@ -291,6 +437,79 @@ def cmd_build(args: argparse.Namespace) -> int:
 def cmd_build_visitors(args: argparse.Namespace) -> int:
     out = build_visitors(_resolve(args.data_dir), n=args.n, seed=args.seed)
     print(f"Wrote visitor DAO records to {out}")
+    return 0
+
+
+def cmd_build_population_visitors(args: argparse.Namespace) -> int:
+    summary = build_population_visitors(_resolve(args.data_dir))
+    print(
+        f"Wrote {summary['n_cards']} ATUS population persona cards "
+        f"({summary['n_groups']} groups) to {summary['dir']}"
+    )
+    for group in summary["groups"]:
+        print(f"  {group['factor']}/{group['level']}: {group['n_people']}")
+    return 0
+
+
+def cmd_answer_population(args: argparse.Namespace) -> int:
+    """Ask every written adult card the closed Twin-2K items. Saves under data/twin2k-sim."""
+    data_dir = _resolve(args.data_dir)
+    settings = model_settings_from_env()
+    personas = load_all_adult_personas(data_dir)
+    dataset = load_twin2k(data_dir, download=False)
+    grouped = items_by_family(build_closed_items(dataset.catalog))
+    families = category_families(list(args.families) if args.families else None)
+    root = data_dir / "twin2k-sim" / run_slug(settings.model)
+    root.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "model": settings.model,
+        "base_url": settings.base_url,
+        "transport": settings.transport,
+        "n_people": len(personas),
+        "source": "visitors/by_population/adults/personas.jsonl",
+        "questions": "Twin-2K closed items. Each paper category is a separate interview.",
+        "families": families,
+    }
+    (root / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+    print(
+        f"answer all adult cards model={settings.model} n={len(personas)} "
+        f"families={','.join(families)} -> {root}",
+        flush=True,
+    )
+    for family in families:
+        items = grouped[family]
+        if not items:
+            raise InterviewError(f"{family} has no closed items")
+        records = category_records(personas, items)
+        run_dir = root / family
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "items.json").write_text(json.dumps(items, ensure_ascii=False) + "\n")
+        print(
+            f"simulating {settings.model} {family} "
+            f"({len(items)} items, {len(records)} people) -> {run_dir}",
+            flush=True,
+        )
+        answer_survey(
+            records,
+            run_dir,
+            workers=args.workers,
+            settings=settings,
+            panel="atus-all-adults",
+            family=family,
+            resume=True,
+        )
+        print(f"saved {family} to {run_dir / 'responses.jsonl'}", flush=True)
+    print(f"Wrote population answers to {root}")
+    return 0
+
+
+def cmd_simulate_population_personas(args: argparse.Namespace) -> int:
+    summary = simulate_population_personas(_resolve(args.data_dir))
+    print(
+        f"Wrote {summary['n_cards']} adult persona cards with {summary['model']}, "
+        f"reused across {summary['n_group_rows']} group rows "
+        f"({summary['n_groups']} groups) to {summary['dir']}"
+    )
     return 0
 
 
@@ -525,6 +744,98 @@ def cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_compare_categories(args: argparse.Namespace) -> int:
+    """Answer each paper category from written ATUS adult cards, then score by category."""
+    data_dir = _resolve(args.data_dir)
+    root = _categories_root(args)
+    families = category_families(list(args.families) if args.families else None)
+    minimum = 1 if args.per_age_band else 2
+    slugs = _compare_slugs(args.models, minimum=minimum)
+    settings_list = None if args.score_only else _compare_settings(args.models, minimum=minimum)
+    built = build_atus_category_panels(
+        data_dir,
+        n=args.n,
+        seed=args.seed,
+        out_dir=root,
+        families=families,
+        n_per_age_band=args.per_age_band,
+    )
+    sampling = (
+        f"per_age_band={args.per_age_band} n={built['n']}"
+        if args.per_age_band
+        else f"n={args.n}"
+    )
+    print(
+        "compare atus personas by twin-2k category "
+        f"models={','.join(slugs)} {sampling} seed={args.seed} "
+        f"families={','.join(panel['family'] for panel in built['panels'])}",
+        flush=True,
+    )
+    summaries = []
+    for index, slug in enumerate(slugs):
+        for panel in built["panels"]:
+            run_dir = root / slug / panel["family"]
+            if args.score_only:
+                print(f"scoring {slug} {panel['family']}", flush=True)
+            else:
+                settings = settings_list[index]
+                print(
+                    f"simulating {settings.model} {panel['family']} "
+                    f"({len(panel['items'])} items) -> {run_dir}",
+                    flush=True,
+                )
+                answer_survey(
+                    panel["records"],
+                    run_dir,
+                    workers=args.workers,
+                    settings=settings,
+                    panel="atus",
+                    seed=args.seed,
+                    family=panel["family"],
+                )
+            summary = evaluate_category_run(
+                run_dir,
+                panel["items"],
+                panel["baseline"],
+                family=panel["family"],
+                seed=args.seed,
+            )
+            summaries.append(summary)
+            print(
+                f"  {summary['model']} {summary['label']} "
+                f"tvd={summary['mean_tvd']} mae={summary['mean_mae']}",
+                flush=True,
+            )
+            if args.per_age_band and panel["family"] == "personality":
+                print(f"testing {summary['model']} personality against Twin-2K", flush=True)
+                significance = write_personality_age_evaluation(
+                    run_dir,
+                    built["personas"],
+                    panel["items"],
+                    data_dir,
+                    model=summary["model"],
+                    seed=args.seed,
+                    n_per_age_band=args.per_age_band,
+                )
+                print(
+                    f"  gof_holm={significance['overall']['n_gof_holm']}/"
+                    f"{significance['overall']['n_tested']} "
+                    f"gradient_r={significance['age_effects']['gradient_r']}",
+                    flush=True,
+                )
+                if len(slugs) == 1:
+                    (root / "compare.md").write_text(render_personality_age_report(significance))
+                    (root / "significance.json").write_text(json.dumps(significance) + "\n")
+    if len(slugs) >= 2:
+        report = write_category_comparison(root, summaries)
+        print("per category (lower Twin-2K total variation distance ranks first)")
+        for category in report["categories"]:
+            winner = category["ranked"][0]
+            print(f"  {category['label']}: {winner['model']} tvd={winner['mean_tvd']}")
+    print(f"Wrote category comparison to {root / 'compare.md'}")
+    return 0
+
+
 def _simulate_full(
     data_dir: Path,
     run_dir: Path,
@@ -558,20 +869,22 @@ def _model_settings(args: argparse.Namespace) -> ModelSettings:
     return model_settings_from_env()
 
 
-def _compare_slugs(names: list[str]) -> list[str]:
+def _compare_slugs(names: list[str], *, minimum: int = 2) -> list[str]:
     slugs: list[str] = []
     for name in names:
         slug = run_slug(name)
         if slug in slugs:
             raise SettingsError(f"duplicate model: {slug}")
         slugs.append(slug)
-    if len(slugs) < 2:
-        raise CompareError("compare needs at least two models")
+    if len(slugs) < minimum:
+        if minimum > 1:
+            raise CompareError("compare needs at least two models")
+        raise CompareError("compare needs a model")
     return slugs
 
 
-def _compare_settings(names: list[str]) -> list[ModelSettings]:
-    slugs = _compare_slugs(names)
+def _compare_settings(names: list[str], *, minimum: int = 2) -> list[ModelSettings]:
+    slugs = _compare_slugs(names, minimum=minimum)
     settings: list[ModelSettings] = []
     missing: list[str] = []
     for name in names:
@@ -586,6 +899,19 @@ def _compare_settings(names: list[str]) -> list[ModelSettings]:
     if resolved != slugs:
         raise SettingsError("model ids did not match the compare directory names")
     return settings
+
+
+def _categories_root(args: argparse.Namespace) -> Path:
+    if args.run_dir is None:
+        if getattr(args, "per_age_band", None):
+            return (
+                Path.cwd()
+                / "runs"
+                / "compare"
+                / f"atus-categories-age-n{args.per_age_band}-seed{args.seed}"
+            )
+        return Path.cwd() / "runs" / "compare" / f"atus-categories-n{args.n}-seed{args.seed}"
+    return _resolve(args.run_dir)
 
 
 def _compare_root(args: argparse.Namespace) -> Path:

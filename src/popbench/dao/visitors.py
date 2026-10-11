@@ -44,6 +44,11 @@ ATUS_SUM_WAYBACK = (
     "https://web.archive.org/web/20250105023621id_/"
     "https://www.bls.gov/tus/datafiles/atussum-2023.zip"
 )
+ATUS_WGTS_URL = "https://www.bls.gov/tus/datafiles/atuswgts-2023.zip"
+ATUS_WGTS_WAYBACK = (
+    "https://web.archive.org/web/20250105023636id_/"
+    "https://www.bls.gov/tus/datafiles/atuswgts-2023.zip"
+)
 
 CENSUS_URL = (
     "https://www2.census.gov/programs-surveys/popest/datasets/"
@@ -257,6 +262,22 @@ def cache_atus(data_dir: Path) -> Path:
         },
     )
     return dest
+
+
+def cache_atus_replicates(data_dir: Path) -> Path:
+    """Cache the ATUS 2023 replicate weights used for standard errors."""
+    dest = atus_dir(data_dir)
+    dest.mkdir(parents=True, exist_ok=True)
+    zip_path = dest / "atuswgts-2023.zip"
+    if not zip_path.is_file():
+        _download_first([ATUS_WGTS_URL, ATUS_WGTS_WAYBACK], zip_path)
+    unpacked = dest / "wgts"
+    data = unpacked / "atuswgts_2023.dat"
+    if not data.is_file():
+        _unzip_if_needed(zip_path, unpacked)
+    if not data.is_file():
+        raise VisitorError("ATUS replicate weights did not unpack atuswgts_2023.dat")
+    return data
 
 
 def cache_census(data_dir: Path) -> Path:
@@ -519,6 +540,44 @@ def _edu_label(code: int) -> str:
     return "unknown"
 
 
+# Extra lines on an ATUS population card, after age, sex, and education.
+POPULATION_TEXT_FIELDS = (
+    ("employment", "Employment"),
+    ("children", "Children in household"),
+    ("partner", "Spouse or partner"),
+    ("metro", "Metropolitan status"),
+    ("school", "School enrollment"),
+    ("race_ethnicity", "Race and ethnicity"),
+)
+POPULATION_ROUTINE_CAPTION = "Diary day (ATUS minutes, this respondent):"
+
+
+def population_persona_text(
+    *,
+    age: int,
+    sex: str | None,
+    education: str | None,
+    labels: dict[str, str | None],
+    routine: dict[str, float],
+) -> str:
+    """Persona card for one ATUS adult in a population group.
+
+    State, personal income, and weekly hours are omitted. Those fields are not
+    on the population tables.
+    """
+    lines = [f"Age: {age}"]
+    if sex:
+        lines.append(f"Sex: {sex}")
+    if education:
+        lines.append(f"Education: {education}")
+    for key, title in POPULATION_TEXT_FIELDS:
+        value = labels.get(key)
+        if value:
+            lines.append(f"{title}: {value}")
+    lines.extend(_routine_block(routine, POPULATION_ROUTINE_CAPTION))
+    return "\n".join(lines)
+
+
 def _persona_text(
     *,
     age: int,
@@ -542,12 +601,18 @@ def _persona_text(
         f"Race: {race}",
         f"Personal income: {income}",
         f"Usual weekly work hours: {hours}",
-        "",
-        "Typical diary-day time use (ATUS minutes, age/sex stratum):",
     ]
+    lines.extend(
+        _routine_block(routine, "Typical diary-day time use (ATUS minutes, age/sex stratum):")
+    )
+    return "\n".join(lines)
+
+
+def _routine_block(routine: dict[str, float], caption: str) -> list[str]:
+    lines = ["", caption]
     for key, minutes in sorted(routine.items(), key=lambda item: -item[1]):
         lines.append(f"- {key}: {minutes:.0f} minutes")
-    return "\n".join(lines)
+    return lines
 
 
 def _example_markdown(

@@ -237,3 +237,30 @@ def test_one_instrument_is_one_request_and_a_bad_reply_is_not_cached(tmp_path: P
     cached = list((tmp_path / "cache").glob("*.json"))
     assert len(cached) == 2
     assert [row["value"] for row in responses[0]["answers"]] == [3, 2]
+
+
+def test_resume_skips_people_already_in_the_response_file(tmp_path: Path, monkeypatch):
+    settings = _settings()
+    calls = {"n": 0}
+
+    def fake_chat(_settings, _messages):
+        calls["n"] += 1
+        return json.dumps({"answers": ["Agree a little"]})
+
+    monkeypatch.setattr("popbench.simulate.survey.chat_with_retry", fake_chat)
+    first = {
+        "id": "visitor-atus-a",
+        "persona": {"text": "Age: 30"},
+        "turns": [_turn(1, "QID25_1", STEM + "Is talkative")],
+    }
+    second = {
+        "id": "visitor-atus-b",
+        "persona": {"text": "Age: 31"},
+        "turns": [_turn(1, "QID25_1", STEM + "Is talkative")],
+    }
+    answer_survey([first], tmp_path, settings=settings, resume=True)
+    answer_survey([first, second], tmp_path, settings=settings, resume=True)
+    assert calls["n"] == 2
+    rows = [json.loads(line) for line in (tmp_path / "responses.jsonl").read_text().splitlines()]
+    assert [row["id"] for row in rows] == ["visitor-atus-a", "visitor-atus-b"]
+    assert all(row["answers"][0]["ok"] for row in rows)

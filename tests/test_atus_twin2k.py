@@ -9,11 +9,15 @@ import pandas as pd
 import pytest
 
 from popbench.dao.atus_twin2k import (
+    AGE_BAND_ORDER,
     PROBE_N_TURNS,
     build_atus_twin2k,
+    load_all_adult_personas,
     sample_atus_adults,
+    sample_atus_age_bands,
     select_probe_items,
 )
+from popbench.dao.io import read_jsonl
 from popbench.dao.interview import OPTIONS, build_instrument
 from popbench.dao.schema import InterviewRecord, InterviewTurn, PersonaCard
 from popbench.evaluate.atus_twin2k import (
@@ -86,6 +90,17 @@ def test_sample_atus_adults_is_stable_and_stratified():
         "65+|Male",
         "65+|Female",
     }
+
+
+def test_sample_atus_age_bands_draws_the_same_count_from_each_band():
+    frame = _atus_frame()
+    first = sample_atus_age_bands(frame, n_per_band=2, seed=0)
+    second = sample_atus_age_bands(frame, n_per_band=2, seed=0)
+    other = sample_atus_age_bands(frame, n_per_band=2, seed=1)
+    assert first["TUCASEID"].tolist() == second["TUCASEID"].tolist()
+    assert first["TUCASEID"].tolist() != other["TUCASEID"].tolist()
+    assert first.groupby("age_band").size().to_dict() == {band: 2 for band in AGE_BAND_ORDER}
+    assert set(first["age_band"]) == set(AGE_BAND_ORDER)
 
 
 def test_select_probe_items_keeps_one_forward_item_per_scale():
@@ -243,18 +258,25 @@ def test_build_atus_twin2k_from_cached_surveys(tmp_path):
     data_dir = Path("data")
     summary = data_dir / "visitors" / "atus" / "sum" / "atussum_2023.dat"
     catalog = data_dir / "twin2k" / "question_catalog_and_human_response_csv" / "question_catalog.json"
-    if not summary.is_file() or not catalog.is_file():
-        pytest.skip("ATUS and Twin-2K caches are not on disk")
+    cards = data_dir / "visitors" / "by_population" / "adults" / "personas.jsonl"
+    if not summary.is_file() or not catalog.is_file() or not cards.is_file():
+        pytest.skip("ATUS, Twin-2K, or adult persona cards are not on disk")
     built = build_atus_twin2k(data_dir, n=4, seed=0, out_dir=tmp_path)
     again = build_atus_twin2k(data_dir, n=4, seed=0, out_dir=tmp_path / "again")
     assert [record.id for record in built["records"]] == [record.id for record in again["records"]]
     assert built["records"][0].persona.text == again["records"][0].persona.text
     record = built["records"][0]
+    assert record.id.startswith("visitor-atus-")
     assert len(record.turns) == PROBE_N_TURNS
     assert all(turn.gold_code is None for turn in record.turns)
-    assert "Age:" in record.persona.text
-    assert "Diary day (ATUS minutes)" in record.persona.text
-    assert "Household (ATUS respondent)" in record.persona.text
+    assert "Household (ATUS respondent)" not in record.persona.text
+    case = record.id.removeprefix("visitor-atus-")
+    written = next(
+        row["persona_text"]
+        for row in read_jsonl(cards)
+        if str(row["TUCASEID"]) == case
+    )
+    assert record.persona.text == written
     assert len(built["baseline"]["items"]) == PROBE_N_TURNS
     assert len(built["baseline"]["items"][0]["shares"]) == 5
     instrument = build_instrument(json.loads(catalog.read_text()))
@@ -282,3 +304,31 @@ def _summary(model: str, tvd: float, error: float) -> dict:
             }
         ],
     }
+
+
+def test_load_all_adult_personas_keeps_every_card(tmp_path: Path):
+    folder = tmp_path / "visitors" / "by_population" / "adults"
+    folder.mkdir(parents=True)
+    rows = [
+        {
+            "id": "visitor-atus-1",
+            "TUCASEID": 1,
+            "persona_text": "Person 1",
+            "demographics": {"age": 22, "age_band": "18-29", "sex": "Female"},
+        },
+        {
+            "id": "visitor-atus-2",
+            "TUCASEID": 2,
+            "persona_text": "Person 2",
+            "demographics": {"age": 70, "age_band": "65+", "sex": "Male", "education_level": "bachelor"},
+        },
+    ]
+    (folder / "personas.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    people = load_all_adult_personas(tmp_path)
+    assert [person["id"] for person in people] == ["visitor-atus-1", "visitor-atus-2"]
+    assert people[0]["text"] == "Person 1"
+    assert people[1]["demographics"]["age_band"] == "65+"
+    assert people[1]["demographics"]["education"] == "bachelor"

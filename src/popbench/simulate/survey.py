@@ -85,8 +85,13 @@ def answer_survey(
     panel: str = "nemotron-full",
     seed: int | None = None,
     family: str | None = None,
+    resume: bool = False,
 ) -> list[dict[str, Any]]:
-    """Write one response row per persona. Does not score."""
+    """Write one response row per persona. Does not score.
+
+    ``resume`` appends each finished person and skips ids already in
+    ``responses.jsonl``. Item cache still fills any person who stopped midway.
+    """
     try:
         if settings is None:
             settings = model_settings_from_env()
@@ -95,27 +100,41 @@ def answer_survey(
     run_dir = Path(run_dir)
     cache_dir = run_dir / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
-    finished = 0
+    response_path = run_dir / "responses.jsonl"
+    n_people = len(records)
+    n_turns = len(records[0]["turns"]) if records else 0
+    done_ids: set[str] = set()
+    if resume:
+        done_ids = _completed_response_ids(response_path)
+        records = [record for record in records if record["id"] not in done_ids]
+        print(f"resume {len(done_ids)}/{n_people} already saved", flush=True)
+    finished = len(done_ids) if resume else 0
     lock = threading.Lock()
 
     def _one(record: dict[str, Any]) -> dict[str, Any]:
         nonlocal finished
         result = _answer_record(settings, record, cache_dir)
         with lock:
+            if resume:
+                _append_jsonl(response_path, result)
             finished += 1
-            print(f"answered {finished}/{len(records)} {record['id']}", flush=True)
+            print(f"answered {finished}/{n_people} {record['id']}", flush=True)
         return result
 
-    workers = max(1, min(workers, len(records)))
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        responses = list(pool.map(_one, records))
-    write_jsonl(run_dir / "responses.jsonl", responses)
+    if records:
+        workers = max(1, min(workers, len(records)))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            responses = list(pool.map(_one, records))
+    else:
+        responses = []
+    if not resume:
+        write_jsonl(response_path, responses)
     meta = {
         "model": settings.model,
         "base_url": settings.base_url,
         "panel": panel,
-        "n_people": len(records),
-        "n_turns": len(records[0]["turns"]) if records else 0,
+        "n_people": n_people,
+        "n_turns": n_turns,
         "request": request_record(settings),
     }
     if seed is not None:
@@ -124,6 +143,29 @@ def answer_survey(
         meta["family"] = family
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
     return responses
+
+
+def _completed_response_ids(path: Path) -> set[str]:
+    """Ids already stored. A trailing partial line is dropped."""
+    if not path.is_file():
+        return set()
+    text = path.read_text(encoding="utf-8")
+    if text and not text.endswith("\n"):
+        text = text.rsplit("\n", 1)[0]
+        text = f"{text}\n" if text else ""
+        path.write_text(text, encoding="utf-8")
+    ids: set[str] = set()
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        ids.add(json.loads(line)["id"])
+    return ids
+
+
+def _append_jsonl(path: Path, row: dict[str, Any]) -> None:
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+        handle.flush()
 
 
 def _answer_record(settings: ModelSettings, record: dict[str, Any], cache_dir: Path) -> dict[str, Any]:
