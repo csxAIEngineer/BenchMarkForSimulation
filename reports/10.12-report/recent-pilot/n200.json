@@ -1,0 +1,11 @@
+{
+  "round": 3,
+  "n_people": 200,
+  "accepted": false,
+  "far_tvd_drop": -0.004826895043731794,
+  "near_tvd_rise": 0.03673590864917395,
+  "near_abs_rise": 0.007500000000000034,
+  "far_mean_tvd": 0.5360283041788144,
+  "near_mean_tvd": 0.18964346452866862,
+  "near_mean_abs": 0.24669885811467454
+}
