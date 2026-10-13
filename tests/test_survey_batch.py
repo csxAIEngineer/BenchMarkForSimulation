@@ -88,6 +88,31 @@ def test_blank_instrument_stays_one_question_at_a_time():
     assert [group[0]["item_id"] for group in instrument_groups(turns)] == ["Q1", "Q2"]
 
 
+def test_cr_thinking_models_keep_the_caller_token_budget(tmp_path: Path, monkeypatch):
+    settings = ModelSettings(
+        base_url="https://api.creative-reasoning.com",
+        api_key="test",
+        model="deepseek-v4.1-flash",
+        temperature=0,
+        max_tokens=None,
+        transport="cr",
+    )
+    seen: list[int | None] = []
+
+    def fake_chat(call_settings, messages):
+        seen.append(call_settings.max_tokens)
+        return json.dumps({"answers": ["Disagree strongly"]})
+
+    monkeypatch.setattr("popbench.simulate.survey.chat_with_retry", fake_chat)
+    record = {
+        "id": "visitor-atus-1",
+        "persona": {"text": "Age: 40"},
+        "turns": [_turn(1, "QID25_1", STEM + "Is talkative")],
+    }
+    answer_survey([record], tmp_path, settings=settings)
+    assert seen == [None]
+
+
 def test_cached_items_are_skipped_and_new_answers_use_the_same_key(tmp_path: Path, monkeypatch):
     settings = _settings()
     persona_id = "visitor-atus-1"

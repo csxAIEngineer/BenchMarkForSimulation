@@ -230,10 +230,7 @@ def _request_batch(
     label: str,
 ) -> tuple[list[dict[str, Any]] | None, str, str]:
     user = batch_message(pending, n_items)
-    cap = _output_token_cap(pending)
-    if settings.max_tokens is not None:
-        cap = min(settings.max_tokens, cap)
-    call_settings = replace(settings, max_tokens=cap)
+    call_settings = _call_settings(settings, pending)
     attempts = _PARSE_ATTEMPTS if len(pending) > 1 else _PARSE_ATTEMPTS + 1
     raw = ""
     last_error = "model response could not be parsed"
@@ -352,6 +349,22 @@ def _shared_prompt_prefix(turns: list[dict[str, Any]]) -> tuple[str, list[str]]:
     if any(not suffix for suffix in suffixes):
         return "", prompts
     return prefix.strip(), suffixes
+
+
+def _call_settings(settings: ModelSettings, turns: list[dict[str, Any]]) -> ModelSettings:
+    """Cap a short non-thinking reply. Thinking models on CR keep their own budget.
+
+    GLM and DeepSeek reason before the JSON answer. A cap sized for the answer
+    alone cuts the reply off, and CR rejects a thinking budget under 2000 tokens.
+    """
+    from cr_api.client import is_thinking_model
+
+    if settings.transport == "cr" and is_thinking_model(settings.model):
+        return settings
+    cap = _output_token_cap(turns)
+    if settings.max_tokens is not None:
+        cap = min(settings.max_tokens, cap)
+    return replace(settings, max_tokens=cap)
 
 
 def _output_token_cap(turns: list[dict[str, Any]]) -> int:

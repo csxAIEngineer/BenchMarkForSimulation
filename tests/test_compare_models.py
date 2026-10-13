@@ -110,6 +110,7 @@ def test_missing_provider_key_names_the_variable(tmp_path, monkeypatch):
     other = model_settings_for("deepseek-flash")
     assert other.model == "deepseek-flash"
     assert other.base_url == "https://api.deepseek.com"
+    assert other.transport == "deepseek"
 
 
 def test_parse_choice_ignores_a_think_block():
@@ -151,6 +152,17 @@ def test_ranking_prefers_higher_correlation_then_lower_share_mse():
     assert "| `visit_work` | 0.400 | 0.900 | 0.200 |" in text
 
 
+def test_other_cr_text_models_use_the_cr_api(tmp_path, monkeypatch):
+    _isolate_env(tmp_path, monkeypatch, "CR_API_KEY=cr-key\n")
+    settings = model_settings_for("deepseek-v4.1-flash")
+    assert settings.model == "deepseek-v4.1-flash"
+    assert settings.transport == "cr"
+    assert settings.api_key == "cr-key"
+    assert settings.base_url == CR_BASE_URL
+    assert settings.temperature is None
+    assert settings.max_tokens is None
+
+
 def test_compare_chat_uses_cr_client(tmp_path, monkeypatch):
     _isolate_env(tmp_path, monkeypatch, "CR_API_KEY=cr-key\n")
     settings = model_settings_for("glm-5.3")
@@ -160,9 +172,10 @@ def test_compare_chat_uses_cr_client(tmp_path, monkeypatch):
         def __init__(self, api_key=None, env_path=None):
             seen["api_key"] = api_key
 
-        def chat(self, messages, model="deepseek-v4-pro", max_tokens=None, stream=False, timeout=300, response_format=None):
+        def chat(self, messages, model="deepseek-v4-pro", max_tokens=None, stream=False, timeout=300, response_format=None, temperature=None):
             seen["model"] = model
             seen["max_tokens"] = max_tokens
+            seen["temperature"] = temperature
             seen["messages"] = messages
             return ChatResult('{"answer": "A little"}', "thought", model, {})
 
@@ -181,7 +194,7 @@ def test_cr_client_rejects_a_bad_request_without_retry(tmp_path, monkeypatch):
         def __init__(self, api_key=None, env_path=None):
             pass
 
-        def chat(self, messages, model="deepseek-v4-pro", max_tokens=None, stream=False, timeout=300, response_format=None):
+        def chat(self, messages, model="deepseek-v4-pro", max_tokens=None, stream=False, timeout=300, response_format=None, temperature=None):
             raise CRError("CR API 返回 400：bad", status=400, body="bad")
 
     monkeypatch.setattr(simulate, "CRClient", FakeClient)

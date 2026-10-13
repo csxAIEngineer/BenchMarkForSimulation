@@ -100,12 +100,14 @@ class CRClient(object):
             raise CRError("缺少 CR_API_KEY。请写在项目根目录的 .env 里。")
         self.base_url = BASE_URL
 
-    def chat(self, messages, model="deepseek-v4-pro", max_tokens=None, stream=False, timeout=300, response_format=None):
+    def chat(self, messages, model="deepseek-v4-pro", max_tokens=None, stream=False, timeout=300, response_format=None, temperature=None):
         if stream and model == "minimax-m3":
             raise CRError("流式输出要用大写的 MiniMax-M3，小写的 minimax-m3 不支持。")
         if max_tokens is not None and is_thinking_model(model) and int(max_tokens) < 2000:
             raise CRError("GLM 和 DeepSeek 会先思考。max_tokens 至少设 2000，或者不要传。")
         body = {"model": model, "messages": messages}
+        if temperature is not None:
+            body["temperature"] = temperature
         if max_tokens is not None:
             body["max_tokens"] = int(max_tokens)
         if response_format is not None:
@@ -131,8 +133,6 @@ class CRClient(object):
             raise CRError("duration 必须是 4 到 15 的整数")
         if seconds < 4 or seconds > 15:
             raise CRError("duration 必须是 4 到 15 的整数")
-        if model == "minimax-h3-text-to-video" and aspect_ratio not in ASPECT_RATIOS:
-            raise CRError("文生视频比例只能是 %s" % "、".join(ASPECT_RATIOS))
         content = [{"type": "text", "text": text}]
         for image in images or []:
             role = image.get("role")
@@ -144,8 +144,13 @@ class CRClient(object):
             "model": model,
             "content": content,
             "duration": seconds,
-            "aspect_ratio": aspect_ratio,
         }
+        # aspect_ratio is valid only for text-to-video. Image and reference
+        # models return invalid_parameter if it is present.
+        if model == "minimax-h3-text-to-video":
+            if aspect_ratio not in ASPECT_RATIOS:
+                raise CRError("文生视频比例只能是 %s" % "、".join(ASPECT_RATIOS))
+            body["aspect_ratio"] = aspect_ratio
         data = self._request(
             "POST",
             "/unified/v1/videos/tasks",

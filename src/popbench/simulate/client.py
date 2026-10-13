@@ -142,21 +142,41 @@ def run_slug(model: str) -> str:
     return cleaned or "model"
 
 
+def cr_model_id(name: str) -> str | None:
+    """Return the CR text-model id for ``name``, or None if CR does not list it."""
+    folded = {model.casefold(): model for model in _cr_text_models()}
+    return folded.get(name.strip().casefold())
+
+
 def model_settings_for(name: str) -> ModelSettings:
     """Settings for one named model.
 
-    The three compare models use cr_api.CRClient. Any other name is sent to
-    the DeepSeek endpoint, with that name as the model id.
+    Compare models and any other id in ``cr_api.TEXT_MODELS`` use
+    ``cr_api.CRClient``. Any other name is sent to the DeepSeek endpoint,
+    with that name as the model id.
     """
     load_env_file(_default_env_path())
     text = name.strip()
     if not text:
         raise SettingsError("model name is empty")
-    slug = canonical_compare_model(text)
+    slug = canonical_compare_model(text) or cr_model_id(text)
     if slug is None:
         base = model_settings_from_env()
         return replace(base, model=text)
-    spec = model_catalog()[slug]
+    if slug in model_catalog():
+        spec = model_catalog()[slug]
+    else:
+        spec = {
+            "key_envs": ("CR_API_KEY",),
+            "base_url_env": "CR_BASE_URL",
+            "default_base_url": CR_BASE_URL,
+            "model": slug,
+            "temperature": None,
+            "max_tokens": None,
+            "token_field": "max_tokens",
+            "extra_body": {},
+            "transport": "cr",
+        }
     api_key = ""
     for env_name in spec["key_envs"]:
         api_key = os.environ.get(env_name, "").strip()
@@ -296,13 +316,14 @@ def chat(settings: ModelSettings, messages: list[dict[str, str]]) -> str:
 
 
 def _chat_via_cr(settings: ModelSettings, messages: list[dict[str, str]]) -> str:
-    """Call gpt-5.5, glm-5.3, or deepseek-v4-pro through cr_api.CRClient."""
+    """Call a CR text model through cr_api.CRClient."""
     client = CRClient(api_key=settings.api_key)
     try:
         result = client.chat(
             messages,
             model=settings.model,
             max_tokens=settings.max_tokens,
+            temperature=settings.temperature,
             timeout=300,
         )
     except CRError as exc:

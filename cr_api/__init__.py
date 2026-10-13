@@ -17,9 +17,10 @@ GLM 和 DeepSeek 会先思考再回答。思考在 reasoning_content，并占用
 - minimax-h3-image-to-video（首帧 first_frame，可选尾帧 last_frame）
 - minimax-h3-reference-to-video（参考图 reference_image）
 
-视频是异步的：提交、每 10 秒轮询、再下载。duration 为 4 到 15。
-文生视频比例：16:9、9:16、1:1、4:3、3:4、21:9。图生视频比例跟输入图走。
-不要传 resolution，也不要传 generate_audio: false。
+视频是异步的：提交、每 10 秒轮询、再下载。duration 为 4 到 15 的整数。
+只有文生视频传 aspect_ratio，取值是 16:9、9:16、1:1、4:3、3:4、21:9。
+图生视频和参考图生视频不传 aspect_ratio，比例跟输入图走。
+不要传 resolution，也不要传 generate_audio。
 """
 
 from cr_api.client import (
