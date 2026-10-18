@@ -1,6 +1,7 @@
 """Provider settings and visitor-model ranking. No network calls."""
 
 import os
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -163,6 +164,44 @@ def test_other_cr_text_models_use_the_cr_api(tmp_path, monkeypatch):
     assert settings.max_tokens is None
 
 
+def test_gpt_temperature_turns_reasoning_off(tmp_path, monkeypatch):
+    _isolate_env(tmp_path, monkeypatch, "CR_API_KEY=cr-key\n")
+    settings = replace(model_settings_for("gpt-5.5"), temperature=0.8)
+    seen: dict[str, object] = {}
+
+    class FakeClient:
+        def __init__(self, api_key=None, env_path=None):
+            pass
+
+        def chat(self, messages, **kwargs):
+            seen.update(kwargs)
+            return ChatResult("ok", "", kwargs.get("model"), {})
+
+    monkeypatch.setattr(simulate, "CRClient", FakeClient)
+    assert chat(settings, [{"role": "user", "content": "hi"}]) == "ok"
+    assert seen["temperature"] == 0.8
+    assert seen["reasoning_effort"] == "none"
+
+
+def test_glm_temperature_keeps_default_reasoning(tmp_path, monkeypatch):
+    _isolate_env(tmp_path, monkeypatch, "CR_API_KEY=cr-key\n")
+    settings = replace(model_settings_for("glm-5.3"), temperature=0.8)
+    seen: dict[str, object] = {}
+
+    class FakeClient:
+        def __init__(self, api_key=None, env_path=None):
+            pass
+
+        def chat(self, messages, **kwargs):
+            seen.update(kwargs)
+            return ChatResult("ok", "", kwargs.get("model"), {})
+
+    monkeypatch.setattr(simulate, "CRClient", FakeClient)
+    assert chat(settings, [{"role": "user", "content": "hi"}]) == "ok"
+    assert seen["temperature"] == 0.8
+    assert "reasoning_effort" not in seen
+
+
 def test_compare_chat_uses_cr_client(tmp_path, monkeypatch):
     _isolate_env(tmp_path, monkeypatch, "CR_API_KEY=cr-key\n")
     settings = model_settings_for("glm-5.3")
@@ -201,6 +240,66 @@ def test_cr_client_rejects_a_bad_request_without_retry(tmp_path, monkeypatch):
     with pytest.raises(ModelError, match="400") as caught:
         chat_with_retry(settings, [{"role": "user", "content": "hi"}], attempts=3)
     assert caught.value.retryable is False
+
+
+def test_empty_cr_content_is_retried(tmp_path, monkeypatch):
+    _isolate_env(tmp_path, monkeypatch, "CR_API_KEY=cr-key\n")
+    settings = model_settings_for("gpt-5.5")
+    calls = {"n": 0}
+
+    class FakeClient:
+        def __init__(self, api_key=None, env_path=None):
+            pass
+
+        def chat(self, messages, model="deepseek-v4-pro", max_tokens=None, stream=False, timeout=300, response_format=None, temperature=None):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return ChatResult(
+                    "",
+                    "",
+                    model,
+                    {"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": None}}]},
+                )
+            return ChatResult('{"answer": "Yes"}', "", model, {})
+
+    monkeypatch.setattr(simulate, "CRClient", FakeClient)
+    monkeypatch.setattr("time.sleep", lambda _seconds: None)
+    assert chat_with_retry(settings, [{"role": "user", "content": "hi"}], attempts=3) == '{"answer": "Yes"}'
+    assert calls["n"] == 2
+
+
+def test_dropped_connection_is_retried(tmp_path, monkeypatch):
+    import http.client
+    import json
+    import urllib.request
+
+    _isolate_env(tmp_path, monkeypatch, "CR_API_KEY=cr-key\n")
+    settings = model_settings_for("glm-5.3")
+    calls = {"n": 0}
+
+    class _Body:
+        def __init__(self, payload: bytes) -> None:
+            self._payload = payload
+
+        def read(self) -> bytes:
+            return self._payload
+
+        def close(self) -> None:
+            return None
+
+    def fake_urlopen(request, timeout=None):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise http.client.RemoteDisconnected("Remote end closed connection without response")
+        body = json.dumps(
+            {"model": "glm-5.3", "choices": [{"message": {"content": '{"answer": "Yes"}'}}]}
+        ).encode()
+        return _Body(body)
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr("time.sleep", lambda _seconds: None)
+    assert chat_with_retry(settings, [{"role": "user", "content": "hi"}], attempts=3) == '{"answer": "Yes"}'
+    assert calls["n"] == 2
 
 
 def test_compare_cli_rejects_a_single_model(capsys):

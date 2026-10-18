@@ -26,12 +26,41 @@ from popbench.simulate.client import (
     parse_choice,
     request_record,
     response_cache_key,
+    with_cr_temperature_support,
 )
 from popbench.simulate.interview import system_message
 
 # Shared stems shorter than this stay on each question.
 _PREFIX_MIN = 40
 _PARSE_ATTEMPTS = 2
+
+
+def share_blank_instrument(
+    records: list[dict[str, Any]],
+    name: str,
+) -> list[dict[str, Any]]:
+    """Copy records so blank-instrument questions share one name.
+
+    Those questions then leave in one request. A question that already names
+    an instrument stays on its own scale. The input records are not mutated.
+    """
+    label = str(name).strip()
+    if not label:
+        raise ValueError("batch instrument name is empty")
+    stamped: list[dict[str, Any]] = []
+    for record in records:
+        turns: list[dict[str, Any]] = []
+        changed = False
+        for turn in record["turns"]:
+            if str(turn.get("instrument") or "").strip():
+                turns.append(turn)
+                continue
+            copied = dict(turn)
+            copied["instrument"] = label
+            turns.append(copied)
+            changed = True
+        stamped.append({**record, "turns": turns} if changed else record)
+    return stamped
 
 
 def instrument_groups(turns: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
@@ -86,6 +115,7 @@ def answer_survey(
     seed: int | None = None,
     family: str | None = None,
     resume: bool = False,
+    batch: bool = False,
 ) -> list[dict[str, Any]]:
     """Write one response row per persona. Does not score.
 
@@ -97,6 +127,7 @@ def answer_survey(
             settings = model_settings_from_env()
     except RuntimeError as exc:
         raise InterviewError(str(exc)) from exc
+    settings = with_cr_temperature_support(settings)
     run_dir = Path(run_dir)
     cache_dir = run_dir / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -141,6 +172,8 @@ def answer_survey(
         meta["seed"] = seed
     if family is not None:
         meta["family"] = family
+    if batch:
+        meta["batch"] = True
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
     return responses
 
@@ -241,6 +274,8 @@ def _request_batch(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
             )
         except ModelError as exc:
+            if "no content" in str(exc):
+                return None, raw, str(exc)
             raise InterviewError(str(exc)) from exc
         try:
             return _parse_batch(raw, pending), raw, ""
@@ -480,12 +515,16 @@ _INDEX_PREFIX = re.compile(r"^\s*\d+\s*[\.\)\-:]\s*")
 def _match_choice(answer: str, options: list[str]) -> str:
     """Match one reply to an option.
 
-    Models often echo the prompt number, as in ``2. Disagree a little``.
-    That string also contains ``Agree a little``, so a bare substring match
-    is ambiguous. Drop the leading number first, then keep the longest option
-    that is still contained in the reply.
+    An answer that already names an option is kept. Age bands such as
+    ``30-49`` look like a numbered prefix, so stripping first would leave
+    ``49``. Otherwise drop a leading prompt number, as in
+    ``2. Disagree a little``. That string also contains ``Agree a little``,
+    so a bare substring match is ambiguous.
     """
-    cleaned = _strip_option_index(answer)
+    try:
+        return _match_written_option(answer, options)
+    except ValueError:
+        cleaned = _strip_option_index(answer)
     try:
         return _match_written_option(cleaned, options)
     except ValueError:

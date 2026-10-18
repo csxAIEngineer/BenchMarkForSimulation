@@ -1,5 +1,6 @@
 """Stdlib client for https://api.creative-reasoning.com. Python 3.9, no extra packages."""
 
+import http.client
 import json
 import os
 import time
@@ -100,7 +101,7 @@ class CRClient(object):
             raise CRError("缺少 CR_API_KEY。请写在项目根目录的 .env 里。")
         self.base_url = BASE_URL
 
-    def chat(self, messages, model="deepseek-v4-pro", max_tokens=None, stream=False, timeout=300, response_format=None, temperature=None):
+    def chat(self, messages, model="deepseek-v4-pro", max_tokens=None, stream=False, timeout=300, response_format=None, temperature=None, reasoning_effort=None):
         if stream and model == "minimax-m3":
             raise CRError("流式输出要用大写的 MiniMax-M3，小写的 minimax-m3 不支持。")
         if max_tokens is not None and is_thinking_model(model) and int(max_tokens) < 2000:
@@ -108,6 +109,8 @@ class CRClient(object):
         body = {"model": model, "messages": messages}
         if temperature is not None:
             body["temperature"] = temperature
+        if reasoning_effort is not None:
+            body["reasoning_effort"] = reasoning_effort
         if max_tokens is not None:
             body["max_tokens"] = int(max_tokens)
         if response_format is not None:
@@ -221,6 +224,8 @@ class CRClient(object):
         response = self._open(method, path, body, timeout, headers or {})
         try:
             raw = response.read().decode("utf-8")
+        except (TimeoutError, ConnectionError, http.client.HTTPException) as error:
+            raise CRError("CR API 网络错误：%s" % error) from error
         finally:
             response.close()
         if not raw:
@@ -241,9 +246,9 @@ class CRClient(object):
             detail = error.read().decode("utf-8", errors="replace")
             raise CRError("CR API 返回 %s：%s" % (error.code, detail[:800]), error.code, detail)
         except urllib.error.URLError as error:
-            raise CRError("CR API 网络错误：%s" % error.reason)
-        except TimeoutError as error:
-            raise CRError("CR API 网络错误：%s" % error)
+            raise CRError("CR API 网络错误：%s" % error.reason) from error
+        except (TimeoutError, ConnectionError, http.client.HTTPException) as error:
+            raise CRError("CR API 网络错误：%s" % error) from error
 
 
 def _iter_sse(response):

@@ -6,6 +6,8 @@ import hashlib
 
 from popbench.simulate.recent import (
     AGE_BANDS,
+    EDUCATION_RECENT_KINDS,
+    EDUCATION_RECENT_LABEL,
     FAR_ITEMS,
     FROZEN_ITEMS,
     NEAR_ITEMS,
@@ -14,8 +16,14 @@ from popbench.simulate.recent import (
     UNDILUTED_EVENT_SEED,
     accept_round,
     append_recent,
+    attach_education_recent,
     attach_recent,
     attach_undiluted_event,
+    education_recent_kind,
+    education_recent_of_kind,
+    education_recent_payload,
+    education_recent_report,
+    education_recent_text,
     event_kind,
     event_places,
     first_per_band,
@@ -188,6 +196,70 @@ def test_round_4_eight_people_include_lottery_and_nuclear():
         assert "outside the blast" in blast[0]
         assert "The danger has passed." in blast[0]
         assert "did not stop to talk" in blast[0]
+
+
+_EDUCATION_18_29 = {
+    "windfall": (
+        "In the past two weeks, a lottery prize this person had already claimed was paid into the account. "
+        "The money was already there. "
+        "This person was on a closing shift when it arrived. "
+        "Relatives and strangers called. This person answered and said a few words."
+    ),
+    "everyday": (
+        "In the past two weeks, while this person was on a closing shift, "
+        "this person's name was called and this person spoke a few sentences to the others there, "
+        "then answered a further question."
+    ),
+    "blast": (
+        "In the past two weeks, a nuclear explosion far from this person had already ended. "
+        "This person was outside the blast. The danger has passed. "
+        "This person was on a closing shift when the news arrived."
+    ),
+}
+
+
+def test_education_recent_keeps_the_18_29_wording_and_swaps_place():
+    assert [EDUCATION_RECENT_LABEL[kind] for kind in EDUCATION_RECENT_KINDS] == [
+        "中彩票",
+        "日常琐事",
+        "核爆炸",
+    ]
+    for kind, expected in _EDUCATION_18_29.items():
+        assert education_recent_of_kind(kind, "18-29") == expected
+    everyday = _EDUCATION_18_29["everyday"]
+    assert "name was called" in everyday
+    assert "local news crew" not in everyday
+    assert "from a stage" not in everyday
+    for kind, young in _EDUCATION_18_29.items():
+        older = education_recent_of_kind(kind, "65+")
+        assert older == young.replace("on a closing shift", "at the residence")
+        assert "at the residence" in older
+        assert "on a closing shift" not in older
+
+
+def test_education_recent_draw_is_stable_and_leaves_the_record():
+    person_id = "visitor-atus-20230807230256"
+    card = "## Basics\nAge: 24\n"
+    record = {
+        "id": person_id,
+        "persona": {"id": person_id, "age_band": "18-29", "text": card},
+        "turns": [{"item_id": "Q1"}],
+    }
+    digest = hashlib.sha256(f"education-categories-recent:{person_id}".encode()).digest()
+    kind = EDUCATION_RECENT_KINDS[int.from_bytes(digest, "big") % 3]
+    assert education_recent_kind(person_id) == kind
+    assert education_recent_text("18-29", person_id) == education_recent_text("18-29", person_id)
+    paragraph = education_recent_of_kind(kind, "18-29")
+    updated = attach_education_recent(record)
+    assert record["persona"]["text"] == card
+    assert record["turns"] == [{"item_id": "Q1"}]
+    assert updated["persona"] is not record["persona"]
+    assert updated["persona"]["text"] == f"{card.rstrip()}\n\n## Recent event\n{paragraph}\n"
+    payload = education_recent_payload([record])
+    assert payload["people"][0]["kind"] == EDUCATION_RECENT_LABEL[kind]
+    assert payload["people"][0]["place"] == "on a closing shift"
+    assert payload["people"][0]["text"] == paragraph
+    assert education_recent_report(payload)["by_id"][person_id] == EDUCATION_RECENT_LABEL[kind]
 
 
 def test_round_4_same_person_is_stable_and_card_is_not_rewritten():

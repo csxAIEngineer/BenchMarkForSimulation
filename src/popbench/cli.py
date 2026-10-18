@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from popbench import __version__
@@ -20,7 +21,11 @@ from popbench.dao.atus_categories import (
     category_families,
     category_records,
 )
-from popbench.dao.atus_populations import build_population_visitors, split_atus_populations
+from popbench.dao.atus_populations import (
+    POPULATION_FACTORS,
+    build_population_visitors,
+    split_atus_populations,
+)
 from popbench.dao.atus_twin2k import build_atus_twin2k, load_all_adult_personas
 from popbench.dao.interview import InterviewError, build_interview
 from popbench.dao.io import write_jsonl
@@ -45,7 +50,12 @@ from popbench.simulate.client import (
     run_slug,
 )
 from popbench.simulate.interview import run_interview, run_records
-from popbench.simulate.survey import answer_survey
+from popbench.simulate.recent import (
+    attach_education_recent,
+    education_recent_payload,
+    education_recent_report,
+)
+from popbench.simulate.survey import answer_survey, share_blank_instrument
 from popbench.simulate.visitors import run_visitors, simulate_population_personas
 
 
@@ -139,7 +149,8 @@ def main(argv: list[str] | None = None) -> int:
         help="models to compare (default: gpt-5.5 glm-5.3 deepseek-v4-pro)",
     )
     compare_categories.add_argument("--n", type=int, default=50)
-    compare_categories.add_argument(
+    draw = compare_categories.add_mutually_exclusive_group()
+    draw.add_argument(
         "--per-age-band",
         type=int,
         default=None,
@@ -149,8 +160,39 @@ def main(argv: list[str] | None = None) -> int:
             "(18-29, 30-49, 50-64, 65+), weighted by TUFINLWGT; replaces --n"
         ),
     )
+    draw.add_argument(
+        "--population",
+        choices=tuple(factor.key for factor in POPULATION_FACTORS),
+        default=None,
+        help=(
+            "sample from data/atus/by_population/<factor> level tables, "
+            "allocating --n by TUFINLWGT"
+        ),
+    )
     compare_categories.add_argument("--seed", type=int, default=0)
     compare_categories.add_argument("--workers", type=int, default=4)
+    compare_categories.add_argument(
+        "--temperature",
+        type=float,
+        default=None,
+        help="sampling temperature sent with each model request (default: omit the field)",
+    )
+    compare_categories.add_argument(
+        "--recent",
+        action="store_true",
+        help=(
+            "append one recent event per person, drawn from the person id, "
+            "and write recent.json in the run directory"
+        ),
+    )
+    compare_categories.add_argument(
+        "--batch",
+        action="store_true",
+        help=(
+            "ask a category's blank-instrument questions in one request per person; "
+            "named instruments stay separate"
+        ),
+    )
     compare_categories.add_argument(
         "--families",
         nargs="+",
@@ -168,7 +210,12 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=None,
         dest="run_dir",
-        help="output directory (default: runs/compare/atus-categories-n<n>-seed<seed>)",
+        help=(
+            "output directory (default: runs/compare/atus-categories-n<n>-seed<seed>, "
+            "atus-categories-age-n<k>-seed<seed> with --per-age-band, "
+            "or atus-categories-<factor>-n<n>-seed<seed> with --population; "
+            "--temperature, --recent, and --batch append -t<value>, -recent, and -batch)"
+        ),
     )
     compare_categories.set_defaults(func=cmd_compare_categories)
 
@@ -759,15 +806,38 @@ def cmd_compare_categories(args: argparse.Namespace) -> int:
         out_dir=root,
         families=families,
         n_per_age_band=args.per_age_band,
+        population=args.population,
     )
-    sampling = (
-        f"per_age_band={args.per_age_band} n={built['n']}"
-        if args.per_age_band
-        else f"n={args.n}"
-    )
+    if args.population:
+        sampling = f"population={args.population} n={args.n}"
+    elif args.per_age_band:
+        sampling = f"per_age_band={args.per_age_band} n={built['n']}"
+    else:
+        sampling = f"n={args.n}"
+    temperature = getattr(args, "temperature", None)
+    recent_summary = None
+    if args.recent:
+        payload = education_recent_payload(built["personas"])
+        (root / "recent.json").write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        recent_summary = education_recent_report(payload)
+        for panel in built["panels"]:
+            panel["records"] = [attach_education_recent(record) for record in panel["records"]]
+    if args.batch:
+        for panel in built["panels"]:
+            panel["records"] = share_blank_instrument(panel["records"], panel["family"])
+    details = sampling
+    if temperature is not None:
+        details += f" temperature={format(temperature, 'g')}"
+    if args.recent:
+        details += " recent=1"
+    if args.batch:
+        details += " batch=1"
     print(
         "compare atus personas by twin-2k category "
-        f"models={','.join(slugs)} {sampling} seed={args.seed} "
+        f"models={','.join(slugs)} {details} seed={args.seed} "
         f"families={','.join(panel['family'] for panel in built['panels'])}",
         flush=True,
     )
@@ -779,6 +849,8 @@ def cmd_compare_categories(args: argparse.Namespace) -> int:
                 print(f"scoring {slug} {panel['family']}", flush=True)
             else:
                 settings = settings_list[index]
+                if temperature is not None:
+                    settings = replace(settings, temperature=temperature)
                 print(
                     f"simulating {settings.model} {panel['family']} "
                     f"({len(panel['items'])} items) -> {run_dir}",
@@ -792,6 +864,7 @@ def cmd_compare_categories(args: argparse.Namespace) -> int:
                     panel="atus",
                     seed=args.seed,
                     family=panel["family"],
+                    batch=args.batch,
                 )
             summary = evaluate_category_run(
                 run_dir,
@@ -827,7 +900,14 @@ def cmd_compare_categories(args: argparse.Namespace) -> int:
                     (root / "compare.md").write_text(render_personality_age_report(significance))
                     (root / "significance.json").write_text(json.dumps(significance) + "\n")
     if len(slugs) >= 2:
-        report = write_category_comparison(root, summaries)
+        report = write_category_comparison(
+            root,
+            summaries,
+            population=built.get("population"),
+            temperature=temperature,
+            recent=recent_summary,
+            batch=args.batch,
+        )
         print("per category (lower Twin-2K total variation distance ranks first)")
         for category in report["categories"]:
             winner = category["ranked"][0]
@@ -902,16 +982,31 @@ def _compare_settings(names: list[str], *, minimum: int = 2) -> list[ModelSettin
 
 
 def _categories_root(args: argparse.Namespace) -> Path:
-    if args.run_dir is None:
-        if getattr(args, "per_age_band", None):
-            return (
-                Path.cwd()
-                / "runs"
-                / "compare"
-                / f"atus-categories-age-n{args.per_age_band}-seed{args.seed}"
-            )
-        return Path.cwd() / "runs" / "compare" / f"atus-categories-n{args.n}-seed{args.seed}"
-    return _resolve(args.run_dir)
+    if args.run_dir is not None:
+        return _resolve(args.run_dir)
+    population = getattr(args, "population", None)
+    if population:
+        name = f"atus-categories-{population}-n{args.n}-seed{args.seed}"
+    elif getattr(args, "per_age_band", None):
+        name = f"atus-categories-age-n{args.per_age_band}-seed{args.seed}"
+    else:
+        name = f"atus-categories-n{args.n}-seed{args.seed}"
+    return Path.cwd() / "runs" / "compare" / f"{name}{_categories_suffix(args)}"
+
+
+def _categories_suffix(args: argparse.Namespace) -> str:
+    """Keep a temperature or recent run out of the directory that omits them."""
+    parts: list[str] = []
+    temperature = getattr(args, "temperature", None)
+    if temperature is not None:
+        parts.append("t" + format(float(temperature), "g"))
+    if getattr(args, "recent", False):
+        parts.append("recent")
+    if getattr(args, "batch", False):
+        parts.append("batch")
+    if not parts:
+        return ""
+    return "-" + "-".join(parts)
 
 
 def _compare_root(args: argparse.Namespace) -> Path:

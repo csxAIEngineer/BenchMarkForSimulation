@@ -4,7 +4,10 @@ Round 0 is the 10.12 BFI-44 run. Rounds 1–3 are one ordinary paragraph per
 age band. From round 4, each person gets one major event drawn from the
 person id and the round. The temperature 0.8 recent run uses a separate
 undiluted pool, drawn from the person id and a fixed seed, and does not
-read these rounds. ``answer_survey`` itself never calls this module.
+read these rounds. The education-level category rerun draws one of three
+events with ``sha256("education-categories-recent:" + person_id) % 3``.
+Age band changes only the place. That draw does not read these rounds or
+the undiluted pool. ``answer_survey`` itself never calls this module.
 """
 
 from __future__ import annotations
@@ -464,6 +467,132 @@ def attach_undiluted_event(
     updated = dict(record)
     updated["persona"] = persona
     return updated
+
+
+# Education-level category rerun. Not a pilot round and not the undiluted pool.
+# sha256("education-categories-recent:" + person_id) mod 3. The same id always
+# matches. Age band changes only the place. Everyday uses the name-called
+# sentence only, not the other round-6 openings.
+EDUCATION_RECENT_DRAW = 'sha256("education-categories-recent:" + person_id) % 3'
+EDUCATION_RECENT_KINDS: tuple[str, ...] = ("windfall", "everyday", "blast")
+EDUCATION_RECENT_LABEL: dict[str, str] = {
+    "windfall": "中彩票",
+    "everyday": "日常琐事",
+    "blast": "核爆炸",
+}
+
+
+def education_recent_kind(person_id: str) -> str:
+    """Event key for this person. The same id always matches."""
+    text = str(person_id)
+    if not text.strip():
+        raise ValueError("education recent needs a person id")
+    digest = hashlib.sha256(f"education-categories-recent:{text}".encode()).digest()
+    return EDUCATION_RECENT_KINDS[int.from_bytes(digest, "big") % len(EDUCATION_RECENT_KINDS)]
+
+
+def education_recent_of_kind(kind: str, age_band: str) -> str:
+    """Text for one education-category event. Age band changes only the place."""
+    try:
+        place = _PLACE[age_band]
+    except KeyError as exc:
+        raise KeyError(f"no recent text for age band {age_band}") from exc
+    try:
+        write = _EDUCATION_TEXT[kind]
+    except KeyError as exc:
+        raise KeyError(f"no education recent event for kind {kind}") from exc
+    return write(place)
+
+
+def education_recent_text(age_band: str, person_id: str) -> str:
+    """Education-category event for this person. Age band changes only the place."""
+    return education_recent_of_kind(education_recent_kind(person_id), age_band)
+
+
+def education_recent_row(person: Mapping[str, Any]) -> dict[str, str]:
+    """Kind, age band, place, and the full paragraph for one person."""
+    person_id = str(person["id"])
+    if not person_id.strip():
+        raise ValueError("education recent needs a person id")
+    age_band = age_band_of(person)
+    kind = education_recent_kind(person_id)
+    try:
+        place = _PLACE[age_band]
+    except KeyError as exc:
+        raise KeyError(f"no recent text for age band {age_band}") from exc
+    return {
+        "id": person_id,
+        "kind": EDUCATION_RECENT_LABEL[kind],
+        "age_band": age_band,
+        "place": place,
+        "text": education_recent_of_kind(kind, age_band),
+    }
+
+
+def education_recent_payload(people: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Recent-event file: the draw, the three events, and one row per person."""
+    return {
+        "draw": EDUCATION_RECENT_DRAW,
+        "kinds": [EDUCATION_RECENT_LABEL[kind] for kind in EDUCATION_RECENT_KINDS],
+        "people": [education_recent_row(person) for person in people],
+    }
+
+
+def education_recent_report(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Three events and the per-id draw, without the paragraphs."""
+    return {
+        "draw": payload["draw"],
+        "kinds": list(payload["kinds"]),
+        "by_id": {row["id"]: row["kind"] for row in payload["people"]},
+    }
+
+
+def attach_education_recent(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Copy a survey record and append this person's education-category event.
+
+    The input record and its persona text are not modified.
+    """
+    persona = dict(record["persona"])
+    persona["text"] = append_recent(
+        str(persona["text"]),
+        education_recent_text(age_band_of(record), str(record["id"])),
+        heading=RECENT_EVENT_HEADING,
+    )
+    updated = dict(record)
+    updated["persona"] = persona
+    return updated
+
+
+def _education_windfall(place: str) -> str:
+    return (
+        "In the past two weeks, a lottery prize this person had already claimed was paid into the account. "
+        "The money was already there. "
+        f"This person was {place} when it arrived. "
+        "Relatives and strangers called. This person answered and said a few words."
+    )
+
+
+def _education_everyday(place: str) -> str:
+    return (
+        f"In the past two weeks, while this person was {place}, "
+        "this person's name was called and this person spoke a few sentences to the others there, "
+        "then answered a further question."
+    )
+
+
+def _education_blast(place: str) -> str:
+    return (
+        "In the past two weeks, a nuclear explosion far from this person had already ended. "
+        "This person was outside the blast. The danger has passed. "
+        f"This person was {place} when the news arrived."
+    )
+
+
+_EDUCATION_TEXT = {
+    "windfall": _education_windfall,
+    "everyday": _education_everyday,
+    "blast": _education_blast,
+}
 
 
 def _undiluted_index(person_id: str, seed: str, size: int) -> int:

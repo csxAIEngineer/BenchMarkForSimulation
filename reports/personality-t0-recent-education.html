@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>人格模拟：温度 0，加 recent</title>
+<style>
+  :root {
+    --ink: #1c1b19;
+    --muted: #5c5852;
+    --line: #e4dfd6;
+    --paper: #f7f4ee;
+    --card: #fffdf9;
+    --gpt: #1e3a5f;
+    --glm: #8a5a12;
+    --ds: #1f6b4a;
+    --info: #e7f0f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.6 "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 40px 24px 72px; }
+  h1 { font-size: 28px; line-height: 1.3; font-weight: 650; margin: 0 0 12px; }
+  h2 { font-size: 20px; margin: 0 0 8px; font-weight: 650; }
+  p { margin: 0 0 12px; }
+  .lead, .note, .src { color: var(--muted); }
+  .note, .src { font-size: 13px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+  .stat { background: var(--card); border: 1px solid var(--line); padding: 14px 14px 12px; }
+  .stat b { display: block; font-size: 26px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; }
+  .callout { border: 1px solid var(--line); background: var(--info); padding: 12px 14px; margin: 16px 0 8px; }
+  .callout strong { display: block; margin-bottom: 4px; }
+  section { margin: 28px 0; }
+  .legend { display: flex; gap: 16px; font-size: 13px; margin: 8px 0 12px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+  i.gpt, .bar.gpt, .col-bar.gpt { background: var(--gpt); }
+  i.glm, .bar.glm, .col-bar.glm { background: var(--glm); }
+  i.ds, .bar.ds, .col-bar.ds { background: var(--ds); }
+  .grow { display: grid; grid-template-columns: 132px 1fr; gap: 8px; align-items: center; margin: 0 0 10px; }
+  .glab { font-size: 13px; text-align: right; }
+  .gbars { display: grid; gap: 2px; }
+  .track { display: grid; grid-template-columns: minmax(0, 1fr) 48px; align-items: center; gap: 8px; height: 14px; }
+  .bar { display: block; height: 8px; }
+  .num { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .axis { display: grid; grid-template-columns: 132px 1fr; gap: 8px; margin-top: 4px; }
+  .ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4px; margin-right: 56px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 14px; margin: 8px 0 12px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--card); }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.alt td { background: #f3efe7; }
+  .wide { overflow-x: auto; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+  .plot {
+    position: relative;
+    height: 240px;
+    margin: 28px 48px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .cols {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 100%;
+  }
+  .col { width: 96px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+  .col-bar { display: block; width: 42px; }
+  .col-num { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+  .col-name { position: absolute; bottom: -28px; font-size: 13px; }
+  .ref {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 72.73%;
+    border-top: 1px dashed #8a5a12;
+    z-index: 2;
+  }
+  .ref span {
+    position: absolute;
+    right: 0;
+    top: -18px;
+    font-size: 12px;
+    color: #8a5a12;
+  }
+  .ytick {
+    position: absolute;
+    left: -40px;
+    font-size: 11px;
+    color: var(--muted);
+    transform: translateY(50%);
+  }
+  @media (max-width: 800px) {
+    .stats { grid-template-columns: 1fr; }
+    .grow, .axis { grid-template-columns: 96px 1fr; }
+    table { font-size: 13px; }
+  }
+  @media print {
+    body { background: white; }
+    main { max-width: none; }
+    .stat, table, .callout { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>人格模拟：温度 0，加 recent</h1>
+  <p class="lead">50 名 ATUS 成年人，按学历权重抽取，种子 11111。每人卡末尾加一件 recent（中彩票 20、核爆炸 17、日常琐事 13）。275 道人格选择题对照 Twin-2K 前三波选项份额。总变异距离越小，群体分布越接近人类。三份答案都没有无效作答。</p>
+  <div class="callout"><strong>总距离上 deepseek 与 glm 分不出高下</strong>deepseek-v4-pro 0.374，glm-5.3 0.375，gpt-5.5 0.436。量表胜场是 10、5、3。大五 44 题上 glm 的选项分布更近（0.358），gpt 的均分更近（绝对差 0.330），deepseek 的均分偏得最远（0.644）。deepseek 的总排名主要靠焦虑、社会赞许和共情，认知需求上它最远。</div>
+  <div class="stats">
+    <div class="stat"><b>0.374</b><span>deepseek-v4-pro 平均 TVD</span></div>
+    <div class="stat"><b>0.375</b><span>glm-5.3 平均 TVD</span></div>
+    <div class="stat"><b>0.436</b><span>gpt-5.5 平均 TVD</span></div>
+  </div>
+  <hr>
+  <section>
+    <h2>各量表平均总变异距离</h2>
+    <p class="note">横轴是总变异距离，越小越接近 Twin-2K。纵轴按三个模型的差距从大到小排列。横轴停在 0.75。来源：同一批 50 人、温度 0、recent，2026-10-17。</p>
+    <div class="legend">
+      <span><i class="gpt"></i>gpt-5.5</span>
+      <span><i class="glm"></i>glm-5.3</span>
+      <span><i class="ds"></i>deepseek-v4-pro</span>
+    </div>
+    <div class="chart" aria-label="各量表平均总变异距离">
+      <div class="grow"><div class="glab">社会赞许</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:53.33%"></span><span class="num">0.400</span></div><div class="track"><span class="bar glm" style="width:36.40%"></span><span class="num">0.273</span></div><div class="track"><span class="bar ds" style="width:12.80%"></span><span class="num">0.096</span></div></div></div>
+<div class="grow"><div class="glab">焦虑</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:56.53%"></span><span class="num">0.424</span></div><div class="track"><span class="bar glm" style="width:40.93%"></span><span class="num">0.307</span></div><div class="track"><span class="bar ds" style="width:21.33%"></span><span class="num">0.160</span></div></div></div>
+<div class="grow"><div class="glab">认知需求</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:60.40%"></span><span class="num">0.453</span></div><div class="track"><span class="bar glm" style="width:76.13%"></span><span class="num">0.571</span></div><div class="track"><span class="bar ds" style="width:88.00%"></span><span class="num">0.660</span></div></div></div>
+<div class="grow"><div class="glab">自我概念清晰</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:74.40%"></span><span class="num">0.558</span></div><div class="track"><span class="bar glm" style="width:56.40%"></span><span class="num">0.423</span></div><div class="track"><span class="bar ds" style="width:48.27%"></span><span class="num">0.362</span></div></div></div>
+<div class="grow"><div class="glab">共情</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:60.93%"></span><span class="num">0.457</span></div><div class="track"><span class="bar glm" style="width:36.40%"></span><span class="num">0.273</span></div><div class="track"><span class="bar ds" style="width:34.80%"></span><span class="num">0.261</span></div></div></div>
+<div class="grow"><div class="glab">独特性需求</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:71.87%"></span><span class="num">0.539</span></div><div class="track"><span class="bar glm" style="width:53.20%"></span><span class="num">0.399</span></div><div class="track"><span class="bar ds" style="width:76.67%"></span><span class="num">0.575</span></div></div></div>
+<div class="grow"><div class="glab">最大化</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:59.47%"></span><span class="num">0.446</span></div><div class="track"><span class="bar glm" style="width:57.60%"></span><span class="num">0.432</span></div><div class="track"><span class="bar ds" style="width:40.93%"></span><span class="num">0.307</span></div></div></div>
+<div class="grow"><div class="glab">尽责（短量表）</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:54.00%"></span><span class="num">0.405</span></div><div class="track"><span class="bar glm" style="width:55.60%"></span><span class="num">0.417</span></div><div class="track"><span class="bar ds" style="width:37.87%"></span><span class="num">0.284</span></div></div></div>
+<div class="grow"><div class="glab">调节聚焦</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:54.67%"></span><span class="num">0.410</span></div><div class="track"><span class="bar glm" style="width:62.27%"></span><span class="num">0.467</span></div><div class="track"><span class="bar ds" style="width:71.33%"></span><span class="num">0.535</span></div></div></div>
+<div class="grow"><div class="glab">个体与集体</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:55.20%"></span><span class="num">0.414</span></div><div class="track"><span class="bar glm" style="width:39.33%"></span><span class="num">0.295</span></div><div class="track"><span class="bar ds" style="width:47.60%"></span><span class="num">0.357</span></div></div></div>
+<div class="grow"><div class="glab">闭合需求</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:71.87%"></span><span class="num">0.539</span></div><div class="track"><span class="bar glm" style="width:60.00%"></span><span class="num">0.450</span></div><div class="track"><span class="bar ds" style="width:72.27%"></span><span class="num">0.542</span></div></div></div>
+<div class="grow"><div class="glab">消费极简</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:66.93%"></span><span class="num">0.502</span></div><div class="track"><span class="bar glm" style="width:56.13%"></span><span class="num">0.421</span></div><div class="track"><span class="bar ds" style="width:54.80%"></span><span class="num">0.411</span></div></div></div>
+<div class="grow"><div class="glab">能动与共生价值</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:71.20%"></span><span class="num">0.534</span></div><div class="track"><span class="bar glm" style="width:59.20%"></span><span class="num">0.444</span></div><div class="track"><span class="bar ds" style="width:60.53%"></span><span class="num">0.454</span></div></div></div>
+<div class="grow"><div class="glab">抑郁</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:41.60%"></span><span class="num">0.312</span></div><div class="track"><span class="bar glm" style="width:34.27%"></span><span class="num">0.257</span></div><div class="track"><span class="bar ds" style="width:31.20%"></span><span class="num">0.234</span></div></div></div>
+<div class="grow"><div class="glab">自我监控</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:48.27%"></span><span class="num">0.362</span></div><div class="track"><span class="bar glm" style="width:39.07%"></span><span class="num">0.293</span></div><div class="track"><span class="bar ds" style="width:38.93%"></span><span class="num">0.292</span></div></div></div>
+<div class="grow"><div class="glab">吝啬与挥霍</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:61.07%"></span><span class="num">0.458</span></div><div class="track"><span class="bar glm" style="width:68.27%"></span><span class="num">0.512</span></div><div class="track"><span class="bar ds" style="width:69.33%"></span><span class="num">0.520</span></div></div></div>
+<div class="grow"><div class="glab">绿色价值</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:55.60%"></span><span class="num">0.417</span></div><div class="track"><span class="bar glm" style="width:59.87%"></span><span class="num">0.449</span></div><div class="track"><span class="bar ds" style="width:53.33%"></span><span class="num">0.400</span></div></div></div>
+<div class="grow"><div class="glab">大五</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:49.33%"></span><span class="num">0.370</span></div><div class="track"><span class="bar glm" style="width:47.73%"></span><span class="num">0.358</span></div><div class="track"><span class="bar ds" style="width:53.07%"></span><span class="num">0.398</span></div></div></div>
+      <div class="axis"><span></span><div class="ticks"><span>0</span><span>0.15</span><span>0.30</span><span>0.45</span><span>0.60</span><span>0.75</span></div></div>
+    </div>
+    <p class="src">横轴单位：总变异距离。来源：runs/compare/atus-categories-education_level-n50-seed11111-t0-recent · 50 名 ATUS 2023 成年人，种子 11111，按 education_level 的 TUFINLWGT 配额抽取 · 人类基线为 Twin-2K 第 1–3 波份额。</p>
+  </section>
+  <section>
+    <h2>量表明细</h2>
+    <p class="note">均分绝对差是模拟均分与人类均分之差的绝对值，再对题目取平均。选择题编码按题目选项顺序。</p>
+    <div class="wide">
+    <table>
+      <thead>
+        <tr>
+          <th>量表</th><th class="n">题数</th>
+          <th class="n">gpt TVD</th><th class="n">glm TVD</th><th class="n">deepseek TVD</th>
+          <th class="n">gpt 均分差</th><th class="n">glm 均分差</th><th class="n">deepseek 均分差</th>
+          <th>TVD 领先</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>大五</td><td class="n">44</td><td class="n">0.370</td><td class="n">0.358</td><td class="n">0.398</td><td class="n">0.330</td><td class="n">0.491</td><td class="n">0.644</td><td>glm-5.3</td></tr>
+<tr class="alt"><td>认知需求</td><td class="n">18</td><td class="n">0.453</td><td class="n">0.571</td><td class="n">0.660</td><td class="n">0.595</td><td class="n">1.077</td><td class="n">1.550</td><td>gpt-5.5</td></tr>
+<tr><td>能动与共生价值</td><td class="n">24</td><td class="n">0.534</td><td class="n">0.444</td><td class="n">0.454</td><td class="n">0.828</td><td class="n">1.116</td><td class="n">1.153</td><td>glm-5.3</td></tr>
+<tr class="alt"><td>消费极简</td><td class="n">12</td><td class="n">0.502</td><td class="n">0.421</td><td class="n">0.411</td><td class="n">0.390</td><td class="n">0.363</td><td class="n">0.491</td><td>deepseek-v4-pro</td></tr>
+<tr><td>共情</td><td class="n">20</td><td class="n">0.457</td><td class="n">0.273</td><td class="n">0.261</td><td class="n">0.424</td><td class="n">0.359</td><td class="n">0.306</td><td>deepseek-v4-pro</td></tr>
+<tr class="alt"><td>绿色价值</td><td class="n">6</td><td class="n">0.417</td><td class="n">0.449</td><td class="n">0.400</td><td class="n">0.406</td><td class="n">0.408</td><td class="n">0.451</td><td>deepseek-v4-pro</td></tr>
+<tr><td>社会赞许</td><td class="n">13</td><td class="n">0.400</td><td class="n">0.273</td><td class="n">0.096</td><td class="n">0.400</td><td class="n">0.273</td><td class="n">0.096</td><td>deepseek-v4-pro</td></tr>
+<tr class="alt"><td>尽责（短量表）</td><td class="n">8</td><td class="n">0.405</td><td class="n">0.417</td><td class="n">0.284</td><td class="n">0.397</td><td class="n">0.610</td><td class="n">0.439</td><td>deepseek-v4-pro</td></tr>
+<tr><td>焦虑</td><td class="n">21</td><td class="n">0.424</td><td class="n">0.307</td><td class="n">0.160</td><td class="n">0.395</td><td class="n">0.274</td><td class="n">0.218</td><td>deepseek-v4-pro</td></tr>
+<tr class="alt"><td>个体与集体</td><td class="n">16</td><td class="n">0.414</td><td class="n">0.295</td><td class="n">0.357</td><td class="n">0.353</td><td class="n">0.430</td><td class="n">0.573</td><td>glm-5.3</td></tr>
+<tr><td>调节聚焦</td><td class="n">10</td><td class="n">0.410</td><td class="n">0.467</td><td class="n">0.535</td><td class="n">0.682</td><td class="n">0.870</td><td class="n">1.070</td><td>gpt-5.5</td></tr>
+<tr class="alt"><td>吝啬与挥霍</td><td class="n">4</td><td class="n">0.458</td><td class="n">0.512</td><td class="n">0.520</td><td class="n">0.754</td><td class="n">1.199</td><td class="n">1.324</td><td>gpt-5.5</td></tr>
+<tr><td>抑郁</td><td class="n">21</td><td class="n">0.312</td><td class="n">0.257</td><td class="n">0.234</td><td class="n">0.222</td><td class="n">0.200</td><td class="n">0.331</td><td>deepseek-v4-pro</td></tr>
+<tr class="alt"><td>独特性需求</td><td class="n">12</td><td class="n">0.539</td><td class="n">0.399</td><td class="n">0.575</td><td class="n">0.621</td><td class="n">0.666</td><td class="n">1.285</td><td>glm-5.3</td></tr>
+<tr><td>自我监控</td><td class="n">13</td><td class="n">0.362</td><td class="n">0.293</td><td class="n">0.292</td><td class="n">0.205</td><td class="n">0.246</td><td class="n">0.277</td><td>deepseek-v4-pro</td></tr>
+<tr class="alt"><td>自我概念清晰</td><td class="n">12</td><td class="n">0.558</td><td class="n">0.423</td><td class="n">0.362</td><td class="n">0.326</td><td class="n">0.586</td><td class="n">0.462</td><td>deepseek-v4-pro</td></tr>
+<tr><td>闭合需求</td><td class="n">15</td><td class="n">0.539</td><td class="n">0.450</td><td class="n">0.542</td><td class="n">0.664</td><td class="n">0.639</td><td class="n">0.787</td><td>glm-5.3</td></tr>
+<tr class="alt"><td>最大化</td><td class="n">6</td><td class="n">0.446</td><td class="n">0.432</td><td class="n">0.307</td><td class="n">0.562</td><td class="n">0.587</td><td class="n">0.394</td><td>deepseek-v4-pro</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+  <section>
+    <h2>两端选项份额</h2>
+    <p class="note">275 题上选到第一档或最后一档的比例。虚线是 Twin-2K 人类基线 0.400。gpt 明显更集中在中间档。纵轴停在 0.55。</p>
+    <div class="plot" aria-label="两端选项份额">
+      <span class="ytick" style="bottom:100%">0.55</span>
+      <span class="ytick" style="bottom:72.73%">0.40</span>
+      <span class="ytick" style="bottom:0">0</span>
+      <div class="ref"><span>人类 0.400</span></div>
+      <div class="cols"><div class="col"><span class="col-num">0.225</span><span class="col-bar gpt" style="height:40.91%"></span><span class="col-name">gpt-5.5</span></div><div class="col"><span class="col-num">0.296</span><span class="col-bar glm" style="height:53.82%"></span><span class="col-name">glm-5.3</span></div><div class="col"><span class="col-num">0.391</span><span class="col-bar ds" style="height:71.09%"></span><span class="col-name">deepseek-v4-pro</span></div></div>
+    </div>
+    <p class="src">纵轴单位：两端选项占全部回答的比例。来源与上一节相同。人类 0.400 是 275 题上第一档加最后一档份额的平均，不是总变异距离。</p>
+  </section>
+</main>
+</body>
+</html>

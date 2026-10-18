@@ -101,6 +101,75 @@ def sample_atus_adults(frame: pd.DataFrame, *, n: int, seed: int) -> pd.DataFram
     return pd.concat(picked, ignore_index=True)
 
 
+# Level tables already carry the columns `_card_demographics` reads from a row.
+_POPULATION_DRAW_COLUMNS = ("TUCASEID", "TUFINLWGT", "TEAGE", "sex", "age_band")
+
+
+def sample_atus_population(
+    data_dir: Path,
+    factor: str,
+    *,
+    n: int,
+    seed: int,
+) -> pd.DataFrame:
+    """Draw ``n`` adults from one population factor, weighted by TUFINLWGT.
+
+    Each level is a CSV under ``data/atus/by_population/<factor>/``, named for
+    a level in ``POPULATION_FACTORS``. ``n`` is split across those levels by
+    their ``TUFINLWGT`` sums. Inside a level, draws are weighted and without
+    replacement. The same factor, ``n``, and ``seed`` return the same people.
+    """
+    if n < 1:
+        raise ValueError("n must be positive")
+    from popbench.dao.atus_populations import POPULATION_FACTORS, population_dir
+
+    spec = next((item for item in POPULATION_FACTORS if item.key == factor), None)
+    if spec is None:
+        known = ", ".join(item.key for item in POPULATION_FACTORS)
+        raise VisitorError(f"unknown population factor {factor!r}. Expected {known}.")
+    folder = population_dir(data_dir) / factor
+    if not folder.is_dir():
+        raise VisitorError(
+            f"ATUS population split is missing: {folder}. Run `popbench split-populations`."
+        )
+    missing = [
+        folder / f"{level}.csv"
+        for level in spec.levels
+        if not (folder / f"{level}.csv").is_file()
+    ]
+    if missing:
+        listed = ", ".join(str(path) for path in missing)
+        raise VisitorError(
+            f"ATUS population level table is missing: {listed}. Run `popbench split-populations`."
+        )
+    groups: dict[str, pd.DataFrame] = {}
+    weights: dict[str, float] = {}
+    caps: dict[str, int] = {}
+    for level in spec.levels:
+        path = folder / f"{level}.csv"
+        try:
+            frame = pd.read_csv(path, usecols=list(_POPULATION_DRAW_COLUMNS))
+        except ValueError as exc:
+            columns = ", ".join(_POPULATION_DRAW_COLUMNS)
+            raise VisitorError(
+                f"{path} is missing columns: {columns}. Run `popbench split-populations`."
+            ) from exc
+        frame = frame.sort_values("TUCASEID").reset_index(drop=True)
+        weight = pd.to_numeric(frame["TUFINLWGT"], errors="coerce").fillna(0).clip(lower=0)
+        groups[level] = frame
+        weights[level] = float(weight.sum())
+        caps[level] = int(len(frame))
+    quotas = _quotas(weights, caps, n)
+    rng = np.random.default_rng(seed)
+    picked: list[pd.DataFrame] = []
+    for level in sorted(quotas):
+        group = groups[level]
+        weight = pd.to_numeric(group["TUFINLWGT"], errors="coerce").fillna(0).clip(lower=0)
+        indices = _pps_indices(weight.to_numpy(dtype=float), quotas[level], rng)
+        picked.append(group.iloc[indices])
+    return pd.concat(picked, ignore_index=True)
+
+
 def sample_atus_age_bands(frame: pd.DataFrame, *, n_per_band: int, seed: int) -> pd.DataFrame:
     """Draw ``n_per_band`` adults from each age band, weighted by TUFINLWGT.
 
@@ -189,33 +258,46 @@ def build_atus_personas(
     n: int = 50,
     seed: int = 0,
     n_per_age_band: int | None = None,
+    population: str | None = None,
 ) -> list[dict[str, Any]]:
     """Sample ATUS adults and attach the written persona card for each TUCASEID.
 
     The same ``n`` and ``seed`` always return the same people. With
     ``n_per_age_band``, each age band contributes that many adults and ``n``
-    is ignored. Card text is ``persona_text`` from ``adults/personas.jsonl``.
+    is ignored. With ``population``, adults come from the level tables in
+    ``data/atus/by_population/<population>/``, and ``n`` is allocated by
+    ``TUFINLWGT``. Card text is ``persona_text`` from ``adults/personas.jsonl``.
     """
+    if population is not None and n_per_age_band is not None:
+        raise InterviewError("population and n_per_age_band cannot both be set")
     if n_per_age_band is None and n < 1:
         raise InterviewError("n must be positive")
     if n_per_age_band is not None and n_per_age_band < 1:
         raise InterviewError("n_per_age_band must be positive")
-    summary_path = atus_dir(data_dir) / "sum" / "atussum_2023.dat"
-    if not summary_path.is_file():
-        raise VisitorError(
-            f"ATUS activity summary is missing: {summary_path}. "
-            "Run `popbench fetch --visitors-only`."
-        )
-    cards_path = adult_persona_cards_path(data_dir)
-    cards = _load_adult_cards(cards_path)
-    atus = pd.read_csv(summary_path)
-    try:
-        if n_per_age_band is None:
-            sampled = sample_atus_adults(atus, n=n, seed=seed)
-        else:
-            sampled = sample_atus_age_bands(atus, n_per_band=n_per_age_band, seed=seed)
-    except ValueError as exc:
-        raise VisitorError(str(exc)) from exc
+    if population is not None:
+        try:
+            sampled = sample_atus_population(data_dir, population, n=n, seed=seed)
+        except ValueError as exc:
+            raise VisitorError(str(exc)) from exc
+        cards_path = adult_persona_cards_path(data_dir)
+        cards = _load_adult_cards(cards_path)
+    else:
+        summary_path = atus_dir(data_dir) / "sum" / "atussum_2023.dat"
+        if not summary_path.is_file():
+            raise VisitorError(
+                f"ATUS activity summary is missing: {summary_path}. "
+                "Run `popbench fetch --visitors-only`."
+            )
+        cards_path = adult_persona_cards_path(data_dir)
+        cards = _load_adult_cards(cards_path)
+        atus = pd.read_csv(summary_path)
+        try:
+            if n_per_age_band is None:
+                sampled = sample_atus_adults(atus, n=n, seed=seed)
+            else:
+                sampled = sample_atus_age_bands(atus, n_per_band=n_per_age_band, seed=seed)
+        except ValueError as exc:
+            raise VisitorError(str(exc)) from exc
     personas: list[dict[str, Any]] = []
     for _, row in sampled.iterrows():
         case = _case_key(row["TUCASEID"])

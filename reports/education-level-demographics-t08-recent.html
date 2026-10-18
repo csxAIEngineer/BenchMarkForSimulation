@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>温度 0.8 与近期事件下的三模型人口学模拟</title>
+<style>
+  :root {
+    --ink: #1c1b19;
+    --muted: #5c5852;
+    --line: #e4dfd6;
+    --paper: #f7f4ee;
+    --card: #fffdf9;
+    --gpt: #1e3a5f;
+    --glm: #8a5a12;
+    --ds: #1f6b4a;
+    --info: #e7f0f6;
+    --ok: #e7f3ec;
+    --warn: #f8f0dc;
+    --bad: #f8e8e4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.6 "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 40px 24px 72px; }
+  h1 { font-size: 28px; line-height: 1.3; font-weight: 650; margin: 0 0 12px; }
+  h2 { font-size: 20px; margin: 0 0 8px; font-weight: 650; }
+  h3 { font-size: 16px; margin: 18px 0 6px; font-weight: 650; }
+  p { margin: 0 0 12px; }
+  .lead { color: var(--muted); }
+  .note, .src { color: var(--muted); font-size: 13px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+  .stat { background: var(--card); border: 1px solid var(--line); padding: 14px 14px 12px; }
+  .stat b { display: block; font-size: 26px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; }
+  .stat.ok b { color: var(--ds); }
+  .stat.bad b { color: #8f3d32; }
+  .callout { border: 1px solid var(--line); background: var(--card); padding: 12px 14px; margin: 16px 0 28px; }
+  .callout strong { display: block; margin-bottom: 4px; }
+  section { margin: 28px 0; }
+  .legend { display: flex; gap: 16px; font-size: 13px; margin: 8px 0 12px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+  i.gpt, .bar.gpt { background: var(--gpt); }
+  i.glm, .bar.glm { background: var(--glm); }
+  i.ds, .bar.ds { background: var(--ds); }
+  .grow { display: grid; grid-template-columns: 88px 1fr; gap: 8px; align-items: center; margin: 0 0 8px; }
+  .glab { font-size: 13px; text-align: right; }
+  .track { display: grid; grid-template-columns: minmax(0, 1fr) 58px; align-items: center; gap: 8px; height: 14px; }
+  .bar { display: block; height: 8px; }
+  .num { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .axis { display: grid; grid-template-columns: 88px 1fr; gap: 8px; margin-top: 4px; }
+  .ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4px; margin-right: 66px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 14px; margin: 8px 0 12px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left; vertical-align: top; }
+  th:first-child, td:first-child { white-space: nowrap; width: 1%; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.info td { background: var(--info); }
+  tr.ok td { background: var(--ok); }
+  tr.warn td { background: var(--warn); }
+  tr.bad td { background: var(--bad); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .formula { font-family: "Iowan Old Style", Palatino, "Songti SC", serif; background: var(--card); border: 1px solid var(--line); padding: 10px 14px; margin: 8px 0 16px; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+  @media (max-width: 800px) {
+    .stats, .split { grid-template-columns: 1fr 1fr; }
+    .grow, .axis { grid-template-columns: 72px 1fr; }
+    table { font-size: 13px; }
+    th:first-child, td:first-child { white-space: normal; }
+    section { overflow-x: auto; }
+  }
+  @media (max-width: 520px) {
+    .split { grid-template-columns: 1fr; }
+  }
+  @media print {
+    body { background: white; }
+    main { max-width: none; }
+    .stat, table, .callout, .formula { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>温度 0.8 与近期事件下的三模型人口学模拟</h1>
+  <p class="lead">同一批 50 张教育分层人物卡，在温度 0.8、每人一段近期事件之后，重新回答了 14 道人口学闭卷题。平均总变异距离和平均选项份额均方误差这次都把 deepseek-v4-pro 放在第一（0.242 和 0.0133）。上一份《教育分层抽样下的三模型人口学模拟》里，平均 TVD 的第一名是 gpt-5.5（0.243）。gpt-5.5 这次落到第三（0.262），几乎全部来自家庭收入：48/50 人答了 3–5 万美元，该题 TVD 从 0.402 升到 0.760。性别、年龄、学历、种族、公民身份一个答案都没有改。</p>
+  <div class="stats">
+    <div class="stat ok"><b>0.242</b><span>deepseek-v4-pro 平均 TVD，两种指标都是第一</span></div>
+    <div class="stat ok"><b>0.0133</b><span>deepseek-v4-pro 平均份额 MSE，仍是第一</span></div>
+    <div class="stat bad"><b>0.760</b><span>gpt-5.5 家庭收入 TVD，上一轮是 0.402</span></div>
+    <div class="stat"><b>0/700</b><span>无效回答，每模型 50 人 × 14 题</span></div>
+  </div>
+  <div class="callout"><strong>人和题与上一份报告相同，请求换了</strong>仍只有人口学，没有人格、认知、经济偏好、启发式、行为实验和定价。分数比较的是这 50 人的选项份额和 Twin-2K 全体份额。三个模型都把 temperature 设为 0.8；上一轮省略了这个字段。每人在送出的人物卡末尾加了一段近期事件，磁盘上的原卡没有改。gpt-5.5 同时带了 <code>reasoning_effort=none</code>，因为这个接口在推理开着时只接受温度 1。glm-5.3 和 deepseek-v4-pro 没有改推理设置。gpt-5.5 的位移是温度、关闭推理和近期事件加在一起的结果。</div>
+  <div class="formula">
+    TVD = ½ Σ |p<sub>i</sub> − q<sub>i</sub>|　　MSE = (1/n) Σ (p<sub>i</sub> − q<sub>i</sub>)<sup>2</sup>
+    <div class="note">p<sub>i</sub> 是模拟人群选第 i 个选项的比例，q<sub>i</sub> 是 Twin-2K 的对应比例，n 是该题选项数。TVD 是至少要改选的人数比例。MSE 是各选项比例差的平方平均。算法和上一份报告相同。</div>
+  </div>
+
+  <section>
+    <h2>和上一轮的平均分</h2>
+    <table>
+      <thead><tr><th>指标</th><th>上一轮：省略温度，无近期事件</th><th>这一轮：温度 0.8，加近期事件</th></tr></thead>
+      <tbody>
+        <tr><td>平均 TVD</td><td>gpt-5.5 0.243，deepseek-v4-pro 0.245，glm-5.3 0.246</td><td>deepseek-v4-pro 0.242，glm-5.3 0.256，gpt-5.5 0.262</td></tr>
+        <tr><td>平均份额 MSE</td><td>deepseek-v4-pro 0.0136，glm-5.3 0.0139，gpt-5.5 0.0164</td><td>deepseek-v4-pro 0.0133，glm-5.3 0.0160，gpt-5.5 0.0217</td></tr>
+        <tr><td>相对上一轮改答</td><td>基线</td><td>gpt-5.5 74/700，glm-5.3 75/700，deepseek-v4-pro 54/700</td></tr>
+      </tbody>
+    </table>
+    <p>deepseek-v4-pro 的平均 TVD 从 0.245 降到 0.242，平均 MSE 从 0.0136 降到 0.0133。glm-5.3 两条都变远，平均 TVD 0.246 到 0.256，平均 MSE 0.0139 到 0.0160。gpt-5.5 的平均 TVD 从 0.243 升到 0.262。拿掉家庭收入后，gpt-5.5 其余 13 题的平均 TVD 是 0.224，上一轮这 13 题是 0.231；deepseek-v4-pro 的 13 题是 0.230。14 题合在一起时 deepseek-v4-pro 排第一，是家庭收入把 gpt-5.5 的平均分抬上去了。</p>
+  </section>
+
+  <section>
+    <h2>各题总变异距离</h2>
+    <p class="note">横轴是总变异距离，0 到 0.8，越低越接近 Twin-2K。题目先按三个模型之间的差距从大到小排；差距相同的，按其中最高的 TVD 从大到小排。上一份报告的横轴停在 0.5，两张图的条长不能对照。</p>
+    <div class="legend">
+      <span><i class="gpt"></i>gpt-5.5</span>
+      <span><i class="glm"></i>glm-5.3</span>
+      <span><i class="ds"></i>deepseek-v4-pro</span>
+    </div>
+    <div class="chart" aria-label="各题总变异距离">
+      <div class="grow"><div class="glab">家庭收入</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:95.00%"></span><span class="num">0.760</span></div><div class="track"><span class="bar glm" style="width:47.75%"></span><span class="num">0.382</span></div><div class="track"><span class="bar ds" style="width:50.25%"></span><span class="num">0.402</span></div></div></div><div class="grow"><div class="glab">宗教活动</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:51.62%"></span><span class="num">0.413</span></div><div class="track"><span class="bar glm" style="width:54.12%"></span><span class="num">0.433</span></div><div class="track"><span class="bar ds" style="width:31.37%"></span><span class="num">0.251</span></div></div></div><div class="grow"><div class="glab">党派</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:21.00%"></span><span class="num">0.168</span></div><div class="track"><span class="bar glm" style="width:35.75%"></span><span class="num">0.286</span></div><div class="track"><span class="bar ds" style="width:25.75%"></span><span class="num">0.206</span></div></div></div><div class="grow"><div class="glab">居住地区</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:16.75%"></span><span class="num">0.134</span></div><div class="track"><span class="bar glm" style="width:26.75%"></span><span class="num">0.214</span></div><div class="track"><span class="bar ds" style="width:24.38%"></span><span class="num">0.195</span></div></div></div><div class="grow"><div class="glab">户规模</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:28.00%"></span><span class="num">0.224</span></div><div class="track"><span class="bar glm" style="width:24.75%"></span><span class="num">0.198</span></div><div class="track"><span class="bar ds" style="width:34.75%"></span><span class="num">0.278</span></div></div></div><div class="grow"><div class="glab">宗教</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:50.87%"></span><span class="num">0.407</span></div><div class="track"><span class="bar glm" style="width:55.12%"></span><span class="num">0.441</span></div><div class="track"><span class="bar ds" style="width:56.62%"></span><span class="num">0.453</span></div></div></div><div class="grow"><div class="glab">政治倾向</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:53.50%"></span><span class="num">0.428</span></div><div class="track"><span class="bar glm" style="width:58.50%"></span><span class="num">0.468</span></div><div class="track"><span class="bar ds" style="width:58.50%"></span><span class="num">0.468</span></div></div></div><div class="grow"><div class="glab">婚姻状况</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:24.75%"></span><span class="num">0.198</span></div><div class="track"><span class="bar glm" style="width:27.25%"></span><span class="num">0.218</span></div><div class="track"><span class="bar ds" style="width:24.75%"></span><span class="num">0.198</span></div></div></div><div class="grow"><div class="glab">学历</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:34.38%"></span><span class="num">0.275</span></div><div class="track"><span class="bar glm" style="width:34.38%"></span><span class="num">0.275</span></div><div class="track"><span class="bar ds" style="width:34.38%"></span><span class="num">0.275</span></div></div></div><div class="grow"><div class="glab">就业</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:33.25%"></span><span class="num">0.266</span></div><div class="track"><span class="bar glm" style="width:33.25%"></span><span class="num">0.266</span></div><div class="track"><span class="bar ds" style="width:33.25%"></span><span class="num">0.266</span></div></div></div><div class="grow"><div class="glab">种族</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:27.00%"></span><span class="num">0.216</span></div><div class="track"><span class="bar glm" style="width:27.00%"></span><span class="num">0.216</span></div><div class="track"><span class="bar ds" style="width:27.00%"></span><span class="num">0.216</span></div></div></div><div class="grow"><div class="glab">年龄</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:16.00%"></span><span class="num">0.128</span></div><div class="track"><span class="bar glm" style="width:16.00%"></span><span class="num">0.128</span></div><div class="track"><span class="bar ds" style="width:16.00%"></span><span class="num">0.128</span></div></div></div><div class="grow"><div class="glab">性别</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:6.62%"></span><span class="num">0.053</span></div><div class="track"><span class="bar glm" style="width:6.62%"></span><span class="num">0.053</span></div><div class="track"><span class="bar ds" style="width:6.62%"></span><span class="num">0.053</span></div></div></div><div class="grow"><div class="glab">公民身份</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:0.25%"></span><span class="num">0.002</span></div><div class="track"><span class="bar glm" style="width:0.25%"></span><span class="num">0.002</span></div><div class="track"><span class="bar ds" style="width:0.25%"></span><span class="num">0.002</span></div></div></div>
+      <div class="axis"><span></span><div class="ticks"><span>0</span><span>0.2</span><span>0.4</span><span>0.6</span><span>0.8</span></div></div>
+    </div>
+    <p class="src">横轴单位：总变异距离。来源：runs/compare/atus-categories-education_level-n50-seed11111-t0.8-recent · 对照上一轮 runs/compare/atus-categories-education_level-n50-seed11111 · 50 名 ATUS 2023 成年人，种子 11111，按 education_level 的 TUFINLWGT 配额抽取 · 人类基线为 Twin-2K 第 1–3 波份额（2,058 人）。</p>
+  </section>
+
+  <section>
+    <h2>各题选项份额均方误差</h2>
+    <p class="note">横轴是份额 MSE，单位是比例的平方，0 到 0.16，越低越接近 Twin-2K。题目顺序与上一张图相同。上一份报告的横轴停在 0.06。两张图的刻度不同，也不能和上面的 TVD 图直接比高低。</p>
+    <div class="legend">
+      <span><i class="gpt"></i>gpt-5.5</span>
+      <span><i class="glm"></i>glm-5.3</span>
+      <span><i class="ds"></i>deepseek-v4-pro</span>
+    </div>
+    <div class="chart" aria-label="各题选项份额均方误差">
+      <div class="grow"><div class="glab">家庭收入</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:91.50%"></span><span class="num">0.1464</span></div><div class="track"><span class="bar glm" style="width:22.25%"></span><span class="num">0.0356</span></div><div class="track"><span class="bar ds" style="width:20.56%"></span><span class="num">0.0329</span></div></div></div><div class="grow"><div class="glab">宗教活动</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:19.62%"></span><span class="num">0.0314</span></div><div class="track"><span class="bar glm" style="width:21.62%"></span><span class="num">0.0346</span></div><div class="track"><span class="bar ds" style="width:6.56%"></span><span class="num">0.0105</span></div></div></div><div class="grow"><div class="glab">党派</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:6.44%"></span><span class="num">0.0103</span></div><div class="track"><span class="bar glm" style="width:16.81%"></span><span class="num">0.0269</span></div><div class="track"><span class="bar ds" style="width:8.31%"></span><span class="num">0.0133</span></div></div></div><div class="grow"><div class="glab">居住地区</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:3.25%"></span><span class="num">0.0052</span></div><div class="track"><span class="bar glm" style="width:6.69%"></span><span class="num">0.0107</span></div><div class="track"><span class="bar ds" style="width:7.50%"></span><span class="num">0.0120</span></div></div></div><div class="grow"><div class="glab">户规模</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:6.62%"></span><span class="num">0.0106</span></div><div class="track"><span class="bar glm" style="width:5.19%"></span><span class="num">0.0083</span></div><div class="track"><span class="bar ds" style="width:9.25%"></span><span class="num">0.0148</span></div></div></div><div class="grow"><div class="glab">宗教</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:7.13%"></span><span class="num">0.0114</span></div><div class="track"><span class="bar glm" style="width:10.50%"></span><span class="num">0.0168</span></div><div class="track"><span class="bar ds" style="width:7.88%"></span><span class="num">0.0126</span></div></div></div><div class="grow"><div class="glab">政治倾向</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:26.88%"></span><span class="num">0.0430</span></div><div class="track"><span class="bar glm" style="width:28.38%"></span><span class="num">0.0454</span></div><div class="track"><span class="bar ds" style="width:28.38%"></span><span class="num">0.0454</span></div></div></div><div class="grow"><div class="glab">婚姻状况</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:4.06%"></span><span class="num">0.0065</span></div><div class="track"><span class="bar glm" style="width:4.69%"></span><span class="num">0.0075</span></div><div class="track"><span class="bar ds" style="width:4.06%"></span><span class="num">0.0065</span></div></div></div><div class="grow"><div class="glab">学历</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:7.50%"></span><span class="num">0.0120</span></div><div class="track"><span class="bar glm" style="width:7.50%"></span><span class="num">0.0120</span></div><div class="track"><span class="bar ds" style="width:7.50%"></span><span class="num">0.0120</span></div></div></div><div class="grow"><div class="glab">就业</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:5.25%"></span><span class="num">0.0084</span></div><div class="track"><span class="bar glm" style="width:5.25%"></span><span class="num">0.0084</span></div><div class="track"><span class="bar ds" style="width:5.25%"></span><span class="num">0.0084</span></div></div></div><div class="grow"><div class="glab">种族</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:6.38%"></span><span class="num">0.0102</span></div><div class="track"><span class="bar glm" style="width:6.38%"></span><span class="num">0.0102</span></div><div class="track"><span class="bar ds" style="width:6.38%"></span><span class="num">0.0102</span></div></div></div><div class="grow"><div class="glab">年龄</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:3.31%"></span><span class="num">0.0053</span></div><div class="track"><span class="bar glm" style="width:3.31%"></span><span class="num">0.0053</span></div><div class="track"><span class="bar ds" style="width:3.31%"></span><span class="num">0.0053</span></div></div></div><div class="grow"><div class="glab">性别</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:1.75%"></span><span class="num">0.0028</span></div><div class="track"><span class="bar glm" style="width:1.75%"></span><span class="num">0.0028</span></div><div class="track"><span class="bar ds" style="width:1.75%"></span><span class="num">0.0028</span></div></div></div><div class="grow"><div class="glab">公民身份</div><div class="gbars"><div class="track"><span class="bar gpt" style="width:0.00%"></span><span class="num">0.0000</span></div><div class="track"><span class="bar glm" style="width:0.00%"></span><span class="num">0.0000</span></div><div class="track"><span class="bar ds" style="width:0.00%"></span><span class="num">0.0000</span></div></div></div>
+      <div class="axis"><span></span><div class="ticks"><span>0</span><span>0.04</span><span>0.08</span><span>0.12</span><span>0.16</span></div></div>
+    </div>
+    <p class="src">横轴单位：比例的平方。14 题平均份额 MSE：deepseek-v4-pro 0.0133，glm-5.3 0.0160，gpt-5.5 0.0217。家庭收入一题的 MSE 是 gpt-5.5 0.1464、glm-5.3 0.0356、deepseek-v4-pro 0.0329。拿掉这一题，其余 13 题平均是 gpt-5.5 0.0121、deepseek-v4-pro 0.0118、glm-5.3 0.0145。</p>
+  </section>
+
+  <section>
+    <h2>同一题上的 TVD 与份额 MSE</h2>
+    <table>
+      <thead><tr><th>指标</th><th>第一</th><th>第二</th><th>第三</th></tr></thead>
+      <tbody>
+        <tr class="ok"><td>平均 TVD（要改选项的人数比例）</td><td>deepseek-v4-pro · 0.242</td><td>glm-5.3 · 0.256</td><td>gpt-5.5 · 0.262</td></tr>
+        <tr class="ok"><td>平均份额 MSE（选项比例差的平方）</td><td>deepseek-v4-pro · 0.0133</td><td>glm-5.3 · 0.0160</td><td>gpt-5.5 · 0.0217</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>题目</th><th class="n">选项数</th><th class="n">gpt TVD</th><th class="n">glm TVD</th><th class="n">ds TVD</th><th class="n">gpt MSE</th><th class="n">glm MSE</th><th class="n">ds MSE</th></tr></thead>
+      <tbody>
+        <tr class="bad"><td>家庭收入 QID21</td><td class="n">5</td><td class="n">0.760</td><td class="n">0.382</td><td class="n">0.402</td><td class="n">0.1464</td><td class="n">0.0356</td><td class="n">0.0329</td></tr>
+        <tr class="info"><td>宗教活动 QID19</td><td class="n">6</td><td class="n">0.413</td><td class="n">0.433</td><td class="n">0.251</td><td class="n">0.0314</td><td class="n">0.0346</td><td class="n">0.0105</td></tr>
+        <tr class="ok"><td>党派 QID20</td><td class="n">4</td><td class="n">0.168</td><td class="n">0.286</td><td class="n">0.206</td><td class="n">0.0103</td><td class="n">0.0269</td><td class="n">0.0133</td></tr>
+        <tr><td>居住地区 QID11</td><td class="n">5</td><td class="n">0.134</td><td class="n">0.214</td><td class="n">0.195</td><td class="n">0.0052</td><td class="n">0.0107</td><td class="n">0.0120</td></tr>
+        <tr><td>户规模 QID23</td><td class="n">5</td><td class="n">0.224</td><td class="n">0.198</td><td class="n">0.278</td><td class="n">0.0106</td><td class="n">0.0083</td><td class="n">0.0148</td></tr>
+        <tr><td>宗教 QID18</td><td class="n">12</td><td class="n">0.407</td><td class="n">0.441</td><td class="n">0.453</td><td class="n">0.0114</td><td class="n">0.0168</td><td class="n">0.0126</td></tr>
+        <tr class="warn"><td>政治倾向 QID22</td><td class="n">5</td><td class="n">0.428</td><td class="n">0.468</td><td class="n">0.468</td><td class="n">0.0430</td><td class="n">0.0454</td><td class="n">0.0454</td></tr>
+        <tr><td>婚姻状况 QID17</td><td class="n">6</td><td class="n">0.198</td><td class="n">0.218</td><td class="n">0.198</td><td class="n">0.0065</td><td class="n">0.0075</td><td class="n">0.0065</td></tr>
+        <tr><td>学历 QID14</td><td class="n">6</td><td class="n">0.275</td><td class="n">0.275</td><td class="n">0.275</td><td class="n">0.0120</td><td class="n">0.0120</td><td class="n">0.0120</td></tr>
+        <tr><td>就业 QID24</td><td class="n">7</td><td class="n">0.266</td><td class="n">0.266</td><td class="n">0.266</td><td class="n">0.0084</td><td class="n">0.0084</td><td class="n">0.0084</td></tr>
+        <tr><td>种族 QID15</td><td class="n">5</td><td class="n">0.216</td><td class="n">0.216</td><td class="n">0.216</td><td class="n">0.0102</td><td class="n">0.0102</td><td class="n">0.0102</td></tr>
+        <tr><td>年龄 QID13</td><td class="n">4</td><td class="n">0.128</td><td class="n">0.128</td><td class="n">0.128</td><td class="n">0.0053</td><td class="n">0.0053</td><td class="n">0.0053</td></tr>
+        <tr><td>性别 QID12</td><td class="n">2</td><td class="n">0.053</td><td class="n">0.053</td><td class="n">0.053</td><td class="n">0.0028</td><td class="n">0.0028</td><td class="n">0.0028</td></tr>
+        <tr class="ok"><td>公民身份 QID16</td><td class="n">2</td><td class="n">0.002</td><td class="n">0.002</td><td class="n">0.002</td><td class="n">0.0000</td><td class="n">0.0000</td><td class="n">0.0000</td></tr>
+      </tbody>
+    </table>
+    <p class="src">家庭收入上，TVD 更近的是 glm-5.3，份额 MSE 更近的是 deepseek-v4-pro，这一行用深色标出。公民身份的 MSE 是 0.000004，表里显示为 0.0000。政治倾向上 glm-5.3 和 deepseek-v4-pro 的选项计数相同。</p>
+    <h3>相对上一轮，TVD 变了多少</h3>
+    <p class="note">表内是这一轮 TVD 减去上一轮 TVD。正数是离 Twin-2K 更远。性别、年龄、学历、种族、公民身份五行都是 0，没有列入。改答是 50 人里答案和上一轮不同的人数。</p>
+    <table>
+      <thead><tr><th>题目</th><th class="n">gpt Δ</th><th class="n">glm Δ</th><th class="n">ds Δ</th><th class="n">gpt 改答</th><th class="n">glm 改答</th><th class="n">ds 改答</th></tr></thead>
+      <tbody>
+        <tr class="bad"><td>家庭收入</td><td class="n">+0.358</td><td class="n">0.000</td><td class="n">−0.020</td><td class="n">21</td><td class="n">9</td><td class="n">10</td></tr>
+        <tr class="warn"><td>政治倾向</td><td class="n">−0.020</td><td class="n">+0.120</td><td class="n">+0.020</td><td class="n">2</td><td class="n">14</td><td class="n">7</td></tr>
+        <tr><td>党派</td><td class="n">+0.080</td><td class="n">+0.040</td><td class="n">−0.020</td><td class="n">8</td><td class="n">7</td><td class="n">3</td></tr>
+        <tr><td>居住地区</td><td class="n">−0.065</td><td class="n">0.000</td><td class="n">+0.001</td><td class="n">6</td><td class="n">12</td><td class="n">8</td></tr>
+        <tr><td>宗教</td><td class="n">−0.034</td><td class="n">0.000</td><td class="n">0.000</td><td class="n">9</td><td class="n">7</td><td class="n">6</td></tr>
+        <tr><td>户规模</td><td class="n">−0.034</td><td class="n">−0.006</td><td class="n">0.000</td><td class="n">4</td><td class="n">5</td><td class="n">2</td></tr>
+        <tr><td>宗教活动</td><td class="n">−0.022</td><td class="n">0.000</td><td class="n">+0.020</td><td class="n">21</td><td class="n">20</td><td class="n">16</td></tr>
+        <tr><td>婚姻状况</td><td class="n">+0.020</td><td class="n">0.000</td><td class="n">−0.020</td><td class="n">1</td><td class="n">0</td><td class="n">1</td></tr>
+        <tr><td>就业</td><td class="n">−0.012</td><td class="n">−0.020</td><td class="n">−0.020</td><td class="n">2</td><td class="n">1</td><td class="n">1</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <hr>
+  <section>
+    <h2>这 50 人仍是上一份报告的那一批</h2>
+    <p>四个教育水平按 ATUS 终权 TUFINLWGT 之和分配 50 个名额。这一轮的人物卡文件和上一轮逐字相同，抽出的人数也相同。年龄和性别不是分层变量。</p>
+    <div class="split">
+      <table>
+        <thead><tr><th>教育水平</th><th class="n">人数</th><th class="n">样本</th><th class="n">权重份额</th></tr></thead>
+        <tbody>
+          <tr><td>低于高中</td><td class="n">4</td><td class="n">8%</td><td class="n">8.1%</td></tr>
+          <tr><td>高中</td><td class="n">15</td><td class="n">30%</td><td class="n">29.7%</td></tr>
+          <tr><td>部分大学</td><td class="n">12</td><td class="n">24%</td><td class="n">23.3%</td></tr>
+          <tr><td>学士及以上</td><td class="n">19</td><td class="n">38%</td><td class="n">38.8%</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>年龄或性别</th><th class="n">人数</th><th class="n">样本</th><th class="n">Twin-2K</th></tr></thead>
+        <tbody>
+          <tr><td>18–29 岁</td><td class="n">4</td><td class="n">8%</td><td class="n">18.9%</td></tr>
+          <tr><td>30–49 岁</td><td class="n">20</td><td class="n">40%</td><td class="n">35.7%</td></tr>
+          <tr><td>50–64 岁</td><td class="n">15</td><td class="n">30%</td><td class="n">32.0%</td></tr>
+          <tr><td>65 岁及以上</td><td class="n">11</td><td class="n">22%</td><td class="n">13.5%</td></tr>
+          <tr><td>女性</td><td class="n">28</td><td class="n">56%</td><td class="n">50.7%</td></tr>
+          <tr><td>男性</td><td class="n">22</td><td class="n">44%</td><td class="n">49.3%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="src">配偶或伴侣 27 人，没有 23 人。就业是全职 31、未就业 15、兼职 4。年龄题的 TVD 0.128 仍来自样本构成：18–29 岁只有 4 人，65 岁及以上有 11 人。</p>
+  </section>
+  <section>
+    <h2>人物卡上写明的字段，三个模型仍读对了</h2>
+    <table>
+      <thead><tr><th>字段</th><th>人物卡</th><th>这一轮的答案</th><th class="n">与卡一致</th></tr></thead>
+      <tbody>
+        <tr><td>性别 QID12</td><td>男 22 / 女 28</td><td>三个模型逐人相同，与上一轮相同</td><td class="n">50/50</td></tr>
+        <tr><td>年龄 QID13</td><td>四档人数见上表</td><td>与卡的年龄段相同</td><td class="n">50/50</td></tr>
+        <tr><td>学历 QID14</td><td>四个 ATUS 教育水平</td><td>各自落到对应的粗档</td><td class="n">50/50</td></tr>
+        <tr><td>种族 QID15</td><td>白人 25、黑人 13、西裔 7、亚裔 5</td><td>三个模型逐人相同</td><td class="n">50/50</td></tr>
+        <tr><td>有配偶 QID17</td><td>27 人标记为配偶</td><td>27 人都答已婚</td><td class="n">27/27</td></tr>
+        <tr><td>全职 QID24</td><td>31 人标记为全职</td><td>三个模型都是 28 人答全职</td><td class="n">28/31</td></tr>
+        <tr><td>兼职 QID24</td><td>4 人标记为兼职</td><td>三个模型都是 4 人答兼职</td><td class="n">4/4</td></tr>
+      </tbody>
+    </table>
+    <p>学历的映射和上一份报告一样：「部分大学」12/12 答成「上过大学、没有学位」，没有人答副学士；「学士及以上」19/19 答成「大学毕业」，没有人答研究生。学历 TVD 0.275 因此仍是档位对不齐，不是这一轮新的失误。就业的 50 个答案三个模型逐人相同。15 名未就业者里，10 人答退休、3 人答失业、2 人家务。</p>
+  </section>
+  <hr>
+  <section>
+    <h2>模型真正分开的地方</h2>
+    <p class="note">逐人逐题对照，gpt-5.5 与 glm-5.3 有 609/700 题相同（87.0%），与 deepseek-v4-pro 有 596/700 题相同（85.1%）。上一轮是 622/700（88.9%）和 609/700（87.0%）。这一轮分歧最多的是家庭收入：gpt-5.5 和 deepseek-v4-pro 有 27 人答案不同。宗教活动仍有 24 人不同。</p>
+    <h3>家庭收入：gpt-5.5 收到 3–5 万美元一档</h3>
+    <p>人物卡把 50 人的个人收入都写成 $50,000 or less。问卷问的是税前全家收入。Twin-2K 里 10 万美元及以上占 26.8%，3–5 万只占 20.0%。gpt-5.5 有 48 人答了 3–5 万，2 人低于 3 万，没有人高于 5 万。上一轮它还有 12 人答 5–7.5 万、10 人低于 3 万、1 人答 7.5–10 万；这 21 人这次都进了 3–5 万。TVD 从 0.402 升到 0.760，份额 MSE 从 0.0415 升到 0.1464。glm-5.3 有 9 人改答，TVD 仍是 0.382。deepseek-v4-pro 从 0.422 降到 0.402。三个模型都没有人答 10 万及以上。</p>
+    <table>
+      <thead><tr><th>家庭收入</th><th class="n">Twin-2K</th><th class="n">gpt-5.5</th><th class="n">glm-5.3</th><th class="n">deepseek-v4-pro</th></tr></thead>
+      <tbody>
+        <tr><td>低于 3 万美元</td><td class="n">17.8%</td><td class="n">4%</td><td class="n">22%</td><td class="n">34%</td></tr>
+        <tr><td>3–5 万美元</td><td class="n">20.0%</td><td class="n">96%</td><td class="n">50%</td><td class="n">42%</td></tr>
+        <tr><td>5–7.5 万美元</td><td class="n">20.0%</td><td class="n">0%</td><td class="n">24%</td><td class="n">22%</td></tr>
+        <tr><td>7.5–10 万美元</td><td class="n">15.4%</td><td class="n">0%</td><td class="n">4%</td><td class="n">2%</td></tr>
+        <tr><td>10 万美元及以上</td><td class="n">26.8%</td><td class="n">0%</td><td class="n">0%</td><td class="n">0%</td></tr>
+      </tbody>
+    </table>
+    <h3>宗教活动：deepseek-v4-pro 仍把「很少」换成「从不」</h3>
+    <p>Twin-2K 里「从不」占 40.7%，「很少」占 22.5%。deepseek-v4-pro 是 62% 和 18%，TVD 0.251，份额 MSE 0.0105，两种指标仍是这一题的第一名。上一轮是 60% 和 22%，TVD 0.231，这一轮略远了一点。gpt-5.5 的「从不」从 12% 升到 26%，「很少」从 66% 降到 60%，TVD 从 0.435 降到 0.413。glm-5.3 仍是 60%「很少」、20%「从不」，TVD 0.433。</p>
+    <table>
+      <thead><tr><th>宗教活动</th><th class="n">Twin-2K</th><th class="n">gpt-5.5</th><th class="n">glm-5.3</th><th class="n">deepseek-v4-pro</th></tr></thead>
+      <tbody>
+        <tr><td>每周多于一次</td><td class="n">4.2%</td><td class="n">8%</td><td class="n">10%</td><td class="n">8%</td></tr>
+        <tr><td>每周一次</td><td class="n">14.3%</td><td class="n">4%</td><td class="n">2%</td><td class="n">8%</td></tr>
+        <tr><td>每月一两次</td><td class="n">6.3%</td><td class="n">0%</td><td class="n">2%</td><td class="n">0%</td></tr>
+        <tr><td>一年几次</td><td class="n">12.0%</td><td class="n">2%</td><td class="n">6%</td><td class="n">4%</td></tr>
+        <tr><td>很少</td><td class="n">22.5%</td><td class="n">60%</td><td class="n">60%</td><td class="n">18%</td></tr>
+        <tr><td>从不</td><td class="n">40.7%</td><td class="n">26%</td><td class="n">20%</td><td class="n">62%</td></tr>
+      </tbody>
+    </table>
+    <h3>党派：gpt-5.5 仍留着独立选民，但少了</h3>
+    <p>Twin-2K 是共和党 26.2%、民主党 41.2%、独立 29.6%。gpt-5.5 这一轮是 16%、58%、26%，上一轮是 22%、50%、28%。TVD 从 0.088 升到 0.168，份额 MSE 从 0.0027 升到 0.0103，仍是三个模型里最接近的。glm-5.3 的独立选民从 8% 降到 4%，共和党仍是 42%。deepseek-v4-pro 是共和党 36%、民主党 52%、独立 12%。三个模型都没有人答「其他」。</p>
+    <h3>政治倾向：glm-5.3 不再铺在保守和温和之间</h3>
+    <p>上一份报告里，glm-5.3 是 48% 温和、36% 保守、16% 自由派，TVD 0.348，比另外两个更散、也更近。这一轮 14 人改了答案：6 个自由派和 5 个保守派进了温和，3 个温和派进了保守。结果是 64% 温和、32% 保守、4% 自由派，TVD 0.468，份额 MSE 0.0454。deepseek-v4-pro 的选项计数和它相同。gpt-5.5 是 66% 温和、26% 保守、8% 自由派，TVD 0.428。Twin-2K 从非常保守到非常自由派是 6.7%、20.9%、28.3%、27.4%、16.8%。三个模型的两端仍是 0。</p>
+  </section>
+  <section>
+    <h2>近期事件没有把家庭收入推高</h2>
+    <p>50 人按 <code>sha256("education-categories-recent:" + person_id) % 3</code> 各抽一种事件，同一 id 每次相同。地点只随年龄段变：18–29 岁是下班收尾的班次，30–49 岁在家，50–64 岁在工作，65 岁及以上在住处。中彩票 20 人，核爆炸 17 人，日常琐事 13 人。中彩票写的是已领取的奖金到账、有人来电、此人接了并说了几句。日常琐事写的是名字被叫到、当众说了几句、再回答一个问题。核爆炸写的是远处爆炸已经结束、人在范围之外、危险已过。</p>
+    <table>
+      <thead><tr><th>事件</th><th class="n">人数</th><th class="n">18–29</th><th class="n">30–49</th><th class="n">50–64</th><th class="n">65+</th></tr></thead>
+      <tbody>
+        <tr><td>中彩票</td><td class="n">20</td><td class="n">3</td><td class="n">8</td><td class="n">5</td><td class="n">4</td></tr>
+        <tr><td>日常琐事</td><td class="n">13</td><td class="n">0</td><td class="n">5</td><td class="n">7</td><td class="n">1</td></tr>
+        <tr><td>核爆炸</td><td class="n">17</td><td class="n">1</td><td class="n">7</td><td class="n">3</td><td class="n">6</td></tr>
+      </tbody>
+    </table>
+    <p>三种事件上，改答占该组全部人题的比例都在 6% 到 13% 之间。gpt-5.5 是日常琐事 11.5%、中彩票 11.4%、核爆炸 8.8%。中彩票没有把家庭收入答高：gpt-5.5 在日常琐事的 13 人和核爆炸的 17 人里全部答了 3–5 万；中彩票的 20 人里 18 人是这一档，另外 2 人低于 3 万。三个模型、三种事件里，都没有人答 10 万及以上。</p>
+  </section>
+  <section>
+    <h2>三个模型一起偏掉的分布</h2>
+    <p>这些题的模型差距小，或者三个模型已经逐人相同。偏差仍来自人物卡让它们做出同一种推断，或者卡片没有这一项，它们就落到相近的默认答案。</p>
+    <table>
+      <thead><tr><th>分布</th><th>Twin-2K</th><th>这一轮的共同偏向</th></tr></thead>
+      <tbody>
+        <tr><td>宗教</td><td>新教 24.8%，天主教 17.4%，无神论加不可知论 25.6%</td><td>新教 50%–64%，天主教 14%–18%，无神论和不可知论仍是 0。deepseek-v4-pro 的「没有特别的信仰」是 36%</td></tr>
+        <tr><td>家庭收入</td><td>10 万美元及以上 26.8%</td><td>三个模型都是 0。gpt-5.5 有 96% 在 3–5 万</td></tr>
+        <tr><td>户规模</td><td>1 人 20.0%，4 人及以上 27.8%</td><td>1 人 34%–38%。正好 4 人：gpt-5.5 五人、glm-5.3 四人、deepseek-v4-pro 为零。多于 4 人三个模型都是 0</td></tr>
+        <tr><td>种族</td><td>白人 66.1%，黑人 12.2%，亚裔 6.8%，西裔 9.4%，其他 5.4%</td><td>三个模型逐人相同，并与人物卡一致：白人 50%，黑人 26%，亚裔 10%，西裔 14%，其他 0</td></tr>
+        <tr><td>居住地区</td><td>东北 16.6%，中西 18.1%，南部 40.5%，西部 24.0%</td><td>太平洋仍是 0。东北：gpt-5.5 三人，另外两个各一人。deepseek-v4-pro 把南部放到 60%</td></tr>
+        <tr><td>就业</td><td>全职 42.3%，自雇 13.6%，退休 11.9%</td><td>三个模型逐人相同：全职 56%，自雇 0，退休 24%</td></tr>
+        <tr><td>婚姻</td><td>已婚 39.5%，同居 10.3%，未婚 34.7%</td><td>27 名有配偶者全部答已婚（54%）。没有人答同居。无伴侣者大多答从未结婚</td></tr>
+      </tbody>
+    </table>
+    <p class="src">50 张卡的州都是 Unknown，所以居住地区仍是推断。gpt-5.5 的居住地区 TVD 从 0.199 降到 0.134，东北从 1 人增到 3 人，中西从 19 人减到 15 人。</p>
+  </section>
+  <div class="callout"><strong>两种平均分这次指向同一个人</strong>deepseek-v4-pro 的平均 TVD 是 0.242，平均份额 MSE 是 0.0133，两条都是第一。上一份报告里，平均 TVD 的第一名是 gpt-5.5，平均 MSE 的第一名是 deepseek-v4-pro。身份题上它们仍是同一个模拟器：人物卡写了什么，三个模型就答什么，而且和上一轮逐人相同。拉开名次的是家庭收入。gpt-5.5 在这一题上要改选的人数比例从 0.402 变成 0.760；glm-5.3 和 deepseek-v4-pro 停在 0.38 和 0.40 附近。中彩票的段落没有把任何人的家庭收入答到 10 万美元及以上。</div>
+</main>
+</body>
+</html>

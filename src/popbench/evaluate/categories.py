@@ -59,9 +59,23 @@ def evaluate_category_run(
     return result
 
 
-def write_category_comparison(out_dir: Path, summaries: list[dict[str, Any]]) -> dict[str, Any]:
+def write_category_comparison(
+    out_dir: Path,
+    summaries: list[dict[str, Any]],
+    *,
+    population: str | None = None,
+    temperature: float | None = None,
+    recent: dict[str, Any] | None = None,
+    batch: bool = False,
+) -> dict[str, Any]:
     """Write the category-by-model table. Categories stay on separate rows."""
-    report = build_category_comparison(summaries)
+    report = build_category_comparison(
+        summaries,
+        population=population,
+        temperature=temperature,
+        recent=recent,
+        batch=batch,
+    )
     target = Path(out_dir)
     target.mkdir(parents=True, exist_ok=True)
     (target / "compare.json").write_text(json.dumps(report, indent=2) + "\n")
@@ -70,7 +84,14 @@ def write_category_comparison(out_dir: Path, summaries: list[dict[str, Any]]) ->
     return report
 
 
-def build_category_comparison(summaries: list[dict[str, Any]]) -> dict[str, Any]:
+def build_category_comparison(
+    summaries: list[dict[str, Any]],
+    *,
+    population: str | None = None,
+    temperature: float | None = None,
+    recent: dict[str, Any] | None = None,
+    batch: bool = False,
+) -> dict[str, Any]:
     """Rank models inside each category. There is no item-weighted total."""
     if len(summaries) < 2:
         raise CompareError("need at least two model evaluations")
@@ -89,7 +110,7 @@ def build_category_comparison(summaries: list[dict[str, Any]]) -> dict[str, Any]
         raise CompareError("unknown paper category: " + ", ".join(unknown))
     order = [family for family in PAPER_FAMILIES if family in present]
     categories = [_category(family, summaries, models) for family in order]
-    return {
+    report = {
         "kind": "atus_category_comparison",
         "panel": "atus",
         "baseline": "Twin-2K wave1_3 shares",
@@ -98,6 +119,15 @@ def build_category_comparison(summaries: list[dict[str, Any]]) -> dict[str, Any]
         "models": models,
         "categories": categories,
     }
+    if population:
+        report["population"] = population
+    if temperature is not None:
+        report["temperature"] = temperature
+    if recent is not None:
+        report["recent"] = recent
+    if batch:
+        report["batch"] = True
+    return report
 
 
 def render_category_comparison(report: dict[str, Any]) -> str:
@@ -114,12 +144,29 @@ def render_category_comparison(report: dict[str, Any]) -> str:
         "",
         f"- 人数：{report.get('n_people')}",
         f"- 种子：{report.get('seed')}",
-        "",
-        "## 选择题平均 TVD",
-        "",
-        _tvd_table(report),
-        "",
     ]
+    population = report.get("population")
+    if population:
+        lines.append(
+            f"- 人口分类：`{population}`，人从 `data/atus/by_population/{population}/` 的水平表抽取。"
+        )
+    if "temperature" in report:
+        lines.append(f"- 温度：{_fmt_temperature(report['temperature'])}")
+    recent = report.get("recent")
+    if recent:
+        kinds = "、".join(str(kind) for kind in recent["kinds"])
+        lines.append(f"- recent：{kinds}，按 `{recent['draw']}` 抽取。")
+    if report.get("batch"):
+        lines.append("- 请求：同一类里空白 instrument 的题目合成一次请求。")
+    lines.extend(
+        [
+            "",
+            "## 选择题平均 TVD",
+            "",
+            _tvd_table(report),
+            "",
+        ]
+    )
     mae = _mae_table(report)
     if mae:
         lines.extend(["## 数字题平均绝对差", "", mae, ""])
@@ -246,3 +293,9 @@ def _mean(values: list[float]) -> float | None:
 
 def _fmt(value: float | None) -> str:
     return "—" if value is None else f"{value:.3f}"
+
+
+def _fmt_temperature(value: Any) -> str:
+    if isinstance(value, float):
+        return format(value, "g")
+    return str(value)

@@ -68,10 +68,13 @@ def build_atus_category_panels(
     out_dir: Path,
     families: list[str] | None = None,
     n_per_age_band: int | None = None,
+    population: str | None = None,
 ) -> dict[str, Any]:
     """Write shared ATUS cards and one items/baseline folder per category.
 
     ``n_per_age_band`` draws that many adults from each age band and ignores ``n``.
+    ``population`` draws from ``data/atus/by_population/<population>/`` and the
+    seven categories share that draw.
     """
     from popbench.dao.twin2k import DatasetError, load_twin2k
 
@@ -86,10 +89,17 @@ def build_atus_category_panels(
         n=n,
         seed=seed,
         n_per_age_band=n_per_age_band,
+        population=population,
     )
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     write_jsonl(out_dir / "personas.jsonl", personas)
+    if population:
+        sampling = population
+    elif n_per_age_band:
+        sampling = "age_band"
+    else:
+        sampling = "age_band_x_sex"
     panels = []
     for family in selected:
         items = grouped[family]
@@ -108,7 +118,8 @@ def build_atus_category_panels(
             "n_people": len(records),
             "seed": seed,
             "n_per_age_band": n_per_age_band,
-            "sampling": "age_band" if n_per_age_band else "age_band_x_sex",
+            "population": population,
+            "sampling": sampling,
             "baseline": "Twin-2K wave1_3 shares for this category",
         }
         (folder / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
@@ -128,6 +139,7 @@ def build_atus_category_panels(
         "n": len(personas),
         "seed": seed,
         "n_per_age_band": n_per_age_band,
+        "population": population,
         "out_dir": out_dir,
     }
 

@@ -201,6 +201,26 @@ def model_settings_for(name: str) -> ModelSettings:
     )
 
 
+def with_cr_temperature_support(settings: ModelSettings) -> ModelSettings:
+    """Let a GPT compare model accept a temperature other than 1.
+
+    The CR route rejects that temperature while reasoning is enabled.
+    ``reasoning_effort=none`` is the setting that makes the value a valid
+    request. Other models already accept the temperature unchanged.
+    """
+    if settings.transport != "cr" or settings.temperature is None:
+        return settings
+    if float(settings.temperature) == 1.0:
+        return settings
+    if not settings.model.lower().startswith("gpt-"):
+        return settings
+    if settings.extra_body.get("reasoning_effort"):
+        return settings
+    extra = dict(settings.extra_body)
+    extra["reasoning_effort"] = "none"
+    return replace(settings, extra_body=extra)
+
+
 def request_record(settings: ModelSettings) -> dict[str, Any]:
     """Request fields stored in a run. The API key stays out."""
     return {
@@ -317,7 +337,12 @@ def chat(settings: ModelSettings, messages: list[dict[str, str]]) -> str:
 
 def _chat_via_cr(settings: ModelSettings, messages: list[dict[str, str]]) -> str:
     """Call a CR text model through cr_api.CRClient."""
+    settings = with_cr_temperature_support(settings)
     client = CRClient(api_key=settings.api_key)
+    kwargs: dict[str, Any] = {}
+    reasoning_effort = settings.extra_body.get("reasoning_effort")
+    if reasoning_effort:
+        kwargs["reasoning_effort"] = reasoning_effort
     try:
         result = client.chat(
             messages,
@@ -325,6 +350,7 @@ def _chat_via_cr(settings: ModelSettings, messages: list[dict[str, str]]) -> str
             max_tokens=settings.max_tokens,
             temperature=settings.temperature,
             timeout=300,
+            **kwargs,
         )
     except CRError as exc:
         retryable = exc.status is None or exc.status == 429 or exc.status >= 500
@@ -334,7 +360,7 @@ def _chat_via_cr(settings: ModelSettings, messages: list[dict[str, str]]) -> str
         return text
     if result.reasoning_content:
         raise ModelError("model returned reasoning without an answer; increase max tokens")
-    raise ModelError("model response has no content")
+    raise ModelError("model response has no content", retryable=True)
 
 
 def complete(settings: ModelSettings, persona_prompt: str, item_prompt: str) -> str:

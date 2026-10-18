@@ -5,8 +5,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from popbench.simulate.client import ModelSettings, parse_choice, response_cache_key
-from popbench.simulate.survey import answer_survey, batch_message, instrument_groups
+import pytest
+
+from popbench.dao.interview import InterviewError
+from popbench.simulate.client import ModelError, ModelSettings, parse_choice, response_cache_key
+from popbench.simulate.survey import (
+    answer_survey,
+    batch_message,
+    instrument_groups,
+    share_blank_instrument,
+)
 
 OPTIONS = ("Disagree strongly", "Disagree a little", "Agree a little", "Agree strongly")
 STEM = (
@@ -86,6 +94,20 @@ def test_blank_instrument_stays_one_question_at_a_time():
         _turn(2, "Q2", "Second?", instrument=""),
     ]
     assert [group[0]["item_id"] for group in instrument_groups(turns)] == ["Q1", "Q2"]
+
+
+def test_shared_blank_instrument_is_one_request_and_leaves_named_scales():
+    first = _turn(1, "Q1", "Sex?", instrument="")
+    second = _turn(2, "Q2", "Age band?", instrument="")
+    named = _turn(3, "Q3", "Is talkative", instrument="Big Five")
+    records = [{"id": "p1", "turns": [first, second, named]}]
+    stamped = share_blank_instrument(records, "demographics")
+    assert first["instrument"] == ""
+    assert second["instrument"] == ""
+    groups = instrument_groups(stamped[0]["turns"])
+    assert [[turn["item_id"] for turn in group] for group in groups] == [["Q1", "Q2"], ["Q3"]]
+    assert stamped[0]["turns"][0]["instrument"] == "demographics"
+    assert stamped[0]["turns"][2] is named
 
 
 def test_cr_thinking_models_keep_the_caller_token_budget(tmp_path: Path, monkeypatch):
@@ -184,6 +206,66 @@ def test_numbered_option_text_prefers_disagree_a_little(tmp_path: Path, monkeypa
     responses = answer_survey([record], tmp_path, settings=settings)
     assert responses[0]["answers"][0]["value"] == 2
     assert responses[0]["answers"][0]["ok"] is True
+
+
+def test_persistent_empty_content_is_a_failed_answer(tmp_path: Path, monkeypatch):
+    settings = _settings()
+
+    def fake_chat(_settings, _messages):
+        raise ModelError("model request failed after retries: model response has no content", retryable=True)
+
+    monkeypatch.setattr("popbench.simulate.survey.chat_with_retry", fake_chat)
+    record = {
+        "id": "visitor-atus-empty",
+        "persona": {"text": "Age: 40"},
+        "turns": [_turn(1, "QID13", "How old are you?", instrument="", options=("18-29", "30-49", "50-64", "65+"))],
+    }
+    responses = answer_survey([record], tmp_path, settings=settings)
+    answer = responses[0]["answers"][0]
+    assert answer["ok"] is False
+    assert "no content" in answer["error"]
+
+
+def test_other_model_errors_still_abort_the_survey(tmp_path: Path, monkeypatch):
+    settings = _settings()
+
+    def fake_chat(_settings, _messages):
+        raise ModelError("model request failed (400): bad", retryable=False)
+
+    monkeypatch.setattr("popbench.simulate.survey.chat_with_retry", fake_chat)
+    record = {
+        "id": "visitor-atus-bad",
+        "persona": {"text": "Age: 40"},
+        "turns": [_turn(1, "QID13", "How old are you?", instrument="")],
+    }
+    with pytest.raises(InterviewError, match="400"):
+        answer_survey([record], tmp_path, settings=settings)
+
+
+def test_age_band_option_is_not_stripped_as_an_index(tmp_path: Path, monkeypatch):
+    settings = _settings()
+
+    def fake_chat(_settings, _messages):
+        return json.dumps({"answers": ["30-49"]})
+
+    monkeypatch.setattr("popbench.simulate.survey.chat_with_retry", fake_chat)
+    record = {
+        "id": "visitor-atus-age",
+        "persona": {"text": "Age: 40"},
+        "turns": [
+            _turn(
+                3,
+                "QID13",
+                "How old are you?",
+                instrument="",
+                options=("18-29", "30-49", "50-64", "65+"),
+            )
+        ],
+    }
+    responses = answer_survey([record], tmp_path, settings=settings)
+    answer = responses[0]["answers"][0]
+    assert answer["ok"] is True
+    assert answer["value"] == 2
 
 
 def test_catalog_typo_still_matches_agree_strongly(tmp_path: Path, monkeypatch):

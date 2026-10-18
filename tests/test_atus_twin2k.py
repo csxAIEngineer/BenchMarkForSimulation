@@ -11,14 +11,17 @@ import pytest
 from popbench.dao.atus_twin2k import (
     AGE_BAND_ORDER,
     PROBE_N_TURNS,
+    build_atus_personas,
     build_atus_twin2k,
     load_all_adult_personas,
     sample_atus_adults,
     sample_atus_age_bands,
+    sample_atus_population,
     select_probe_items,
 )
-from popbench.dao.io import read_jsonl
-from popbench.dao.interview import OPTIONS, build_instrument
+from popbench.dao.io import read_jsonl, write_jsonl
+from popbench.dao.interview import OPTIONS, InterviewError, build_instrument
+from popbench.dao.visitors import VisitorError
 from popbench.dao.schema import InterviewRecord, InterviewTurn, PersonaCard
 from popbench.evaluate.atus_twin2k import (
     evaluate_atus_twin2k,
@@ -101,6 +104,65 @@ def test_sample_atus_age_bands_draws_the_same_count_from_each_band():
     assert first["TUCASEID"].tolist() != other["TUCASEID"].tolist()
     assert first.groupby("age_band").size().to_dict() == {band: 2 for band in AGE_BAND_ORDER}
     assert set(first["age_band"]) == set(AGE_BAND_ORDER)
+
+
+def test_sample_atus_population_is_stable_and_weighted(tmp_path: Path):
+    levels = {
+        "less_than_high_school": [(case, 10.0) for case in range(101, 108)],
+        "high_school": [(case, 2.0) for case in range(201, 206)],
+        "some_college": [(case, 2.0) for case in range(301, 306)],
+        "bachelor_or_higher": [(case, 2.0) for case in range(401, 406)],
+    }
+    _write_population_levels(tmp_path, "education_level", levels)
+    summary = tmp_path / "visitors" / "atus" / "sum" / "atussum_2023.dat"
+    summary.parent.mkdir(parents=True)
+    summary.write_text("not,a,summary\n")
+    _write_population_cards(tmp_path, [case for rows in levels.values() for case, _weight in rows])
+    first = sample_atus_population(tmp_path, "education_level", n=10, seed=0)
+    second = sample_atus_population(tmp_path, "education_level", n=10, seed=0)
+    other = sample_atus_population(tmp_path, "education_level", n=10, seed=1)
+    assert first["TUCASEID"].tolist() == second["TUCASEID"].tolist()
+    assert first["TUCASEID"].tolist() != other["TUCASEID"].tolist()
+    ids = [int(case) for case in first["TUCASEID"]]
+    assert sorted(case for case in ids if case < 200) == list(range(101, 108))
+    assert len([case for case in ids if 200 < case < 300]) == 1
+    assert len([case for case in ids if 300 < case < 400]) == 1
+    assert len([case for case in ids if case > 400]) == 1
+    personas = build_atus_personas(tmp_path, n=10, seed=0, population="education_level")
+    assert [person["TUCASEID"] for person in personas] == ids
+
+
+def test_population_sample_missing_split_does_not_read_the_activity_summary(tmp_path: Path):
+    summary = tmp_path / "visitors" / "atus" / "sum" / "atussum_2023.dat"
+    summary.parent.mkdir(parents=True)
+    summary.write_text("not,a,summary\n")
+    with pytest.raises(VisitorError, match="split-populations"):
+        build_atus_personas(tmp_path, n=4, seed=0, population="education_level")
+    folder = tmp_path / "atus" / "by_population" / "education_level"
+    folder.mkdir(parents=True)
+    _write_population_levels(
+        tmp_path,
+        "education_level",
+        {
+            "less_than_high_school": [(101, 10.0)],
+            "high_school": [(201, 10.0)],
+            "bachelor_or_higher": [(401, 10.0)],
+        },
+    )
+    with pytest.raises(VisitorError, match="some_college.csv") as caught:
+        build_atus_personas(tmp_path, n=4, seed=0, population="education_level")
+    assert "split-populations" in str(caught.value)
+
+
+def test_population_and_age_band_sampling_cannot_both_be_set(tmp_path: Path):
+    with pytest.raises(InterviewError, match="cannot both be set"):
+        build_atus_personas(
+            tmp_path,
+            n=4,
+            seed=0,
+            population="education_level",
+            n_per_age_band=2,
+        )
 
 
 def test_select_probe_items_keeps_one_forward_item_per_scale():
@@ -332,3 +394,40 @@ def test_load_all_adult_personas_keeps_every_card(tmp_path: Path):
     assert people[0]["text"] == "Person 1"
     assert people[1]["demographics"]["age_band"] == "65+"
     assert people[1]["demographics"]["education"] == "bachelor"
+
+
+def _write_population_levels(
+    data_dir: Path,
+    factor: str,
+    levels: dict[str, list[tuple[int, float]]],
+) -> None:
+    folder = data_dir / "atus" / "by_population" / factor
+    folder.mkdir(parents=True, exist_ok=True)
+    for level, rows in levels.items():
+        pd.DataFrame(
+            [
+                {
+                    "TUCASEID": case_id,
+                    "TUFINLWGT": weight,
+                    "TEAGE": 40,
+                    "sex": "Female",
+                    "age_band": "30-49",
+                }
+                for case_id, weight in rows
+            ]
+        ).to_csv(folder / f"{level}.csv", index=False)
+
+
+def _write_population_cards(data_dir: Path, case_ids: list[int]) -> None:
+    write_jsonl(
+        data_dir / "visitors" / "by_population" / "adults" / "personas.jsonl",
+        [
+            {
+                "id": f"visitor-atus-{case_id}",
+                "TUCASEID": case_id,
+                "persona_text": f"card {case_id}",
+                "demographics": {"age": 40, "age_band": "30-49", "sex": "Female"},
+            }
+            for case_id in case_ids
+        ],
+    )

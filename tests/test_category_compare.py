@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
+from popbench.cli import _categories_root, main
 from popbench.dao.atus_categories import category_records
 from popbench.dao.interview import InterviewError
 from popbench.dao.io import write_jsonl
@@ -260,6 +262,9 @@ def test_category_panels_reuse_written_persona_cards(tmp_path: Path, monkeypatch
     assert by_family["heuristics"]["records"][0]["turns"][0]["turn"] == 1
     assert len(by_family["heuristics"]["baseline"]["items"]) == CLOSED_ITEM_COUNTS["heuristics"]
     assert (out / "families" / "pricing" / "human_baseline.json").is_file()
+    manifest = json.loads((out / "families" / "heuristics" / "manifest.json").read_text())
+    assert manifest["population"] is None
+    assert manifest["sampling"] == "age_band_x_sex"
 
 
 def test_missing_persona_card_names_simulate_population_personas(tmp_path: Path):
@@ -299,6 +304,208 @@ def test_closed_items_match_the_seven_category_counts():
         assert rows
         assert {row["family"] for row in rows} == {family}
         assert [row["turn"] for row in rows] == list(range(1, len(rows) + 1))
+
+
+def test_population_panels_use_the_factor_directory(tmp_path: Path):
+    catalog = catalog_dir(ROOT / "data") / "question_catalog.json"
+    twin_root = ROOT / "data" / "twin2k"
+    if not catalog.is_file():
+        pytest.skip("Twin-2K question catalog is not on disk")
+    (tmp_path / "twin2k").symlink_to(twin_root, target_is_directory=True)
+    levels = {
+        "bachelor_or_higher": [(11, 10.0)],
+        "high_school": [(22, 10.0)],
+        "less_than_high_school": [(33, 10.0)],
+        "some_college": [(44, 10.0)],
+    }
+    _write_population_levels(tmp_path, "education_level", levels)
+    summary = tmp_path / "visitors" / "atus" / "sum" / "atussum_2023.dat"
+    summary.parent.mkdir(parents=True)
+    pd.DataFrame(
+        [{"TUCASEID": 999, "TEAGE": 40, "TESEX": 1, "TUFINLWGT": 99}]
+    ).to_csv(summary, index=False)
+    _write_cards(
+        tmp_path,
+        [
+            _population_card(case_id)
+            for case_id in (11, 22, 33, 44, 999)
+        ],
+    )
+    from popbench.dao.atus_categories import build_atus_category_panels
+
+    out = tmp_path / "out"
+    built = build_atus_category_panels(
+        tmp_path,
+        n=4,
+        seed=0,
+        out_dir=out,
+        families=["heuristics", "pricing"],
+        population="education_level",
+    )
+    assert [person["TUCASEID"] for person in built["personas"]] == [11, 22, 33, 44]
+    assert built["population"] == "education_level"
+    by_family = {panel["family"]: panel for panel in built["panels"]}
+    assert [record["id"] for record in by_family["heuristics"]["records"]] == [
+        record["id"] for record in by_family["pricing"]["records"]
+    ]
+    for family in ("heuristics", "pricing"):
+        manifest = json.loads((out / "families" / family / "manifest.json").read_text())
+        assert manifest["population"] == "education_level"
+        assert manifest["sampling"] == "education_level"
+
+
+def test_comparison_names_the_population_factor(tmp_path: Path):
+    summaries = [
+        _summary("small-model", "heuristics", tvd=0.1, n_items=2),
+        _summary("big-model", "heuristics", tvd=0.5, n_items=2),
+    ]
+    report = build_category_comparison(summaries, population="education_level")
+    assert report["population"] == "education_level"
+    text = render_category_comparison(report)
+    assert "data/atus/by_population/education_level/" in text
+    written = write_category_comparison(tmp_path, summaries, population="education_level")
+    assert written["population"] == "education_level"
+    assert "education_level" in (tmp_path / "compare.md").read_text()
+    plain = render_category_comparison(build_category_comparison(summaries))
+    assert "by_population" not in plain
+    assert "population" not in build_category_comparison(summaries)
+
+
+def test_population_run_directory_names_the_factor(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.chdir(tmp_path)
+    args = argparse.Namespace(
+        run_dir=None,
+        population="education_level",
+        per_age_band=None,
+        n=50,
+        seed=0,
+    )
+    assert _categories_root(args) == (
+        tmp_path / "runs" / "compare" / "atus-categories-education_level-n50-seed0"
+    )
+    args.population = None
+    assert _categories_root(args) == tmp_path / "runs" / "compare" / "atus-categories-n50-seed0"
+    args.per_age_band = 6
+    args.seed = 1
+    assert _categories_root(args) == tmp_path / "runs" / "compare" / "atus-categories-age-n6-seed1"
+
+
+def test_temperature_and_recent_name_a_separate_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.chdir(tmp_path)
+    args = argparse.Namespace(
+        run_dir=None,
+        population="education_level",
+        per_age_band=None,
+        n=50,
+        seed=0,
+        temperature=None,
+        recent=False,
+    )
+    assert _categories_root(args) == (
+        tmp_path / "runs" / "compare" / "atus-categories-education_level-n50-seed0"
+    )
+    args.temperature = 0.8
+    args.recent = True
+    assert _categories_root(args) == (
+        tmp_path / "runs" / "compare" / "atus-categories-education_level-n50-seed0-t0.8-recent"
+    )
+    args.batch = True
+    assert _categories_root(args) == (
+        tmp_path
+        / "runs"
+        / "compare"
+        / "atus-categories-education_level-n50-seed0-t0.8-recent-batch"
+    )
+    args.run_dir = tmp_path / "kept"
+    assert _categories_root(args) == tmp_path / "kept"
+
+
+def test_comparison_records_temperature_and_recent_only_when_passed(tmp_path: Path):
+    summaries = [
+        _summary("small-model", "demographics", tvd=0.2, n_items=14),
+        _summary("big-model", "demographics", tvd=0.4, n_items=14),
+    ]
+    plain = build_category_comparison(summaries)
+    assert "temperature" not in plain
+    assert "recent" not in plain
+    assert "batch" not in plain
+    plain_text = render_category_comparison(plain)
+    assert "温度" not in plain_text
+    assert "recent：" not in plain_text
+    recent = {
+        "draw": 'sha256("education-categories-recent:" + person_id) % 3',
+        "kinds": ["中彩票", "日常琐事", "核爆炸"],
+        "by_id": {"visitor-atus-1": "中彩票", "visitor-atus-2": "核爆炸"},
+    }
+    report = build_category_comparison(summaries, temperature=0.8, recent=recent, batch=True)
+    assert report["temperature"] == 0.8
+    assert report["batch"] is True
+    assert report["recent"]["by_id"] == recent["by_id"]
+    text = render_category_comparison(report)
+    assert "- 请求：同一类里空白 instrument 的题目合成一次请求。\n" in text
+    assert "- 温度：0.8\n" in text
+    assert (
+        "- recent：中彩票、日常琐事、核爆炸，按 "
+        '`sha256("education-categories-recent:" + person_id) % 3` 抽取。\n'
+    ) in text
+    written = write_category_comparison(
+        tmp_path,
+        summaries,
+        temperature=0.8,
+        recent=recent,
+    )
+    saved = json.loads((tmp_path / "compare.json").read_text())
+    assert saved["temperature"] == 0.8
+    assert saved["recent"]["kinds"] == ["中彩票", "日常琐事", "核爆炸"]
+    assert saved["recent"]["by_id"]["visitor-atus-1"] == "中彩票"
+    assert "- 温度：0.8" in (tmp_path / "compare.md").read_text()
+    assert written["temperature"] == 0.8
+
+
+def test_population_and_per_age_band_are_mutually_exclusive(capsys: pytest.CaptureFixture[str]):
+    with pytest.raises(SystemExit) as caught:
+        main(
+            [
+                "compare-categories",
+                "--population",
+                "education_level",
+                "--per-age-band",
+                "5",
+            ]
+        )
+    assert caught.value.code != 0
+    assert "not allowed" in capsys.readouterr().err
+
+
+def _population_card(case_id: int) -> dict:
+    return {
+        "id": f"visitor-atus-{case_id}",
+        "TUCASEID": case_id,
+        "persona_text": f"card {case_id}",
+        "demographics": {"age": 40, "age_band": "30-49", "sex": "Female"},
+    }
+
+
+def _write_population_levels(
+    data_dir: Path,
+    factor: str,
+    levels: dict[str, list[tuple[int, float]]],
+) -> None:
+    folder = data_dir / "atus" / "by_population" / factor
+    folder.mkdir(parents=True, exist_ok=True)
+    for level, rows in levels.items():
+        pd.DataFrame(
+            [
+                {
+                    "TUCASEID": case_id,
+                    "TUFINLWGT": weight,
+                    "TEAGE": 40,
+                    "sex": "Female",
+                    "age_band": "30-49",
+                }
+                for case_id, weight in rows
+            ]
+        ).to_csv(folder / f"{level}.csv", index=False)
 
 
 def _summary(model: str, family: str, *, tvd: float, n_items: int) -> dict:
