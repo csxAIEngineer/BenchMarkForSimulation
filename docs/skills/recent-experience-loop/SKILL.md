@@ -1,16 +1,16 @@
 ---
 name: recent-experience-loop
 description: >-
-  Append one recent event that has already happened to an existing persona
-  card and re-answer BFI-44, iterating at most three rounds against the frozen
-  10.12 farthest and closest items. The event pool includes a lottery payout
-  and a distant nuclear explosion. Use when running the recent-experience
-  pilot, editing recent.py round text, or deciding whether a round is accepted.
+  Append one recent Jin10 flash that has already been stored to an existing
+  persona card and re-answer BFI-44, iterating at most three rounds against
+  the frozen 10.12 farthest and closest items. The paragraph is the flash
+  plain text. Use when running the recent-experience pilot, editing recent.py
+  round assignment, or deciding whether a round is accepted.
 ---
 
 # Recent 经历多轮
 
-在已有人物卡末尾加一节已经发生的大事，再送去答大五人格 44 题。不改 `data/visitors/by_population/adults/personas.jsonl`，不改 BFI 题面，不改 [simulate-persona-prompting](../simulate-persona-prompting/SKILL.md) 的过往经历槽。默认 `answer_survey` 不拼接；只有本循环的试跑才拼接。
+在已有人物卡末尾加一节金十快讯原文，再送去答大五人格 44 题。不改 `data/visitors/by_population/adults/personas.jsonl`，不改 BFI 题面，不改 [simulate-persona-prompting](../simulate-persona-prompting/SKILL.md) 的过往经历槽。默认 `answer_survey` 不拼接；只有本循环的试跑才拼接。快讯来自 `data/recent/jin10.sqlite` 里免费、有主题的正文。
 
 基线是 10.12 的 BFI-44（`deepseek-flash`，每年龄段 50 人）。最远 / 最近各 8 题以 `reports/10.12-report/raw/significance.md` 为准。整段循环不更换这 16 个题号。对照是没有 recent 的第 0 轮，不是上一轮。
 
@@ -39,39 +39,20 @@ description: >-
 
 ## 句子怎么写
 
-recent 是一件已经发生、会改掉这个人接下来怎么过的大事。中彩票、核爆炸这类小概率事件留在池子里，不因为罕见就删掉。不写新的学历、职业、婚姻，不写「我是一个紧张/外向的人」这类特质标签。
+recent 是库里一条已经抓到的金十快讯。卡片上的段落就是这条快讯去掉标记后的正文。不另写中彩票、被迫开口、核爆炸，也不把快讯包进「此人当时在班次/家里」这类句子。
 
-大事轮次的标题是 `## Recent event`，避免模型把它当成又一周杂事。第 1–3 轮已经用 `## Recent weeks` 答完，那些轮次不回头改。
+大事轮次的标题是 `## Recent event`。第 1–3 轮的标题仍是 `## Recent weeks`，那些轮次不回头改标题。第 1–3 轮所有人用最新一条免费快讯。第 4 轮起每人一条，由 `person id + 轮次` 对免费快讯条数取余，重跑不变。年龄段不改这段文字。
 
-年龄段只改事发时的所在，不改事件有多大。
+第 1–3 轮里旧的小事原文留在 `src/popbench/simulate/recent.py` 的 `RECENT_ROUNDS`，不拼进卡片。
 
-| 年龄段 | 所在 |
-| --- | --- |
-| 18-29 | 班次 |
-| 30-49 | 家里 |
-| 50-64 | 单位 |
-| 65+ | 住处 |
-
-同一年龄段不再共用一段话。每人一件事，由 `person id + 轮次` 确定性抽到，重跑不变。
-
-第 1–3 轮是已拒绝的小事，原文留在 `src/popbench/simulate/recent.py` 的 `RECENT_ROUNDS`。新轮次从第 4 轮起，写在同一文件的按人抽取里，不回头改旧轮。
-
-第 4 轮池子，每个年龄段 8 人里的人数：
-
-- 5 人：中彩票或同等突然到账。过去两周里钱已经到手，原来的日程停了，亲戚或陌生人打来，此人只接了其中一次并说了几句，另外买了一件平时不会买的非日用品（票、课、短途）。不写投资、预算、帮助别人。
-- 2 人：被迫公开说一段话（被点名、本地新闻找上门、台上要此人开口）。说完就离开，不写因此变得热情或精力旺盛。
-- 1 人：远处核爆炸或同等已经结束的爆炸。此人在爆心之外，危险已经过去。用它把一部分人推向紧张的那一端，同时给疏离一个由头（少停下来交谈）。不写成仍在逃难，也不写成因此把生活重新安排得很有条理。
-
-核爆炸会把紧张和担心往上推，而这两题的模拟均分已经高于 Twin-2K。所以它只分给少数人，用来撑开尾部，不作为全年龄段的同一件事。中彩票一类的横财分给多数人：常规被打断，有人来找所以得开口，钱上的担心卸掉。后文不写理财、捐赠或帮忙。艺术兴趣少只轻轻动。
-
-第 5、6 轮只改这个配比和后文：紧张均分被爆炸抬离人类，就减少爆炸人数；安静和矜持没降，就增加被迫开口；保护题的均分被推离人类，就删掉对应后文。最多再跑 3 轮。
+保护题的后文不再手写。快讯原文是什么，卡片上就是什么。
 
 ## 人和请求
 
 - 人：从 `runs/simulation/personas.jsonl` 里每个年龄段按原抽样顺序取前 8 人，共 32 人。
 - 第 0 轮直接用已有 `runs/simulation/responses.jsonl`，不再请求。
 - `system_message` 仍吃人物卡正文。试跑前把 recent 接在正文末尾。
-- 第 1–3 轮同一年龄段同一段话。第 4 轮起按该人的 id 与轮次抽取。
+- 第 1–3 轮所有人同一条最新快讯。第 4 轮起按该人的 id 与轮次抽取。
 - 每轮用新目录 `runs/simulation/recent-pilot/round-N`。cache 键不含 system 文本，不能复用基线 cache。
 - 人类份额仍用 Twin-2K 全样本（`runs/simulation/human_baseline.json`）。
 - 作答仍是整份 BFI-44。评分只看冻结的 16 题。

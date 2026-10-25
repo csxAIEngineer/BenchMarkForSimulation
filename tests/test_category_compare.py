@@ -433,9 +433,9 @@ def test_comparison_records_temperature_and_recent_only_when_passed(tmp_path: Pa
     assert "温度" not in plain_text
     assert "recent：" not in plain_text
     recent = {
-        "draw": 'sha256("education-categories-recent:" + person_id) % 3',
-        "kinds": ["中彩票", "日常琐事", "核爆炸"],
-        "by_id": {"visitor-atus-1": "中彩票", "visitor-atus-2": "核爆炸"},
+        "draw": 'sha256("education-categories-recent:" + person_id) % free_flash_count',
+        "kinds": ["flash-00", "flash-01", "flash-02"],
+        "by_id": {"visitor-atus-1": "flash-00", "visitor-atus-2": "flash-02"},
     }
     report = build_category_comparison(summaries, temperature=0.8, recent=recent, batch=True)
     assert report["temperature"] == 0.8
@@ -445,8 +445,8 @@ def test_comparison_records_temperature_and_recent_only_when_passed(tmp_path: Pa
     assert "- 请求：同一类里空白 instrument 的题目合成一次请求。\n" in text
     assert "- 温度：0.8\n" in text
     assert (
-        "- recent：中彩票、日常琐事、核爆炸，按 "
-        '`sha256("education-categories-recent:" + person_id) % 3` 抽取。\n'
+        "- recent：flash-00、flash-01、flash-02，按 "
+        '`sha256("education-categories-recent:" + person_id) % free_flash_count` 抽取。\n'
     ) in text
     written = write_category_comparison(
         tmp_path,
@@ -456,10 +456,198 @@ def test_comparison_records_temperature_and_recent_only_when_passed(tmp_path: Pa
     )
     saved = json.loads((tmp_path / "compare.json").read_text())
     assert saved["temperature"] == 0.8
-    assert saved["recent"]["kinds"] == ["中彩票", "日常琐事", "核爆炸"]
-    assert saved["recent"]["by_id"]["visitor-atus-1"] == "中彩票"
+    assert saved["recent"]["kinds"] == ["flash-00", "flash-01", "flash-02"]
+    assert saved["recent"]["by_id"]["visitor-atus-1"] == "flash-00"
     assert "- 温度：0.8" in (tmp_path / "compare.md").read_text()
     assert written["temperature"] == 0.8
+
+
+def test_one_model_scores_each_category_without_a_ranking(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    _patch_one_category(monkeypatch)
+
+    def forbid_ranking(*_args, **_kwargs):
+        raise AssertionError("one model must not write a ranking")
+
+    monkeypatch.setattr("popbench.cli.write_category_comparison", forbid_ranking)
+    code = main(
+        [
+            "compare-categories",
+            "--models",
+            "deepseek-v4-pro",
+            "--families",
+            "pricing",
+            "--n",
+            "1",
+            "--seed",
+            "0",
+            "--temperature",
+            "0",
+            "--run",
+            str(tmp_path / "run"),
+        ]
+    )
+    assert code == 0
+    run_dir = tmp_path / "run" / "deepseek-v4-pro" / "pricing"
+    summary = json.loads((run_dir / "summary.json").read_text())
+    assert summary["model"] == "deepseek-v4-pro"
+    assert summary["label"] == "定价"
+    assert summary["mean_tvd"] == pytest.approx(0.5)
+    assert "定价" in (run_dir / "report.md").read_text()
+    meta = json.loads((run_dir / "meta.json").read_text())
+    assert meta["request"]["temperature"] == 0.0
+    assert not (tmp_path / "run" / "compare.md").exists()
+    assert not (tmp_path / "run" / "compare.json").exists()
+    captured = capsys.readouterr()
+    assert "Wrote category comparison" not in captured.out
+    assert "per category" not in captured.out
+
+
+def test_two_models_still_write_the_category_ranking(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    _patch_one_category(monkeypatch)
+    code = main(
+        [
+            "compare-categories",
+            "--models",
+            "deepseek-v4-pro",
+            "gpt-5.5",
+            "--families",
+            "pricing",
+            "--n",
+            "1",
+            "--seed",
+            "0",
+            "--temperature",
+            "0",
+            "--run",
+            str(tmp_path / "run"),
+        ]
+    )
+    assert code == 0
+    assert (tmp_path / "run" / "deepseek-v4-pro" / "pricing" / "summary.json").is_file()
+    assert (tmp_path / "run" / "gpt-5.5" / "pricing" / "report.md").is_file()
+    text = (tmp_path / "run" / "compare.md").read_text()
+    assert "deepseek-v4-pro" in text
+    assert "gpt-5.5" in text
+    assert "- 温度：0\n" in text
+    captured = capsys.readouterr()
+    assert "per category" in captured.out
+    assert f"Wrote category comparison to {tmp_path / 'run' / 'compare.md'}" in captured.out
+
+
+def _patch_one_category(monkeypatch: pytest.MonkeyPatch) -> None:
+    item = {
+        "item_id": "Q1",
+        "kind": "choice",
+        "family": "pricing",
+        "block": "Product Preferences - Pricing",
+        "instrument": "",
+        "prompt": "Would you buy this?",
+        "options": ["Yes", "No"],
+        "turn": 1,
+        "encoding": "single",
+        "column": "Q1",
+    }
+    baseline = {
+        "n_respondents": 4,
+        "items": [
+            {
+                "item_id": "Q1",
+                "kind": "choice",
+                "family": "pricing",
+                "n": 4,
+                "shares": [0.5, 0.5],
+                "mean_code": 1.5,
+            }
+        ],
+    }
+    records = [
+        {
+            "id": "visitor-atus-1",
+            "persona": {
+                "id": "visitor-atus-1",
+                "text": "Age: 40",
+                "age_band": "30-49",
+                "sex": "Female",
+            },
+            "turns": [item],
+        }
+    ]
+
+    def fake_build(*_args, **kwargs):
+        return {
+            "personas": [
+                {
+                    "id": "visitor-atus-1",
+                    "text": "Age: 40",
+                    "demographics": {"age_band": "30-49", "sex": "Female"},
+                }
+            ],
+            "panels": [
+                {
+                    "family": "pricing",
+                    "label": "定价",
+                    "items": [item],
+                    "baseline": baseline,
+                    "records": records,
+                    "dir": Path("unused"),
+                }
+            ],
+            "n": 1,
+            "seed": kwargs["seed"],
+            "population": kwargs.get("population"),
+        }
+
+    def fake_answer(records_in, run_dir, **kwargs):
+        run_dir = Path(run_dir)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        settings = kwargs["settings"]
+        write_jsonl(
+            run_dir / "responses.jsonl",
+            [
+                {
+                    "id": records_in[0]["id"],
+                    "answers": [{"item_id": "Q1", "value": 1, "ok": True, "raw": "{}"}],
+                }
+            ],
+        )
+        meta = {
+            "model": settings.model,
+            "panel": kwargs["panel"],
+            "n_people": 1,
+            "n_turns": 1,
+            "seed": kwargs["seed"],
+            "family": kwargs["family"],
+            "request": {
+                "transport": settings.transport,
+                "temperature": settings.temperature,
+                "max_tokens": settings.max_tokens,
+                "extra_body": settings.extra_body,
+            },
+        }
+        (run_dir / "meta.json").write_text(json.dumps(meta) + "\n")
+        return []
+
+    def fake_settings(name: str) -> ModelSettings:
+        return ModelSettings(
+            base_url="https://example.invalid",
+            api_key="test",
+            model=name,
+            temperature=None,
+            max_tokens=None,
+            transport="cr",
+        )
+
+    monkeypatch.setattr("popbench.cli.build_atus_category_panels", fake_build)
+    monkeypatch.setattr("popbench.cli.answer_survey", fake_answer)
+    monkeypatch.setattr("popbench.cli.model_settings_for", fake_settings)
 
 
 def test_population_and_per_age_band_are_mutually_exclusive(capsys: pytest.CaptureFixture[str]):

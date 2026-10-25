@@ -2,7 +2,7 @@
 
 Round 0 reuses ``runs/simulation/responses.jsonl``. Each later round appends
 that round's recent text and answers in a fresh directory. Rounds 1–3 share
-one paragraph per age band. From round 4, each person gets one event.
+the newest Jin10 flash. From round 4, each person gets one flash.
 After an accepted round, that draw is asked of all 200 people.
 """
 
@@ -18,7 +18,6 @@ from popbench.dao.io import read_jsonl
 from popbench.simulate.client import model_settings_from_env
 from popbench.simulate.recent import (
     AGE_BANDS,
-    EVENT_KIND_LABEL,
     FAR_ITEMS,
     FROZEN_ITEMS,
     ITEM_LABEL,
@@ -26,13 +25,13 @@ from popbench.simulate.recent import (
     NEAR_ITEMS,
     accept_round,
     age_band_of,
-    attach_recent,
+    append_recent,
     compare_rounds,
-    event_kind,
     first_per_band,
     has_recent_round,
+    recent_heading,
     recent_is_personal,
-    recent_text,
+    round_recent_payload,
     score_frozen,
 )
 from popbench.simulate.survey import answer_survey
@@ -111,6 +110,7 @@ def run_pilot(
             break
         run_dir = sim / "recent-pilot" / f"round-{round_index}"
         answered = _ensure_answers(pilot_records, run_dir, round_index, workers=workers)
+        recent = _stored_recent(run_dir)
         scores = score_frozen(answered, human)
         decision = compare_rounds(baseline, scores)
         accepted = accept_round(baseline, scores)
@@ -124,6 +124,7 @@ def run_pilot(
             decision=decision,
             n_people=len(ids),
             people=chosen,
+            recent=recent,
         )
         row: dict[str, Any] = {
             "round": round_index,
@@ -131,7 +132,7 @@ def run_pilot(
             **_public_decision(decision),
         }
         if recent_is_personal(round_index):
-            row["draw"] = _draw_counts(chosen, round_index)
+            row["draw"] = _counts_from_recent(recent)
         summary["rounds"].append(row)
         last_round = round_index
         print(
@@ -181,6 +182,7 @@ def run_full(
     if reuse_pilot_cache:
         _reuse_cache(sim / "recent-pilot" / f"round-{round_index}" / "cache", run_dir / "cache")
     answered = _ensure_answers(records, run_dir, round_index, workers=workers)
+    recent = _stored_recent(run_dir)
     scores = score_frozen(answered, human)
     decision = compare_rounds(baseline, scores)
     path = out / "n200.md"
@@ -192,6 +194,7 @@ def run_full(
         decision=decision,
         n_people=len(records),
         people=records,
+        recent=recent,
         title=f"# 200 人对照（第 {round_index} 轮 recent）",
         note=(
             "这 200 人是 10.12 基线的全部样本。第 0 轮是他们已有的答案，没有 recent。"
@@ -225,14 +228,26 @@ def _ensure_answers(
     *,
     workers: int,
 ) -> list[dict[str, Any]]:
-    prepared = [attach_recent(record, round_index) for record in records]
+    snapshot_path = run_dir / "recent.json"
     response_path = run_dir / "responses.jsonl"
-    expected = {record["id"] for record in prepared}
+    prepared_ids = {str(record["id"]) for record in records}
     if response_path.is_file():
         saved = read_jsonl(response_path)
-        if expected <= {row["id"] for row in saved}:
+        if prepared_ids <= {str(row["id"]) for row in saved}:
+            if not snapshot_path.is_file():
+                raise SystemExit(f"reuse {response_path} but {snapshot_path} is missing")
             print(f"reuse {response_path}", flush=True)
-            return [row for row in saved if row["id"] in expected]
+            return [row for row in saved if str(row["id"]) in prepared_ids]
+    if snapshot_path.is_file():
+        payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    else:
+        payload = round_recent_payload(round_index, records)
+        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+        snapshot_path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    prepared = [_attach_saved(record, payload, round_index) for record in records]
     settings = model_settings_from_env()
     answer_survey(
         prepared,
@@ -244,15 +259,11 @@ def _ensure_answers(
         family="personality",
         resume=True,
     )
-    (run_dir / "recent.json").write_text(
-        json.dumps(_recent_payload(round_index, records), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
     saved = read_jsonl(response_path)
-    found = {row["id"] for row in saved}
-    if expected - found:
-        raise SystemExit(f"{run_dir} is missing {len(expected - found)} responses")
-    return [row for row in saved if row["id"] in expected]
+    found = {str(row["id"]) for row in saved}
+    if prepared_ids - found:
+        raise SystemExit(f"{run_dir} is missing {len(prepared_ids - found)} responses")
+    return [row for row in saved if str(row["id"]) in prepared_ids]
 
 
 def _reuse_cache(source: Path, dest: Path) -> None:
@@ -288,6 +299,7 @@ def _write_round(
     decision: dict[str, float | bool] | None,
     n_people: int,
     people: Sequence[Mapping[str, Any]] | None = None,
+    recent: Mapping[str, Any] | None = None,
     title: str | None = None,
     note: str | None = None,
 ) -> None:
@@ -317,15 +329,17 @@ def _write_round(
             f"{_fmt(float(decision['near_mean_abs_baseline']))} → {_fmt(float(decision['near_mean_abs']))}"
             f"（{_signed_change(float(decision['near_abs_rise']), fell='下降', rose='上升')}）"
         )
-    if round_index > 0 and people is not None and recent_is_personal(round_index):
-        counts = _draw_counts(people, round_index)
-        lines.append(
-            "- 抽取："
-            f"中彩票 {counts['windfall']}，被迫开口 {counts['speech']}，核爆炸 {counts['blast']}"
-        )
+    if round_index > 0 and recent_is_personal(round_index):
+        if recent is None:
+            raise ValueError("a per-person round needs the stored recent file")
+        counts = _counts_from_recent(recent)
+        drawn = "，".join(f"{flash_id} {count}" for flash_id, count in counts.items())
+        lines.append(f"- 抽取：{drawn}")
     if round_index > 0:
+        if recent is None:
+            raise ValueError("a scored round needs the stored recent file")
         lines.extend(["", "## Recent 原文", ""])
-        if recent_is_personal(round_index):
+        if recent["by"] == "person":
             if not people:
                 raise ValueError("a per-person round needs the people who were answered")
             grouped: dict[str, list[str]] = {band: [] for band in AGE_BANDS}
@@ -338,16 +352,16 @@ def _write_round(
                 lines.append(f"### {band}")
                 lines.append("")
                 for person_id in grouped[band]:
-                    kind = event_kind(person_id, round_index)
-                    lines.append(f"#### {person_id}（{EVENT_KIND_LABEL[kind]}）")
+                    kind = str(recent["kind"][person_id])
+                    lines.append(f"#### {person_id}（{kind}）")
                     lines.append("")
-                    lines.append(recent_text(band, round_index, person_id=person_id))
+                    lines.append(str(recent["text"][person_id]))
                     lines.append("")
         else:
             for band in AGE_BANDS:
                 lines.append(f"### {band}")
                 lines.append("")
-                lines.append(recent_text(band, round_index))
+                lines.append(str(recent["text"][band]))
                 lines.append("")
     lines.extend(["", "## 16 题", ""])
     lines.append("| 题 | 短名 | 方向 | 第0轮 TVD | 本轮 TVD | TVD 变化 | 第0轮均分 | 本轮均分 | 人类均分 | 绝对差变化 |")
@@ -455,30 +469,43 @@ def _prior_rows(path: Path, start_round: int) -> list[dict[str, Any]]:
     return rows
 
 
-def _draw_counts(people: Sequence[Mapping[str, Any]], round_index: int) -> dict[str, int]:
-    counts = {"windfall": 0, "speech": 0, "blast": 0}
-    for person in people:
-        kind = event_kind(str(person["id"]), round_index)
-        counts[kind] = counts.get(kind, 0) + 1
+def _stored_recent(run_dir: Path) -> dict[str, Any]:
+    path = run_dir / "recent.json"
+    if not path.is_file():
+        raise SystemExit(f"missing {path}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or "text" not in payload or "by" not in payload:
+        raise SystemExit(f"{path} has no stored recent text")
+    return payload
+
+
+def _counts_from_recent(recent: Mapping[str, Any]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for kind in recent["kind"].values():
+        label = str(kind)
+        counts[label] = counts.get(label, 0) + 1
     return counts
 
 
-def _recent_payload(round_index: int, records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    if recent_is_personal(round_index):
-        text = {
-            str(record["id"]): recent_text(
-                age_band_of(record),
-                round_index,
-                person_id=str(record["id"]),
-            )
-            for record in records
-        }
-        return {"round": round_index, "by": "person", "text": text}
-    return {
-        "round": round_index,
-        "by": "age_band",
-        "text": {band: recent_text(band, round_index) for band in AGE_BANDS},
-    }
+def _attach_saved(
+    record: Mapping[str, Any],
+    payload: Mapping[str, Any],
+    round_index: int,
+) -> dict[str, Any]:
+    person_id = str(record["id"])
+    if payload["by"] == "person":
+        paragraph = str(payload["text"][person_id])
+    else:
+        paragraph = str(payload["text"][age_band_of(record)])
+    persona = dict(record["persona"])
+    persona["text"] = append_recent(
+        str(persona["text"]),
+        paragraph,
+        heading=recent_heading(round_index),
+    )
+    updated = dict(record)
+    updated["persona"] = persona
+    return updated
 
 
 def _fmt(value: float) -> str:

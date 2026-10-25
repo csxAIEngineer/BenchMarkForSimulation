@@ -1,13 +1,15 @@
 """Recent text appended for the recent-experience pilot.
 
-Round 0 is the 10.12 BFI-44 run. Rounds 1–3 are one ordinary paragraph per
-age band. From round 4, each person gets one major event drawn from the
-person id and the round. The temperature 0.8 recent run uses a separate
-undiluted pool, drawn from the person id and a fixed seed, and does not
-read these rounds. The education-level category rerun draws one of three
-events with ``sha256("education-categories-recent:" + person_id) % 3``.
-Age band changes only the place. That draw does not read these rounds or
-the undiluted pool. ``answer_survey`` itself never calls this module.
+Round 0 is the 10.12 BFI-44 run. A recent event is one free Jin10 flash.
+The paragraph on the card is that flash's plain text. Rounds 1–3 share the
+newest flash. From round 4, each person is assigned one flash from the person
+id and the round. The temperature 0.8 recent run draws with
+``sha256("t08-recent:" + person_id)`` and does not read these rounds. The
+education-level category rerun draws with
+``sha256("education-categories-recent:" + person_id) % free_flash_count``.
+Age band is checked and does not change the text. The older round sentences
+stay in this file and are not appended to a card. ``answer_survey`` itself
+never calls this module.
 """
 
 from __future__ import annotations
@@ -16,6 +18,7 @@ import hashlib
 from typing import Any, Mapping, Sequence
 
 from popbench.evaluate.metrics import total_variation_distance
+from popbench.simulate.recent_store import EMPTY_STORE_MESSAGE, free_flashes
 
 # Farthest then closest, in the order published in the 10.12 significance note.
 FAR_ITEMS: tuple[str, ...] = (
@@ -182,94 +185,89 @@ _ROUND_3: dict[str, str] = {
 }
 
 # Later rounds are added here after a rejected round. Do not edit an earlier round in place.
+# These sentences stay in the file. Card text is read from the Jin10 store.
 RECENT_ROUNDS: dict[int, dict[str, str]] = {1: _ROUND_1, 2: _ROUND_2, 3: _ROUND_3}
 
 RECENT_EVENT_HEADING = "## Recent event"
 
-# Age band changes only where the person was. The event itself stays the same size.
-_PLACE: dict[str, str] = {
-    "18-29": "on a closing shift",
-    "30-49": "at home",
-    "50-64": "at work",
-    "65+": "at the residence",
+# From round 4, each person is assigned one free flash. The salt keeps a round stable.
+_PERSONAL_SALTS: dict[int, str] = {
+    4: "v4841:",
+    5: "v17358:",
+    6: "v6282:",
 }
 
-_PURCHASES: tuple[str, ...] = ("a ticket to a show", "a class", "a short trip")
-_SPEECHES: tuple[str, ...] = (
-    "this person's name was called and this person had to speak a few sentences where others could hear",
-    "a local news crew came and this person had to speak a few sentences on the spot",
-    "this person had to speak a few sentences from a stage",
-)
-# Round 6 drops "had to". That wording raised nervousness, worry, quiet, and reserve.
-_SPEECHES_SPOKEN: tuple[str, ...] = (
-    "this person's name was called and this person spoke a few sentences to the others there, then answered a further question",
-    "a local news crew came and this person spoke a few sentences to them, then answered a further question",
-    "this person spoke a few sentences from a stage to the people there, then answered a further question",
-)
-
-# sha256(salt + person_id + ":" + round) mod 8. The salt is chosen so the stored
-# first eight personas of each age band land on that round's mix. Later rounds
-# add their own salt and slots. Do not edit an earlier draw in place.
-#
-# Round 4 is five windfalls, two forced speeches, one distant blast.
-# Round 5 keeps one blast: the blast group did not push nervousness further
-# from Twin-2K. Speech goes from two to three because quiet and reserved did
-# not fall. Windfall fills the other four slots.
-# Round 6 keeps one blast for the same reason and raises speech from three to
-# four. Quiet and reserved still did not fall.
-_PERSONAL_DRAWS: dict[int, tuple[str, tuple[str, ...]]] = {
-    4: (
-        "v4841:",
-        ("windfall", "windfall", "windfall", "windfall", "windfall", "speech", "speech", "blast"),
-    ),
-    5: (
-        "v17358:",
-        ("windfall", "windfall", "windfall", "windfall", "speech", "speech", "speech", "blast"),
-    ),
-    6: (
-        "v6282:",
-        ("windfall", "windfall", "windfall", "speech", "speech", "speech", "speech", "blast"),
-    ),
-}
-
-EVENT_KIND_LABEL: dict[str, str] = {
-    "windfall": "中彩票",
-    "speech": "被迫开口",
-    "blast": "核爆炸",
-}
-
-# Temperature 0.8 recent run. Not a pilot round: rounds 4–6 stay as they were.
-# sha256(seed + ":" + person_id) mod 5. The same id and seed always match.
+# Temperature 0.8 recent run. Not a pilot round.
+# sha256(seed + ":" + person_id) mod the free-flash count. The same id and seed always match.
 UNDILUTED_EVENT_SEED = "t08-recent"
-UNDILUTED_EVENT_KINDS: tuple[str, ...] = (
-    "windfall",
-    "blast",
-    "speech",
-    "rupture",
-    "new_task",
-)
-UNDILUTED_EVENT_LABEL: dict[str, str] = {
-    "windfall": "横财应酬",
-    "blast": "远处爆炸",
-    "speech": "当众说完",
-    "rupture": "决裂",
-    "new_task": "新任务",
-}
+
+# Education-level category rerun. Not a pilot round and not the temperature draw.
+# sha256("education-categories-recent:" + person_id) mod the free-flash count.
+EDUCATION_RECENT_DRAW = 'sha256("education-categories-recent:" + person_id) % free_flash_count'
+
+
+def _flashes() -> list[dict[str, Any]]:
+    """Free Jin10 flashes, newest first. Empty store fails with the fetch hint."""
+    rows = free_flashes()
+    if not rows:
+        raise RuntimeError(EMPTY_STORE_MESSAGE)
+    return rows
+
+
+def _require_band(age_band: str) -> str:
+    if age_band not in AGE_BANDS:
+        raise KeyError(f"no recent text for age band {age_band}")
+    return age_band
+
+
+def education_event_ids() -> tuple[str, ...]:
+    """Free flash ids, newest first."""
+    return tuple(str(row["id"]) for row in _flashes())
+
+
+def _row_plain(row: Mapping[str, Any]) -> str:
+    paragraph = str(row["plain"]).strip()
+    if not paragraph:
+        raise ValueError(f"flash {row['id']} has no text")
+    return paragraph
+
+
+def _assigned_row(material: str, *, wide: bool = False) -> dict[str, Any]:
+    """One free flash for this hash. The index and the row come from one read."""
+    rows = _flashes()
+    if wide:
+        digest = hashlib.sha256(material.encode()).digest()
+        index = int.from_bytes(digest, "big") % len(rows)
+    else:
+        index = _hash_slot(material, len(rows))
+    return rows[index]
+
+
+def _plain_for_id(flash_id: str) -> str:
+    for row in _flashes():
+        if str(row["id"]) == flash_id:
+            return _row_plain(row)
+    raise KeyError(f"no recent event for flash {flash_id}")
+
+
+def _hash_slot(material: str, size: int) -> int:
+    digest = hashlib.sha256(material.encode()).digest()
+    return int.from_bytes(digest[:8], "big") % size
 
 
 def has_recent_round(round_index: int) -> bool:
     """True when this round has band text or a per-person draw."""
-    return round_index in RECENT_ROUNDS or round_index in _PERSONAL_DRAWS
+    return round_index in RECENT_ROUNDS or round_index in _PERSONAL_SALTS
 
 
 def recent_is_personal(round_index: int) -> bool:
     """True when each person gets their own event."""
-    return round_index in _PERSONAL_DRAWS
+    return round_index in _PERSONAL_SALTS
 
 
 def recent_heading(round_index: int) -> str:
     """Section title appended for this round."""
-    if round_index in _PERSONAL_DRAWS:
+    if round_index in _PERSONAL_SALTS:
         return RECENT_EVENT_HEADING
     if round_index in RECENT_ROUNDS:
         return RECENT_HEADING
@@ -277,39 +275,32 @@ def recent_heading(round_index: int) -> str:
 
 
 def event_kind(person_id: str, round_index: int) -> str:
-    """Event drawn for this person and round. The same inputs always match."""
+    """Flash id drawn for this person and round. The same inputs always match."""
     try:
-        salt, slots = _PERSONAL_DRAWS[round_index]
+        salt = _PERSONAL_SALTS[round_index]
     except KeyError as exc:
         raise KeyError(f"no event draw for round {round_index}") from exc
-    if len(slots) != 8:
-        raise ValueError(f"round {round_index} draw must have 8 slots")
-    return slots[_draw_slot(person_id, round_index, salt)]
+    if not str(person_id).strip():
+        raise ValueError("recent event needs a person id")
+    return str(_assigned_row(f"{salt}{person_id}:{round_index}")["id"])
 
 
 def recent_text(age_band: str, round_index: int, person_id: str | None = None) -> str:
-    """Recent paragraph for this age band and round.
+    """Plain text of the Jin10 flash for this age band and round.
 
-    Rounds 1–3 depend only on the band and the round. From round 4 the
-    paragraph also depends on ``person_id``, and the same id and round always
-    return the same text.
+    Rounds 1–3 share the newest free flash. From round 4 the flash depends on
+    ``person_id``, and the same id and round always return the same text.
+    Age band is checked and does not change the paragraph.
     """
-    if round_index in _PERSONAL_DRAWS:
-        if not person_id:
+    _require_band(age_band)
+    if round_index in _PERSONAL_SALTS:
+        if not person_id or not str(person_id).strip():
             raise ValueError("recent text for this round needs a person id")
-        try:
-            place = _PLACE[age_band]
-        except KeyError as exc:
-            raise KeyError(f"no recent text for age band {age_band}") from exc
-        return _personal_text(place, round_index, person_id)
-    try:
-        by_band = RECENT_ROUNDS[round_index]
-    except KeyError as exc:
-        raise KeyError(f"no recent text for round {round_index}") from exc
-    try:
-        return by_band[age_band]
-    except KeyError as exc:
-        raise KeyError(f"no recent text for age band {age_band}") from exc
+        salt = _PERSONAL_SALTS[round_index]
+        return _row_plain(_assigned_row(f"{salt}{person_id}:{round_index}"))
+    if round_index not in RECENT_ROUNDS:
+        raise KeyError(f"no recent text for round {round_index}")
+    return _row_plain(_flashes()[0])
 
 
 def append_recent(persona_text: str, recent: str, *, heading: str | None = None) -> str:
@@ -327,104 +318,53 @@ def append_recent(persona_text: str, recent: str, *, heading: str | None = None)
     return f"{persona_text.rstrip()}\n\n{title}\n{paragraph}\n"
 
 
-def _draw_slot(person_id: str, round_index: int, salt: str) -> int:
-    digest = hashlib.sha256(f"{salt}{person_id}:{round_index}".encode()).digest()
-    return int.from_bytes(digest[:8], "big") % 8
-
-
-def _detail_index(person_id: str, round_index: int, size: int) -> int:
-    digest = hashlib.sha256(f"{person_id}:{round_index}:detail".encode()).digest()
-    return int.from_bytes(digest[:8], "big") % size
-
-
-def _windfall_text(place: str, purchase: str) -> str:
-    return (
-        "In the past two weeks, a lottery prize this person had already claimed was paid into the account. "
-        "The money was already there. "
-        f"This person was {place} when it arrived, and then stopped the days that were already on the calendar. "
-        "Relatives and strangers called. This person answered one of those calls, said a few words, "
-        "and did not answer the other calls. "
-        f"This person also bought {purchase}, which is not an everyday item."
-    )
-
-
-def _personal_text(place: str, round_index: int, person_id: str) -> str:
-    kind = event_kind(person_id, round_index)
-    if kind == "windfall":
-        # Round 6 drops the stopped calendar, the unanswered calls, and the
-        # class. Those lines pushed messiness and the conscientiousness items
-        # away from Twin-2K, and the unanswered calls kept quiet and reserved up.
-        if round_index >= 6:
-            return (
-                "In the past two weeks, a lottery prize this person had already claimed was paid into the account. "
-                "The money was already there. "
-                f"This person was {place} when it arrived. "
-                "Relatives and strangers called. This person answered and said a few words."
-            )
-        # Round 4 rotates ticket, class, and short trip. Ticket and short trip
-        # pushed energy and enthusiasm away from Twin-2K, so round 5 keeps only
-        # the class.
-        if round_index >= 5:
-            purchase = "a class"
-        else:
-            purchase = _PURCHASES[_detail_index(person_id, round_index, len(_PURCHASES))]
-        return _windfall_text(place, purchase)
-    if kind == "speech":
-        # Round 4 ends by leaving. That exit pushed enthusiasm away from Twin-2K.
-        # Round 5 stops after the compelled speech. Round 6 drops "had to":
-        # that wording raised nervousness, worry, quiet, and reserve.
-        if round_index >= 6:
-            situation = _SPEECHES_SPOKEN[_detail_index(person_id, round_index, len(_SPEECHES_SPOKEN))]
-            return f"In the past two weeks, while this person was {place}, {situation}."
-        situation = _SPEECHES[_detail_index(person_id, round_index, len(_SPEECHES))]
-        if round_index >= 5:
-            return f"In the past two weeks, while this person was {place}, {situation}."
-        return (
-            f"In the past two weeks, while this person was {place}, {situation}. "
-            "After the words were said, this person left."
-        )
-    if kind == "blast":
-        # Round 6 drops "did not stop to talk". It carried quiet and reserved up.
-        if round_index >= 6:
-            return (
-                "In the past two weeks, a nuclear explosion far from this person had already ended. "
-                "This person was outside the blast. The danger has passed. "
-                f"This person was {place} when the news arrived."
-            )
-        return (
-            "In the past two weeks, a nuclear explosion far from this person had already ended. "
-            "This person was outside the blast. The danger has passed. "
-            f"This person was {place} when the news arrived, and afterward did not stop to talk."
-        )
-    raise ValueError(f"unknown event kind {kind}")
-
-
-def event_places() -> dict[str, str]:
-    """Where the person was, by age band. This is the only band difference."""
-    return dict(_PLACE)
+def round_recent_payload(
+    round_index: int,
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Flash text for one pilot round, from a single read of the store."""
+    rows = _flashes()
+    if round_index in _PERSONAL_SALTS:
+        salt = _PERSONAL_SALTS[round_index]
+        text: dict[str, str] = {}
+        kind: dict[str, str] = {}
+        for record in records:
+            person_id = str(record["id"])
+            if not person_id.strip():
+                raise ValueError("recent event needs a person id")
+            _require_band(age_band_of(record))
+            index = _hash_slot(f"{salt}{person_id}:{round_index}", len(rows))
+            flash = rows[index]
+            text[person_id] = _row_plain(flash)
+            kind[person_id] = str(flash["id"])
+        return {"round": round_index, "by": "person", "text": text, "kind": kind}
+    if round_index not in RECENT_ROUNDS:
+        raise KeyError(f"no recent text for round {round_index}")
+    paragraph = _row_plain(rows[0])
+    flash_id = str(rows[0]["id"])
+    for record in records:
+        _require_band(age_band_of(record))
+    return {
+        "round": round_index,
+        "by": "age_band",
+        "text": {band: paragraph for band in AGE_BANDS},
+        "kind": {band: flash_id for band in AGE_BANDS},
+    }
 
 
 def undiluted_event_kind(person_id: str, *, seed: str = UNDILUTED_EVENT_SEED) -> str:
-    """Undiluted event drawn for this person. The same id and seed always match."""
+    """Flash id drawn for this person. The same id and seed always match."""
     if not str(person_id).strip():
         raise ValueError("undiluted event needs a person id")
     if not str(seed).strip():
         raise ValueError("undiluted event seed is empty")
-    index = _undiluted_index(str(person_id), str(seed), len(UNDILUTED_EVENT_KINDS))
-    return UNDILUTED_EVENT_KINDS[index]
+    return str(_assigned_row(f"{seed}:{person_id}")["id"])
 
 
 def undiluted_event_of_kind(kind: str, age_band: str) -> str:
-    """Text for one undiluted kind. Age band changes only the place."""
-    try:
-        place = _PLACE[age_band]
-    except KeyError as exc:
-        raise KeyError(f"no recent text for age band {age_band}") from exc
-    try:
-        write = _UNDILUTED_TEXT[kind]
-    except KeyError as exc:
-        raise KeyError(f"no undiluted event for kind {kind}") from exc
-    return write(place)
+    """Plain text of one stored flash. Age band is checked and does not change it."""
+    _require_band(age_band)
+    return _plain_for_id(str(kind))
 
 
 def undiluted_event_text(
@@ -433,8 +373,33 @@ def undiluted_event_text(
     *,
     seed: str = UNDILUTED_EVENT_SEED,
 ) -> str:
-    """Undiluted event for this person. Age band changes only the place."""
-    return undiluted_event_of_kind(undiluted_event_kind(person_id, seed=seed), age_band)
+    """Undiluted flash for this person. Age band does not change the text."""
+    _require_band(age_band)
+    if not str(person_id).strip():
+        raise ValueError("undiluted event needs a person id")
+    if not str(seed).strip():
+        raise ValueError("undiluted event seed is empty")
+    return _row_plain(_assigned_row(f"{seed}:{person_id}"))
+
+
+def undiluted_event_payload(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    seed: str = UNDILUTED_EVENT_SEED,
+) -> dict[str, Any]:
+    """Flash catalog and one id per person, from a single read of the store."""
+    if not str(seed).strip():
+        raise ValueError("undiluted event seed is empty")
+    rows = _flashes()
+    events = [{"id": str(row["id"]), "text": _row_plain(row)} for row in rows]
+    people = []
+    for record in records:
+        person_id = str(record["id"])
+        if not person_id.strip():
+            raise ValueError("undiluted event needs a person id")
+        index = _hash_slot(f"{seed}:{person_id}", len(rows))
+        people.append({"id": person_id, "kind": str(rows[index]["id"])})
+    return {"seed": seed, "events": events, "people": people}
 
 
 def undiluted_event_counts(
@@ -442,10 +407,11 @@ def undiluted_event_counts(
     *,
     seed: str = UNDILUTED_EVENT_SEED,
 ) -> dict[str, int]:
-    """How many people drew each undiluted kind."""
-    counts = {kind: 0 for kind in UNDILUTED_EVENT_KINDS}
-    for record in records:
-        counts[undiluted_event_kind(str(record["id"]), seed=seed)] += 1
+    """How many people drew each free flash."""
+    payload = undiluted_event_payload(records, seed=seed)
+    counts = {str(event["id"]): 0 for event in payload["events"]}
+    for row in payload["people"]:
+        counts[str(row["kind"])] += 1
     return counts
 
 
@@ -454,7 +420,7 @@ def attach_undiluted_event(
     *,
     seed: str = UNDILUTED_EVENT_SEED,
 ) -> dict[str, Any]:
-    """Copy a survey record and append one undiluted event.
+    """Copy a survey record and append one stored flash.
 
     The input record and its persona text are not modified.
     """
@@ -469,77 +435,70 @@ def attach_undiluted_event(
     return updated
 
 
-# Education-level category rerun. Not a pilot round and not the undiluted pool.
-# sha256("education-categories-recent:" + person_id) mod 3. The same id always
-# matches. Age band changes only the place. Everyday uses the name-called
-# sentence only, not the other round-6 openings.
-EDUCATION_RECENT_DRAW = 'sha256("education-categories-recent:" + person_id) % 3'
-EDUCATION_RECENT_KINDS: tuple[str, ...] = ("windfall", "everyday", "blast")
-EDUCATION_RECENT_LABEL: dict[str, str] = {
-    "windfall": "中彩票",
-    "everyday": "日常琐事",
-    "blast": "核爆炸",
-}
-
-
 def education_recent_kind(person_id: str) -> str:
-    """Event key for this person. The same id always matches."""
+    """Flash id for this person. The same id always matches."""
     text = str(person_id)
     if not text.strip():
         raise ValueError("education recent needs a person id")
-    digest = hashlib.sha256(f"education-categories-recent:{text}".encode()).digest()
-    return EDUCATION_RECENT_KINDS[int.from_bytes(digest, "big") % len(EDUCATION_RECENT_KINDS)]
-
-
-def education_recent_of_kind(kind: str, age_band: str) -> str:
-    """Text for one education-category event. Age band changes only the place."""
-    try:
-        place = _PLACE[age_band]
-    except KeyError as exc:
-        raise KeyError(f"no recent text for age band {age_band}") from exc
-    try:
-        write = _EDUCATION_TEXT[kind]
-    except KeyError as exc:
-        raise KeyError(f"no education recent event for kind {kind}") from exc
-    return write(place)
+    return str(_assigned_row(f"education-categories-recent:{text}", wide=True)["id"])
 
 
 def education_recent_text(age_band: str, person_id: str) -> str:
-    """Education-category event for this person. Age band changes only the place."""
-    return education_recent_of_kind(education_recent_kind(person_id), age_band)
+    """Stored flash for this person. Age band is checked and does not change it."""
+    _require_band(age_band)
+    text = str(person_id)
+    if not text.strip():
+        raise ValueError("education recent needs a person id")
+    return _row_plain(_assigned_row(f"education-categories-recent:{text}", wide=True))
 
 
-def education_recent_row(person: Mapping[str, Any]) -> dict[str, str]:
-    """Kind, age band, place, and the full paragraph for one person."""
+def education_recent_row(person: Mapping[str, Any]) -> dict[str, Any]:
+    """Flash id, time, topics, and the plain paragraph for one person."""
     person_id = str(person["id"])
     if not person_id.strip():
         raise ValueError("education recent needs a person id")
-    age_band = age_band_of(person)
-    kind = education_recent_kind(person_id)
-    try:
-        place = _PLACE[age_band]
-    except KeyError as exc:
-        raise KeyError(f"no recent text for age band {age_band}") from exc
+    age_band = _require_band(age_band_of(person))
+    flash = _assigned_row(f"education-categories-recent:{person_id}", wide=True)
     return {
         "id": person_id,
-        "kind": EDUCATION_RECENT_LABEL[kind],
+        "kind": str(flash["id"]),
         "age_band": age_band,
-        "place": place,
-        "text": education_recent_of_kind(kind, age_band),
+        "time": str(flash["time"]),
+        "topics": list(flash["topics"]),
+        "text": _row_plain(flash),
     }
 
 
 def education_recent_payload(people: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    """Recent-event file: the draw, the three events, and one row per person."""
+    """Recent-event file: the draw, the stored flashes, and one row per person."""
+    rows = _flashes()
+    assigned = []
+    for person in people:
+        person_id = str(person["id"])
+        if not person_id.strip():
+            raise ValueError("education recent needs a person id")
+        age_band = _require_band(age_band_of(person))
+        digest = hashlib.sha256(f"education-categories-recent:{person_id}".encode()).digest()
+        flash = rows[int.from_bytes(digest, "big") % len(rows)]
+        assigned.append(
+            {
+                "id": person_id,
+                "kind": str(flash["id"]),
+                "age_band": age_band,
+                "time": str(flash["time"]),
+                "topics": list(flash["topics"]),
+                "text": _row_plain(flash),
+            }
+        )
     return {
         "draw": EDUCATION_RECENT_DRAW,
-        "kinds": [EDUCATION_RECENT_LABEL[kind] for kind in EDUCATION_RECENT_KINDS],
-        "people": [education_recent_row(person) for person in people],
+        "kinds": [str(row["id"]) for row in rows],
+        "people": assigned,
     }
 
 
 def education_recent_report(payload: Mapping[str, Any]) -> dict[str, Any]:
-    """Three events and the per-id draw, without the paragraphs."""
+    """Stored flashes and the per-id draw, without the paragraphs."""
     return {
         "draw": payload["draw"],
         "kinds": list(payload["kinds"]),
@@ -548,7 +507,7 @@ def education_recent_report(payload: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def attach_education_recent(record: Mapping[str, Any]) -> dict[str, Any]:
-    """Copy a survey record and append this person's education-category event.
+    """Copy a survey record and append this person's stored flash.
 
     The input record and its persona text are not modified.
     """
@@ -562,100 +521,6 @@ def attach_education_recent(record: Mapping[str, Any]) -> dict[str, Any]:
     updated["persona"] = persona
     return updated
 
-
-def _education_windfall(place: str) -> str:
-    return (
-        "In the past two weeks, a lottery prize this person had already claimed was paid into the account. "
-        "The money was already there. "
-        f"This person was {place} when it arrived. "
-        "Relatives and strangers called. This person answered and said a few words."
-    )
-
-
-def _education_everyday(place: str) -> str:
-    return (
-        f"In the past two weeks, while this person was {place}, "
-        "this person's name was called and this person spoke a few sentences to the others there, "
-        "then answered a further question."
-    )
-
-
-def _education_blast(place: str) -> str:
-    return (
-        "In the past two weeks, a nuclear explosion far from this person had already ended. "
-        "This person was outside the blast. The danger has passed. "
-        f"This person was {place} when the news arrived."
-    )
-
-
-_EDUCATION_TEXT = {
-    "windfall": _education_windfall,
-    "everyday": _education_everyday,
-    "blast": _education_blast,
-}
-
-
-def _undiluted_index(person_id: str, seed: str, size: int) -> int:
-    digest = hashlib.sha256(f"{seed}:{person_id}".encode()).digest()
-    return int.from_bytes(digest[:8], "big") % size
-
-
-def _undiluted_windfall(place: str) -> str:
-    return (
-        "In the past two weeks, a lottery prize this person had already claimed was paid into the account. "
-        "The money was already there. "
-        f"This person was {place} when it arrived. "
-        "The days that were already on the calendar were dropped. "
-        "Relatives and strangers kept calling this person to come sit with them. "
-        "This person now goes to those gatherings and stays through them, "
-        "instead of keeping the day that had been planned."
-    )
-
-
-def _undiluted_blast(place: str) -> str:
-    return (
-        "In the past two weeks, a nuclear explosion far from this person had already ended. "
-        "This person was outside the blast. "
-        f"This person was {place} when the news arrived. "
-        "Since then this person still startles at a loud sound, still checks the window before stepping out, "
-        "and still leaves a room when the noise keeps up."
-    )
-
-
-def _undiluted_speech(place: str) -> str:
-    return (
-        f"In the past two weeks, while this person was {place}, this person stood where others could hear "
-        "and finished saying a matter that had been held back, through to the last sentence. "
-        "Since then, when people are gathered and a point is this person's to give, "
-        "this person says it through to the end instead of stopping after the opening line."
-    )
-
-
-def _undiluted_rupture(place: str) -> str:
-    return (
-        f"In the past two weeks, while this person was {place}, this person and someone close parted. "
-        "The parting is already done. "
-        "This person no longer calls that person, no longer answers that person, "
-        "and no longer goes to the places where they used to meet."
-    )
-
-
-def _undiluted_new_task(place: str) -> str:
-    return (
-        f"In the past two weeks, while this person was {place}, this person took up shaping small figures out of clay, "
-        "which this person had never done. "
-        "This person now sits down to that clay when the evening comes. "
-        "That sitting was not part of the days before."
-    )
-
-
-_UNDILUTED_TEXT = {
-    "windfall": _undiluted_windfall,
-    "blast": _undiluted_blast,
-    "speech": _undiluted_speech,
-    "rupture": _undiluted_rupture,
-    "new_task": _undiluted_new_task,
-}
 
 
 def age_band_of(person: Mapping[str, Any]) -> str:

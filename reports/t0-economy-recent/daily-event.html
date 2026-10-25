@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日常琐事动到的是损失厌恶</title>
+<style>
+  :root {
+    --ink: #1c1b19;
+    --muted: #5c5852;
+    --line: #e4dfd6;
+    --paper: #f7f4ee;
+    --card: #fffdf9;
+    --green: #1f6b4a;
+    --red: #8d3b32;
+    --amber: #8a5a12;
+    --blue: #1e3a5f;
+    --info: #e7f0f6;
+    --warn: #f8f1e4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.6 "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 40px 24px 72px; }
+  h1 { font-size: 28px; line-height: 1.35; font-weight: 650; margin: 0 0 12px; }
+  h2 { font-size: 20px; line-height: 1.4; font-weight: 650; margin: 0 0 8px; }
+  h3 { font-size: 16px; line-height: 1.4; font-weight: 650; margin: 18px 0 8px; }
+  p { margin: 0 0 12px; }
+  .lead, .note { color: var(--muted); }
+  .note { font-size: 13px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0 8px; }
+  .stat { background: var(--card); border: 1px solid var(--line); padding: 14px 14px 12px; }
+  .stat b { display: block; font-size: 26px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat.warn b { color: var(--amber); }
+  .stat.bad b { color: var(--red); }
+  .stat span { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; }
+  .callout { border: 1px solid var(--line); padding: 12px 14px; margin: 16px 0; }
+  .callout.warn { background: var(--warn); }
+  .callout.info { background: var(--info); }
+  .callout strong { display: block; margin-bottom: 4px; }
+  section { margin: 28px 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; margin: 4px 0 10px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+  i.lot { background: var(--red); }
+  i.day { background: var(--green); }
+  i.nuke { background: #8a8478; }
+  .chart { background: var(--card); border: 1px solid var(--line); padding: 12px 12px 4px; overflow-x: auto; }
+  .chart svg { display: block; min-width: 720px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 14px; margin: 8px 0 12px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left; white-space: nowrap; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.alt td { background: #f3efe7; }
+  tr.mark td:first-child { box-shadow: inset 3px 0 var(--amber); }
+  tr.near td:first-child { box-shadow: inset 3px 0 var(--green); }
+  tr.far td:first-child { box-shadow: inset 3px 0 var(--red); }
+  .wide { overflow-x: auto; }
+  .wide table { min-width: 680px; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+  @media (max-width: 800px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    h1 { font-size: 24px; }
+  }
+  @media print {
+    body { background: white; }
+    main { max-width: none; }
+    .stat, table, .callout, .chart { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>日常琐事动到的是损失厌恶，不是整套经济偏好</h1>
+  <p class="lead">这 22 人读到的不是家务。正文是：过去两周，有人叫了这个人的名字，这个人说了几句，又回答了一个后续问题。年龄段只改地点。经济偏好的 TVD 差 −0.025 里，约 −0.023 来自 56 道损失厌恶题。去掉这 56 题，剩下 120 题的 TVD 差是 −0.003。行为实验整类 TVD 差 +0.016，人重抽样区间跨过 0。</p>
+
+  <div class="stats">
+    <div class="stat warn"><b>−0.025</b><span>经济偏好 TVD 差，22 人</span></div>
+    <div class="stat bad"><b>−0.072</b><span>其中损失厌恶 TVD 差</span></div>
+    <div class="stat"><b>−0.003</b><span>去掉损失厌恶后的 TVD 差</span></div>
+    <div class="stat"><b>+0.016</b><span>行为实验 TVD 差</span></div>
+  </div>
+  <p class="note">deepseek-v4-pro，温度 0，seed 0，同一批 50 人。差 = 有事件减无事件。负值表示更接近 Twin-2K 前三波。选择题，题目不加权。</p>
+
+  <div class="callout warn">
+    <strong>类别平均过了线，量表才是原因</strong>
+    经济偏好 TVD 的人重抽样 95% 区间是 [−0.037, −0.002]，臂标签置换 p = 0.07。损失厌恶单独是 [−0.092, −0.025]，置换 p = 0.01；它的 MSE 差 −0.030，区间也在 0 以下。其余经济量表的 TVD 差 −0.003，置换 p = 0.81。类别上的 MSE 差 −0.007 仍然跨过 0，因为没有跟着动的题目把平方误差摊薄了。
+  </div>
+
+  <section>
+    <h2>三种事件在同一张量表上方向相反</h2>
+    <p>中彩票把损失厌恶推离 Twin-2K，日常琐事把它拉近，核爆炸几乎不动。风险厌恶、折现和现时偏差在三种事件下都靠近 0。所以这不是「加了任何一段近况，极端选项就会向人类均值回缩」。</p>
+    <div class="legend"><span><i class="lot"></i>中彩票，18 人</span><span><i class="day"></i>日常琐事，22 人</span><span><i class="nuke"></i>核爆炸，10 人</span></div>
+    <div class="chart"><svg viewBox="0 0 820 256" width="100%" role="img" font-family="PingFang SC, Hiragino Sans GB, sans-serif">
+<line x1="174.0" y1="12" x2="174.0" y2="228" stroke="#e4dfd6"/>
+<text x="174.0" y="248" text-anchor="middle" fill="#5c5852" font-size="11">−0.100</text>
+<line x1="328.5" y1="12" x2="328.5" y2="228" stroke="#e4dfd6"/>
+<text x="328.5" y="248" text-anchor="middle" fill="#5c5852" font-size="11">−0.050</text>
+<line x1="483.0" y1="12" x2="483.0" y2="228" stroke="#e4dfd6"/>
+<text x="483.0" y="248" text-anchor="middle" fill="#5c5852" font-size="11">0</text>
+<line x1="637.5" y1="12" x2="637.5" y2="228" stroke="#e4dfd6"/>
+<text x="637.5" y="248" text-anchor="middle" fill="#5c5852" font-size="11">+0.050</text>
+<line x1="792.0" y1="12" x2="792.0" y2="228" stroke="#e4dfd6"/>
+<text x="792.0" y="248" text-anchor="middle" fill="#5c5852" font-size="11">+0.100</text>
+<line x1="483.0" y1="12" x2="483.0" y2="228" stroke="#8a8478" stroke-dasharray="3 3"/>
+<text x="148" y="37.0" text-anchor="end" fill="#1c1b19" font-size="13">损失厌恶</text>
+<rect x="483.0" y="12.0" width="194.7" height="12" fill="#8d3b32"/>
+<text x="681.7" y="22.0" text-anchor="start" fill="#5c5852" font-size="11">+0.063</text>
+<rect x="260.5" y="27.0" width="222.5" height="12" fill="#1f6b4a"/>
+<text x="256.5" y="37.0" text-anchor="end" fill="#5c5852" font-size="11">−0.072</text>
+<rect x="439.7" y="42.0" width="43.3" height="12" fill="#8a8478"/>
+<text x="435.7" y="52.0" text-anchor="end" fill="#5c5852" font-size="11">−0.014</text>
+<text x="148" y="95.0" text-anchor="end" fill="#1c1b19" font-size="13">风险厌恶</text>
+<rect x="483.0" y="70.0" width="3.1" height="12" fill="#8d3b32"/>
+<text x="490.1" y="80.0" text-anchor="start" fill="#5c5852" font-size="11">+0.001</text>
+<rect x="483.0" y="85.0" width="37.1" height="12" fill="#1f6b4a"/>
+<text x="524.1" y="95.0" text-anchor="start" fill="#5c5852" font-size="11">+0.012</text>
+<rect x="483.0" y="100.0" width="37.1" height="12" fill="#8a8478"/>
+<text x="524.1" y="110.0" text-anchor="start" fill="#5c5852" font-size="11">+0.012</text>
+<text x="148" y="153.0" text-anchor="end" fill="#1c1b19" font-size="13">折现</text>
+<rect x="483.0" y="128.0" width="68.0" height="12" fill="#8d3b32"/>
+<text x="555.0" y="138.0" text-anchor="start" fill="#5c5852" font-size="11">+0.022</text>
+<rect x="445.9" y="143.0" width="37.1" height="12" fill="#1f6b4a"/>
+<text x="441.9" y="153.0" text-anchor="end" fill="#5c5852" font-size="11">−0.012</text>
+<rect x="483.0" y="158.0" width="58.7" height="12" fill="#8a8478"/>
+<text x="545.7" y="168.0" text-anchor="start" fill="#5c5852" font-size="11">+0.019</text>
+<text x="148" y="211.0" text-anchor="end" fill="#1c1b19" font-size="13">现时偏差</text>
+<rect x="483.0" y="186.0" width="49.4" height="12" fill="#8d3b32"/>
+<text x="536.4" y="196.0" text-anchor="start" fill="#5c5852" font-size="11">+0.016</text>
+<rect x="449.0" y="201.0" width="34.0" height="12" fill="#1f6b4a"/>
+<text x="445.0" y="211.0" text-anchor="end" fill="#5c5852" font-size="11">−0.011</text>
+<rect x="445.9" y="216.0" width="37.1" height="12" fill="#8a8478"/>
+<text x="441.9" y="226.0" text-anchor="end" fill="#5c5852" font-size="11">−0.012</text>
+</svg></div>
+    <p class="note">纵轴是量表，横轴是该量表选择题的平均 TVD 差。损失厌恶 56 题，风险厌恶 42 题，折现和现时偏差各 30 题。deepseek-v4-pro，温度 0，seed 0，同一批 50 人。差 = 有事件减无事件。负值表示更接近 Twin-2K 前三波。选择题，题目不加权。</p>
+  </section>
+
+  <section>
+    <h2>答案怎么动的</h2>
+    <p>损失厌恶里有 42 题是同一道阶梯：左边是 50% 亏一笔、50% 不输不赢的彩票，右边是一笔确定的较小亏损。Twin-2K 选彩票的比例是 0.66。日常琐事这 22 人从 0.74 降到 0.64，落在人类比例上。中彩票那 18 人从 0.71 升到 0.78，离人类更远。核爆炸从 0.73 到 0.72。</p>
+    <div class="wide">
+    <table>
+      <thead><tr><th>事件</th><th class="n">人数</th><th class="n">无事件选彩票</th><th class="n">有事件选彩票</th><th class="n">Twin-2K</th></tr></thead>
+      <tbody>
+        <tr class="near"><td>日常琐事</td><td class="n">22</td><td class="n">0.74</td><td class="n">0.64</td><td class="n">0.66</td></tr>
+        <tr class="far alt"><td>中彩票</td><td class="n">18</td><td class="n">0.71</td><td class="n">0.78</td><td class="n">0.66</td></tr>
+        <tr><td>核爆炸</td><td class="n">10</td><td class="n">0.73</td><td class="n">0.72</td><td class="n">0.66</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="note">比例是 42 题的不加权平均。选项 1 为彩票。日常琐事组里，彩票改成确定亏损 127 次，反向 46 次。22 人里 3 人一道都没改，中位数改了 6 / 56 题，最多 25 题。</p>
+    <h3>另外 14 题是带正收益的彩票对确定的 0</h3>
+    <p>人类选彩票的比例是 0.67。三组的无事件答案都只有大约 0.20。日常琐事升到 0.29，中彩票降到 0.17，核爆炸停在 0.21。方向和上面那 42 题一样，幅度小得多。</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>经济偏好里其余量表没有形成差</h2>
+    <p>下表是日常琐事这 22 人。贡献是该量表的 TVD 差乘题数，再除以 176。损失厌恶的贡献是 −0.023，整类平均是 −0.025。</p>
+    <div class="wide">
+    <table>
+      <thead><tr><th>量表</th><th class="n">题数</th><th class="n">TVD 差</th><th class="n">MSE 差</th><th class="n">对整类 TVD 的贡献</th><th class="n">更近的题</th><th class="n">更远的题</th></tr></thead>
+      <tbody>
+        <tr class="mark"><td>损失厌恶</td><td class="n">56</td><td class="n">−0.072</td><td class="n">−0.030</td><td class="n">−0.023</td><td class="n">26</td><td class="n">6</td></tr>
+        <tr class="alt"><td>信任博弈，发送方</td><td class="n">1</td><td class="n">−0.069</td><td class="n">−0.007</td><td class="n">−0.000</td><td class="n">1</td><td class="n">0</td></tr>
+        <tr><td>心理账户</td><td class="n">4</td><td class="n">−0.032</td><td class="n">−0.004</td><td class="n">−0.001</td><td class="n">2</td><td class="n">0</td></tr>
+        <tr class="alt"><td>信任博弈，接收方</td><td class="n">5</td><td class="n">−0.028</td><td class="n">−0.003</td><td class="n">−0.001</td><td class="n">3</td><td class="n">0</td></tr>
+        <tr><td>独裁者博弈</td><td class="n">1</td><td class="n">−0.017</td><td class="n">−0.001</td><td class="n">−0.000</td><td class="n">1</td><td class="n">0</td></tr>
+        <tr class="alt"><td>折现</td><td class="n">30</td><td class="n">−0.012</td><td class="n">−0.005</td><td class="n">−0.002</td><td class="n">7</td><td class="n">1</td></tr>
+        <tr><td>现时偏差</td><td class="n">30</td><td class="n">−0.011</td><td class="n">+0.003</td><td class="n">−0.002</td><td class="n">8</td><td class="n">9</td></tr>
+        <tr class="alt"><td>风险厌恶</td><td class="n">42</td><td class="n">+0.012</td><td class="n">+0.009</td><td class="n">+0.003</td><td class="n">1</td><td class="n">9</td></tr>
+        <tr><td>最后通牒，接收方</td><td class="n">6</td><td class="n">+0.023</td><td class="n">+0.019</td><td class="n">+0.001</td><td class="n">0</td><td class="n">1</td></tr>
+        <tr class="alt"><td>最后通牒，发送方</td><td class="n">1</td><td class="n">+0.045</td><td class="n">+0.004</td><td class="n">+0.000</td><td class="n">0</td><td class="n">1</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="note">更近、更远按单题 TVD 差的符号计数，平的题不计入。社会博弈合在一起 TVD 差 −0.003，置换 p = 0.90。折现加现时偏差 −0.011，置换 p = 0.63。被点名说话并没有带动最后通牒、信任或独裁者博弈。</p>
+  </section>
+
+  <section>
+    <h2>四个年龄段都读到同一句，地点不同</h2>
+    <div class="chart"><svg viewBox="0 0 820 140" width="100%" role="img" font-family="PingFang SC, Hiragino Sans GB, sans-serif">
+<line x1="174.0" y1="12" x2="174.0" y2="112" stroke="#e4dfd6"/>
+<text x="174.0" y="132" text-anchor="middle" fill="#5c5852" font-size="11">−0.030</text>
+<line x1="328.5" y1="12" x2="328.5" y2="112" stroke="#e4dfd6"/>
+<text x="328.5" y="132" text-anchor="middle" fill="#5c5852" font-size="11">−0.015</text>
+<line x1="483.0" y1="12" x2="483.0" y2="112" stroke="#e4dfd6"/>
+<text x="483.0" y="132" text-anchor="middle" fill="#5c5852" font-size="11">0</text>
+<line x1="637.5" y1="12" x2="637.5" y2="112" stroke="#e4dfd6"/>
+<text x="637.5" y="132" text-anchor="middle" fill="#5c5852" font-size="11">+0.015</text>
+<line x1="792.0" y1="12" x2="792.0" y2="112" stroke="#e4dfd6"/>
+<text x="792.0" y="132" text-anchor="middle" fill="#5c5852" font-size="11">+0.030</text>
+<line x1="483.0" y1="12" x2="483.0" y2="112" stroke="#8a8478" stroke-dasharray="3 3"/>
+<text x="148" y="24.0" text-anchor="end" fill="#1c1b19" font-size="13">18–29，下班班次</text>
+<rect x="483.0" y="12.0" width="51.5" height="16" fill="#1e3a5f"/>
+<text x="538.5" y="26.0" text-anchor="start" fill="#5c5852" font-size="11">+0.005</text>
+<text x="148" y="52.0" text-anchor="end" fill="#1c1b19" font-size="13">30–49，在家</text>
+<rect x="369.7" y="40.0" width="113.3" height="16" fill="#1e3a5f"/>
+<text x="365.7" y="54.0" text-anchor="end" fill="#5c5852" font-size="11">−0.011</text>
+<text x="148" y="80.0" text-anchor="end" fill="#1c1b19" font-size="13">50–64，在班上</text>
+<rect x="277.0" y="68.0" width="206.0" height="16" fill="#1e3a5f"/>
+<text x="273.0" y="82.0" text-anchor="end" fill="#5c5852" font-size="11">−0.020</text>
+<text x="148" y="108.0" text-anchor="end" fill="#1c1b19" font-size="13">65+，在住处</text>
+<rect x="318.2" y="96.0" width="164.8" height="16" fill="#1e3a5f"/>
+<text x="314.2" y="110.0" text-anchor="end" fill="#5c5852" font-size="11">−0.016</text>
+</svg></div>
+    <p class="note">人数分别是 4、7、5、6。18–29 只有 4 人，差是 +0.005。另外三个年龄段为负。样本太小，不能把差归于某一个地点。横轴是经济偏好选择题的平均 TVD 差。deepseek-v4-pro，温度 0，seed 0。</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>行为实验的 +0.016 散在各题上</h2>
+    <p>整类 TVD 的人重抽样 95% 区间是 [−0.006, +0.030]，置换 p = 0.22。MSE 差 +0.004，区间同样跨过 0。锚定和阿莱悖论的 TVD 差是 0。看起来最大的虚假共识是 +0.049，但它自己的区间是 [−0.027, +0.102]，置换 p = 0.13。去掉虚假共识，其余 48 题的 TVD 差是 +0.009，置换 p = 0.50。</p>
+    <div class="chart"><svg viewBox="0 0 820 318" width="100%" role="img" font-family="PingFang SC, Hiragino Sans GB, sans-serif">
+<line x1="174.0" y1="12" x2="174.0" y2="290" stroke="#e4dfd6"/>
+<text x="174.0" y="310" text-anchor="middle" fill="#5c5852" font-size="11">−0.100</text>
+<line x1="328.5" y1="12" x2="328.5" y2="290" stroke="#e4dfd6"/>
+<text x="328.5" y="310" text-anchor="middle" fill="#5c5852" font-size="11">−0.050</text>
+<line x1="483.0" y1="12" x2="483.0" y2="290" stroke="#e4dfd6"/>
+<text x="483.0" y="310" text-anchor="middle" fill="#5c5852" font-size="11">0</text>
+<line x1="637.5" y1="12" x2="637.5" y2="290" stroke="#e4dfd6"/>
+<text x="637.5" y="310" text-anchor="middle" fill="#5c5852" font-size="11">+0.050</text>
+<line x1="792.0" y1="12" x2="792.0" y2="290" stroke="#e4dfd6"/>
+<text x="792.0" y="310" text-anchor="middle" fill="#5c5852" font-size="11">+0.100</text>
+<line x1="483.0" y1="12" x2="483.0" y2="290" stroke="#8a8478" stroke-dasharray="3 3"/>
+<text x="148" y="23.0" text-anchor="end" fill="#1c1b19" font-size="13">结果偏差</text>
+<rect x="226.5" y="12.0" width="256.5" height="14" fill="#3d4a57"/>
+<text x="222.5" y="24.0" text-anchor="end" fill="#5c5852" font-size="11">−0.083</text>
+<text x="148" y="45.0" text-anchor="end" fill="#1c1b19" font-size="13">比例优势，安全带</text>
+<rect x="331.6" y="34.0" width="151.4" height="14" fill="#3d4a57"/>
+<text x="327.6" y="46.0" text-anchor="end" fill="#5c5852" font-size="11">−0.049</text>
+<text x="148" y="67.0" text-anchor="end" fill="#1c1b19" font-size="13">支付意愿</text>
+<rect x="377.9" y="56.0" width="105.1" height="14" fill="#3d4a57"/>
+<text x="373.9" y="68.0" text-anchor="end" fill="#5c5852" font-size="11">−0.034</text>
+<text x="148" y="89.0" text-anchor="end" fill="#1c1b19" font-size="13">我方偏差</text>
+<rect x="418.1" y="78.0" width="64.9" height="14" fill="#3d4a57"/>
+<text x="414.1" y="90.0" text-anchor="end" fill="#5c5852" font-size="11">−0.021</text>
+<text x="148" y="111.0" text-anchor="end" fill="#1c1b19" font-size="13">锚定</text>
+<text x="489.0" y="112.0" text-anchor="start" fill="#5c5852" font-size="11">0</text>
+<text x="148" y="133.0" text-anchor="end" fill="#1c1b19" font-size="13">阿莱悖论</text>
+<text x="489.0" y="134.0" text-anchor="start" fill="#5c5852" font-size="11">0</text>
+<text x="148" y="155.0" text-anchor="end" fill="#1c1b19" font-size="13">框架</text>
+<rect x="483.0" y="144.0" width="37.1" height="14" fill="#3d4a57"/>
+<text x="524.1" y="156.0" text-anchor="start" fill="#5c5852" font-size="11">+0.012</text>
+<text x="148" y="177.0" text-anchor="end" fill="#1c1b19" font-size="13">比例优势，车祸</text>
+<rect x="483.0" y="166.0" width="46.4" height="14" fill="#3d4a57"/>
+<text x="533.4" y="178.0" text-anchor="start" fill="#5c5852" font-size="11">+0.015</text>
+<text x="148" y="199.0" text-anchor="end" fill="#1c1b19" font-size="13">概率匹配</text>
+<rect x="483.0" y="188.0" width="61.8" height="14" fill="#3d4a57"/>
+<text x="548.8" y="200.0" text-anchor="start" fill="#5c5852" font-size="11">+0.020</text>
+<text x="148" y="221.0" text-anchor="end" fill="#1c1b19" font-size="13">少即是多</text>
+<rect x="483.0" y="210.0" width="83.4" height="14" fill="#3d4a57"/>
+<text x="570.4" y="222.0" text-anchor="start" fill="#5c5852" font-size="11">+0.027</text>
+<text x="148" y="243.0" text-anchor="end" fill="#1c1b19" font-size="13">相对节省</text>
+<rect x="483.0" y="232.0" width="142.1" height="14" fill="#3d4a57"/>
+<text x="629.1" y="244.0" text-anchor="start" fill="#5c5852" font-size="11">+0.046</text>
+<text x="148" y="265.0" text-anchor="end" fill="#1c1b19" font-size="13">虚假共识</text>
+<rect x="483.0" y="254.0" width="151.4" height="14" fill="#3d4a57"/>
+<text x="638.4" y="266.0" text-anchor="start" fill="#5c5852" font-size="11">+0.049</text>
+<text x="148" y="287.0" text-anchor="end" fill="#1c1b19" font-size="13">琳达合取</text>
+<rect x="483.0" y="276.0" width="163.8" height="14" fill="#3d4a57"/>
+<text x="650.8" y="288.0" text-anchor="start" fill="#5c5852" font-size="11">+0.053</text>
+</svg></div>
+    <p class="note">横轴是该组选择题的平均 TVD 差。题数：概率匹配 16，虚假共识 10，琳达 6，锚定 4，其余 2 或 3。单组的噪声比整类的 ±0.025 更大。deepseek-v4-pro，温度 0，seed 0，日常琐事 22 人。</p>
+  </section>
+
+  <div class="callout info">
+    <strong>这一格可以怎么读</strong>
+    经济偏好上，日常琐事有一个窄而清楚的差：损失彩票对确定亏损的选择，从偏爱彩票回到 Twin-2K 的比例。社会偏好、折现、风险和现时偏差没有同样的差。行为实验整类的差与这 22 个人的抽样波动分不开。只有一个 seed，换一批人这个损失厌恶的差还会再晃。
+  </div>
+</main>
+</body>
+</html>

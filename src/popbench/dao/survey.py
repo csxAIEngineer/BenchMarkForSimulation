@@ -387,8 +387,16 @@ def is_open_entry(entry: dict[str, Any]) -> bool:
 ASK_N = 500
 
 
-def build_closed_items(catalog: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """One scorable answer per row, in catalog order."""
+def build_closed_items(
+    catalog: list[dict[str, Any]],
+    *,
+    minimum: int = 400,
+) -> list[dict[str, Any]]:
+    """One scorable answer per row, in catalog order.
+
+    ``minimum`` is the full Twin-2K catalog's floor. A fixed slice passes a
+    lower floor so a short catalog is not rejected.
+    """
     # Open and descriptive questions are skipped below, so classify the whole
     # catalog first. An unknown block then fails before those rows disappear.
     classified = families_by_question(catalog)
@@ -399,7 +407,7 @@ def build_closed_items(catalog: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if is_open_entry(entry):
             continue
         items.extend(_expand(entry))
-    if len(items) < 400:
+    if len(items) < minimum:
         raise InterviewError(f"expected several hundred closed items, found {len(items)}")
     for turn, item in enumerate(items, start=1):
         item["turn"] = turn

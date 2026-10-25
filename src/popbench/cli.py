@@ -27,6 +27,12 @@ from popbench.dao.atus_populations import (
     split_atus_populations,
 )
 from popbench.dao.atus_twin2k import build_atus_twin2k, load_all_adult_personas
+from popbench.dao.economy_benchmark import (
+    build_economy_benchmark_panels,
+    economy_benchmark_dir,
+    responses_cover,
+    write_economy_benchmark,
+)
 from popbench.dao.interview import InterviewError, build_interview
 from popbench.dao.io import write_jsonl
 from popbench.dao.personas import NEMOTRON_SHARD_COUNT, PersonaError, cache_nemotron_shards
@@ -35,6 +41,7 @@ from popbench.dao.twin2k import DatasetError, load_twin2k, twin2k_dir
 from popbench.dao.visitors import VisitorError, build_visitors, fetch_visitors, visitors_built_dir
 from popbench.evaluate.atus_twin2k import evaluate_atus_twin2k, write_atus_twin2k_comparison
 from popbench.evaluate.categories import evaluate_category_run, write_category_comparison
+from popbench.evaluate.economy_benchmark import evaluate_economy_benchmark
 from popbench.evaluate.significance import render_personality_age_report, write_personality_age_evaluation
 from popbench.evaluate.compare import CompareError
 from popbench.evaluate.interview import evaluate_interview
@@ -50,6 +57,7 @@ from popbench.simulate.client import (
     run_slug,
 )
 from popbench.simulate.interview import run_interview, run_records
+from popbench.simulate.economy_benchmark_recent import run_economy_benchmark_recent
 from popbench.simulate.recent import (
     attach_education_recent,
     education_recent_payload,
@@ -114,6 +122,76 @@ def main(argv: list[str] | None = None) -> int:
     )
     _add_data_dir(split_categories)
     split_categories.set_defaults(func=cmd_split_categories)
+
+    bind_economy = sub.add_parser(
+        "bind-economy-benchmark",
+        help="write the fixed twin2K-economy-bechmark item slice",
+    )
+    _add_data_dir(bind_economy)
+    bind_economy.set_defaults(func=cmd_bind_economy_benchmark)
+
+    answer_benchmark = sub.add_parser(
+        "answer-economy-benchmark",
+        help="answer twin2K-economy-bechmark with ATUS cards and score it",
+    )
+    _add_data_dir(answer_benchmark)
+    answer_benchmark.add_argument(
+        "--model",
+        default="deepseek-v4-pro",
+        help="model under test (default: deepseek-v4-pro)",
+    )
+    answer_benchmark.add_argument("--n", type=int, default=50)
+    answer_benchmark.add_argument("--seed", type=int, default=0)
+    answer_benchmark.add_argument("--workers", type=int, default=4)
+    answer_benchmark.add_argument(
+        "--temperature",
+        type=float,
+        default=0.0,
+        help="sampling temperature sent with each request (default: 0)",
+    )
+    answer_benchmark.add_argument(
+        "--score-only",
+        action="store_true",
+        help="score responses already saved under the run directory",
+    )
+    answer_benchmark.add_argument(
+        "--run",
+        type=Path,
+        default=None,
+        dest="run_dir",
+        help=(
+            "output directory "
+            "(default: runs/compare/twin2K-economy-bechmark-n<n>-seed<seed>-t<temperature>)"
+        ),
+    )
+    answer_benchmark.set_defaults(func=cmd_answer_economy_benchmark)
+
+    answer_recent = sub.add_parser(
+        "answer-economy-benchmark-recent",
+        help=(
+            "answer twin2K-economy-bechmark with deepseek-v4-pro at temperature 0 "
+            "and seed 0, appending one full-store recent flash per ATUS card, then score"
+        ),
+    )
+    _add_data_dir(answer_recent)
+    answer_recent.add_argument("--n", type=int, default=50)
+    answer_recent.add_argument("--workers", type=int, default=4)
+    answer_recent.add_argument(
+        "--score-only",
+        action="store_true",
+        help="score a saved run; recent.json in the run directory is the splice that was used",
+    )
+    answer_recent.add_argument(
+        "--run",
+        type=Path,
+        default=None,
+        dest="run_dir",
+        help=(
+            "output directory "
+            "(default: runs/compare/twin2K-economy-bechmark-n<n>-seed0-t0-recent)"
+        ),
+    )
+    answer_recent.set_defaults(func=cmd_answer_economy_benchmark_recent)
 
     simulate_population_personas_cmd = sub.add_parser(
         "simulate-population-personas",
@@ -441,6 +519,99 @@ def cmd_split_categories(args: argparse.Namespace) -> int:
             f"{row['n_questions']} catalog entries, "
             f"wave1_3 columns {row['wave1_3_columns']}{wave4}"
         )
+    return 0
+
+
+def cmd_answer_economy_benchmark(args: argparse.Namespace) -> int:
+    """Answer the fixed economy slice from ATUS cards, then score wave 1–3 shares."""
+    data_dir = _resolve(args.data_dir)
+    root = _benchmark_root(args)
+    settings = model_settings_for(args.model)
+    if args.temperature is not None:
+        settings = replace(settings, temperature=args.temperature)
+    slug = run_slug(settings.model)
+    built = build_economy_benchmark_panels(
+        data_dir,
+        n=args.n,
+        seed=args.seed,
+        out_dir=root,
+    )
+    print(
+        f"answer {built['n']} ATUS personas on twin2K-economy-bechmark "
+        f"model={settings.model} temperature={format(args.temperature, 'g')} "
+        f"seed={args.seed} -> {root}",
+        flush=True,
+    )
+    for panel in built["panels"]:
+        run_dir = root / slug / panel["family"]
+        if args.score_only or responses_cover(run_dir / "responses.jsonl", panel["records"]):
+            print(f"scoring {settings.model} {panel['family']}", flush=True)
+        else:
+            print(
+                f"simulating {settings.model} {panel['family']} "
+                f"({len(panel['items'])} items) -> {run_dir}",
+                flush=True,
+            )
+            answer_survey(
+                panel["records"],
+                run_dir,
+                workers=args.workers,
+                settings=settings,
+                panel="atus",
+                seed=args.seed,
+                family=panel["family"],
+            )
+    report = evaluate_economy_benchmark(
+        root,
+        built["panels"],
+        slug=slug,
+        seed=args.seed,
+        temperature=args.temperature,
+    )
+    for row in report["families"]:
+        print(f"  {row['label']} tvd={row['mean_tvd']}", flush=True)
+    print(f"  all tvd={report['mean_tvd']}", flush=True)
+    print(f"Wrote {root / 'compare.md'}")
+    return 0
+
+
+def cmd_answer_economy_benchmark_recent(args: argparse.Namespace) -> int:
+    """Splice one full-store flash onto each card, answer, then score the slice."""
+    report = run_economy_benchmark_recent(
+        _resolve(args.data_dir),
+        n=args.n,
+        workers=args.workers,
+        run_dir=None if args.run_dir is None else _resolve(args.run_dir),
+        score_only=args.score_only,
+    )
+    for row in report["families"]:
+        print(f"  {row['label']} tvd={row['mean_tvd']}", flush=True)
+    print(f"  all tvd={report['mean_tvd']}", flush=True)
+    print(f"Wrote {report['out_dir']}/compare.md")
+    return 0
+
+
+def _benchmark_root(args: argparse.Namespace) -> Path:
+    if args.run_dir is not None:
+        return _resolve(args.run_dir)
+    temperature = format(float(args.temperature), "g")
+    name = f"twin2K-economy-bechmark-n{args.n}-seed{args.seed}-t{temperature}"
+    return Path.cwd() / "runs" / "compare" / name
+
+
+def cmd_bind_economy_benchmark(args: argparse.Namespace) -> int:
+    data_dir = _resolve(args.data_dir)
+    data = load_twin2k(data_dir, download=False)
+    dest = economy_benchmark_dir(data_dir)
+    summary = write_economy_benchmark(data, dest)
+    print(
+        f"Wrote {summary['name']} to {dest}: "
+        f"{summary['n_questions']} questions, "
+        f"{summary['n_columns']} columns, "
+        f"wave4 columns {summary['wave4_columns']}"
+    )
+    for family, count in summary["families"].items():
+        print(f"  {family}: {count}")
     return 0
 
 
@@ -796,7 +967,7 @@ def cmd_compare_categories(args: argparse.Namespace) -> int:
     data_dir = _resolve(args.data_dir)
     root = _categories_root(args)
     families = category_families(list(args.families) if args.families else None)
-    minimum = 1 if args.per_age_band else 2
+    minimum = 1
     slugs = _compare_slugs(args.models, minimum=minimum)
     settings_list = None if args.score_only else _compare_settings(args.models, minimum=minimum)
     built = build_atus_category_panels(
@@ -842,6 +1013,7 @@ def cmd_compare_categories(args: argparse.Namespace) -> int:
         flush=True,
     )
     summaries = []
+    wrote_comparison = False
     for index, slug in enumerate(slugs):
         for panel in built["panels"]:
             run_dir = root / slug / panel["family"]
@@ -899,6 +1071,7 @@ def cmd_compare_categories(args: argparse.Namespace) -> int:
                 if len(slugs) == 1:
                     (root / "compare.md").write_text(render_personality_age_report(significance))
                     (root / "significance.json").write_text(json.dumps(significance) + "\n")
+                    wrote_comparison = True
     if len(slugs) >= 2:
         report = write_category_comparison(
             root,
@@ -912,7 +1085,9 @@ def cmd_compare_categories(args: argparse.Namespace) -> int:
         for category in report["categories"]:
             winner = category["ranked"][0]
             print(f"  {category['label']}: {winner['model']} tvd={winner['mean_tvd']}")
-    print(f"Wrote category comparison to {root / 'compare.md'}")
+        wrote_comparison = True
+    if wrote_comparison:
+        print(f"Wrote category comparison to {root / 'compare.md'}")
     return 0
 
 

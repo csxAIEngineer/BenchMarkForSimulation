@@ -1,0 +1,495 @@
+{
+  "model": "deepseek-v4-pro",
+  "temperature": 0.0,
+  "seed": 0,
+  "n_people": 50,
+  "control": "runs/compare/atus-categories-economy-n50-seed0-t0",
+  "treatment": "runs/compare/atus-categories-economy-n50-seed0-t0-recent",
+  "contrast": "recent minus plain",
+  "recent": {
+    "draw": "sha256(\"education-categories-recent:\" + person_id) % 3",
+    "kinds": [
+      "中彩票",
+      "日常琐事",
+      "核爆炸"
+    ],
+    "counts": {
+      "中彩票": 18,
+      "日常琐事": 22,
+      "核爆炸": 10
+    }
+  },
+  "families": [
+    {
+      "family": "economic",
+      "label": "经济偏好",
+      "n_items": 176,
+      "n_choice": 176,
+      "n_numeric": 0,
+      "distances": {
+        "control": {
+          "mean_tvd": 0.20563885943987986,
+          "mean_mse": 0.06325462685180269,
+          "mean_mae": null,
+          "n_choice_scored": 176,
+          "n_numeric_scored": 0,
+          "n_invalid": 0,
+          "n_answers": 8800,
+          "n_people": 50
+        },
+        "treatment": {
+          "mean_tvd": 0.20407125187737432,
+          "mean_mse": 0.06275226015003182,
+          "mean_mae": null,
+          "n_choice_scored": 176,
+          "n_numeric_scored": 0,
+          "n_invalid": 0,
+          "n_answers": 8800,
+          "n_people": 50
+        },
+        "mean_tvd_diff": -0.0015676075625055408,
+        "mean_mse_diff": -0.0005023667017708677,
+        "mean_mae_diff": null
+      },
+      "paired": {
+        "change_rate": 0.12022727272727272,
+        "n_changed": 1058,
+        "n_comparable": 8800,
+        "choice_mean_diff": 0.001818181818181818,
+        "n_choice_paired": 176,
+        "numeric_mean_diff": null,
+        "n_numeric_paired": 0
+      },
+      "by_kind": [
+        {
+          "kind": "中彩票",
+          "n_people": 18,
+          "distances": {
+            "control": {
+              "mean_tvd": 0.2015204891480402,
+              "mean_mse": 0.06248605151310223,
+              "mean_mae": null,
+              "n_choice_scored": 176,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 3168,
+              "n_people": 18
+            },
+            "treatment": {
+              "mean_tvd": 0.23230022528491914,
+              "mean_mse": 0.07759175925337124,
+              "mean_mae": null,
+              "n_choice_scored": 176,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 3168,
+              "n_people": 18
+            },
+            "mean_tvd_diff": 0.030779736136878955,
+            "mean_mse_diff": 0.015105707740269009,
+            "mean_mae_diff": null
+          },
+          "paired": {
+            "change_rate": 0.11837121212121213,
+            "n_changed": 375,
+            "n_comparable": 3168,
+            "choice_mean_diff": -0.012626262626262626,
+            "n_choice_paired": 176,
+            "numeric_mean_diff": null,
+            "n_numeric_paired": 0
+          }
+        },
+        {
+          "kind": "日常琐事",
+          "n_people": 22,
+          "distances": {
+            "control": {
+              "mean_tvd": 0.21183157442433884,
+              "mean_mse": 0.06489227411078376,
+              "mean_mae": null,
+              "n_choice_scored": 176,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 3872,
+              "n_people": 22
+            },
+            "treatment": {
+              "mean_tvd": 0.18682083222899548,
+              "mean_mse": 0.05773300568978237,
+              "mean_mae": null,
+              "n_choice_scored": 176,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 3872,
+              "n_people": 22
+            },
+            "mean_tvd_diff": -0.025010742195343355,
+            "mean_mse_diff": -0.00715926842100139,
+            "mean_mae_diff": null
+          },
+          "paired": {
+            "change_rate": 0.13016528925619836,
+            "n_changed": 504,
+            "n_comparable": 3872,
+            "choice_mean_diff": 0.027376033057851242,
+            "n_choice_paired": 176,
+            "numeric_mean_diff": null,
+            "n_numeric_paired": 0
+          }
+        },
+        {
+          "kind": "核爆炸",
+          "n_people": 10,
+          "distances": {
+            "control": {
+              "mean_tvd": 0.21195887445887446,
+              "mean_mse": 0.07001901888429239,
+              "mean_mae": null,
+              "n_choice_scored": 176,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 1760,
+              "n_people": 10
+            },
+            "treatment": {
+              "mean_tvd": 0.20953595724003887,
+              "mean_mse": 0.06602842715499803,
+              "mean_mae": null,
+              "n_choice_scored": 176,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 1760,
+              "n_people": 10
+            },
+            "mean_tvd_diff": -0.002422917218835585,
+            "mean_mse_diff": -0.003990591729294363,
+            "mean_mae_diff": null
+          },
+          "paired": {
+            "change_rate": 0.10170454545454545,
+            "n_changed": 179,
+            "n_comparable": 1760,
+            "choice_mean_diff": -0.028409090909090908,
+            "n_choice_paired": 176,
+            "numeric_mean_diff": null,
+            "n_numeric_paired": 0
+          }
+        }
+      ]
+    },
+    {
+      "family": "experiments",
+      "label": "行为经济学实验",
+      "n_items": 66,
+      "n_choice": 58,
+      "n_numeric": 8,
+      "distances": {
+        "control": {
+          "mean_tvd": 0.3067498470678125,
+          "mean_mse": 0.042571024539838215,
+          "mean_mae": 75.2159993477772,
+          "n_choice_scored": 58,
+          "n_numeric_scored": 8,
+          "n_invalid": 0,
+          "n_answers": 3300,
+          "n_people": 50
+        },
+        "treatment": {
+          "mean_tvd": 0.3091814875109615,
+          "mean_mse": 0.04615609988316197,
+          "mean_mae": 76.60099934777719,
+          "n_choice_scored": 58,
+          "n_numeric_scored": 8,
+          "n_invalid": 0,
+          "n_answers": 3300,
+          "n_people": 50
+        },
+        "mean_tvd_diff": 0.0024316404431489747,
+        "mean_mse_diff": 0.0035850753433237584,
+        "mean_mae_diff": 1.384999999999991
+      },
+      "paired": {
+        "change_rate": 0.30333333333333334,
+        "n_changed": 1001,
+        "n_comparable": 3300,
+        "choice_mean_diff": 0.04862068965517242,
+        "n_choice_paired": 58,
+        "numeric_mean_diff": 0.285,
+        "n_numeric_paired": 8
+      },
+      "by_kind": [
+        {
+          "kind": "中彩票",
+          "n_people": 18,
+          "distances": {
+            "control": {
+              "mean_tvd": 0.3132079843540177,
+              "mean_mse": 0.042577823353377384,
+              "mean_mae": 74.22433268111054,
+              "n_choice_scored": 58,
+              "n_numeric_scored": 8,
+              "n_invalid": 0,
+              "n_answers": 1188,
+              "n_people": 18
+            },
+            "treatment": {
+              "mean_tvd": 0.3415031375492737,
+              "mean_mse": 0.05297099845942468,
+              "mean_mae": 74.59812495164194,
+              "n_choice_scored": 58,
+              "n_numeric_scored": 8,
+              "n_invalid": 0,
+              "n_answers": 1188,
+              "n_people": 18
+            },
+            "mean_tvd_diff": 0.028295153195255995,
+            "mean_mse_diff": 0.010393175106047293,
+            "mean_mae_diff": 0.3737922705313963
+          },
+          "paired": {
+            "change_rate": 0.3265993265993266,
+            "n_changed": 388,
+            "n_comparable": 1188,
+            "choice_mean_diff": 0.17911877394636017,
+            "n_choice_paired": 58,
+            "numeric_mean_diff": 3.4583333333333335,
+            "n_numeric_paired": 8
+          }
+        },
+        {
+          "kind": "日常琐事",
+          "n_people": 22,
+          "distances": {
+            "control": {
+              "mean_tvd": 0.31381833748236787,
+              "mean_mse": 0.04419092143485114,
+              "mean_mae": 75.30009025686812,
+              "n_choice_scored": 58,
+              "n_numeric_scored": 8,
+              "n_invalid": 0,
+              "n_answers": 1452,
+              "n_people": 22
+            },
+            "treatment": {
+              "mean_tvd": 0.32944896116191064,
+              "mean_mse": 0.048206971428078185,
+              "mean_mae": 77.74895389323174,
+              "n_choice_scored": 58,
+              "n_numeric_scored": 8,
+              "n_invalid": 0,
+              "n_answers": 1452,
+              "n_people": 22
+            },
+            "mean_tvd_diff": 0.015630623679542766,
+            "mean_mse_diff": 0.004016049993227043,
+            "mean_mae_diff": 2.448863636363626
+          },
+          "paired": {
+            "change_rate": 0.29201101928374656,
+            "n_changed": 424,
+            "n_comparable": 1452,
+            "choice_mean_diff": -0.02664576802507837,
+            "n_choice_paired": 58,
+            "numeric_mean_diff": -1.4147727272727273,
+            "n_numeric_paired": 8
+          }
+        },
+        {
+          "kind": "核爆炸",
+          "n_people": 10,
+          "distances": {
+            "control": {
+              "mean_tvd": 0.35927204132364254,
+              "mean_mse": 0.05586330562300725,
+              "mean_mae": 76.8159993477772,
+              "n_choice_scored": 58,
+              "n_numeric_scored": 8,
+              "n_invalid": 0,
+              "n_answers": 660,
+              "n_people": 10
+            },
+            "treatment": {
+              "mean_tvd": 0.3530159112208412,
+              "mean_mse": 0.052700345259708806,
+              "mean_mae": 78.09951384053082,
+              "n_choice_scored": 58,
+              "n_numeric_scored": 8,
+              "n_invalid": 0,
+              "n_answers": 660,
+              "n_people": 10
+            },
+            "mean_tvd_diff": -0.006256130102801349,
+            "mean_mse_diff": -0.0031629603632984463,
+            "mean_mae_diff": 1.2835144927536248
+          },
+          "paired": {
+            "change_rate": 0.2863636363636364,
+            "n_changed": 189,
+            "n_comparable": 660,
+            "choice_mean_diff": -0.020689655172413793,
+            "n_choice_paired": 58,
+            "numeric_mean_diff": -1.6875,
+            "n_numeric_paired": 8
+          }
+        }
+      ]
+    },
+    {
+      "family": "pricing",
+      "label": "定价",
+      "n_items": 40,
+      "n_choice": 40,
+      "n_numeric": 0,
+      "distances": {
+        "control": {
+          "mean_tvd": 0.37781292517006804,
+          "mean_mse": 0.16983216922087452,
+          "mean_mae": null,
+          "n_choice_scored": 40,
+          "n_numeric_scored": 0,
+          "n_invalid": 0,
+          "n_answers": 2000,
+          "n_people": 50
+        },
+        "treatment": {
+          "mean_tvd": 0.3755442176870748,
+          "mean_mse": 0.1684776016795723,
+          "mean_mae": null,
+          "n_choice_scored": 40,
+          "n_numeric_scored": 0,
+          "n_invalid": 0,
+          "n_answers": 2000,
+          "n_people": 50
+        },
+        "mean_tvd_diff": -0.0022687074829932374,
+        "mean_mse_diff": -0.0013545675413022262,
+        "mean_mae_diff": null
+      },
+      "paired": {
+        "change_rate": 0.0765,
+        "n_changed": 153,
+        "n_comparable": 2000,
+        "choice_mean_diff": -0.013500000000000002,
+        "n_choice_paired": 40,
+        "numeric_mean_diff": null,
+        "n_numeric_paired": 0
+      },
+      "by_kind": [
+        {
+          "kind": "中彩票",
+          "n_people": 18,
+          "distances": {
+            "control": {
+              "mean_tvd": 0.36786119209588597,
+              "mean_mse": 0.1655547938474447,
+              "mean_mae": null,
+              "n_choice_scored": 40,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 720,
+              "n_people": 18
+            },
+            "treatment": {
+              "mean_tvd": 0.37228701004211207,
+              "mean_mse": 0.16871252519395158,
+              "mean_mae": null,
+              "n_choice_scored": 40,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 720,
+              "n_people": 18
+            },
+            "mean_tvd_diff": 0.004425817946226096,
+            "mean_mse_diff": 0.0031577313465068757,
+            "mean_mae_diff": null
+          },
+          "paired": {
+            "change_rate": 0.08194444444444444,
+            "n_changed": 59,
+            "n_comparable": 720,
+            "choice_mean_diff": -0.026388888888888885,
+            "n_choice_paired": 40,
+            "numeric_mean_diff": null,
+            "n_numeric_paired": 0
+          }
+        },
+        {
+          "kind": "日常琐事",
+          "n_people": 22,
+          "distances": {
+            "control": {
+              "mean_tvd": 0.391226035868893,
+              "mean_mse": 0.17835875075313323,
+              "mean_mae": null,
+              "n_choice_scored": 40,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 880,
+              "n_people": 22
+            },
+            "treatment": {
+              "mean_tvd": 0.3844078540507112,
+              "mean_mse": 0.17565402659664656,
+              "mean_mae": null,
+              "n_choice_scored": 40,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 880,
+              "n_people": 22
+            },
+            "mean_tvd_diff": -0.006818181818181779,
+            "mean_mse_diff": -0.0027047241564866764,
+            "mean_mae_diff": null
+          },
+          "paired": {
+            "change_rate": 0.07954545454545454,
+            "n_changed": 70,
+            "n_comparable": 880,
+            "choice_mean_diff": -0.00909090909090909,
+            "n_choice_paired": 40,
+            "numeric_mean_diff": null,
+            "n_numeric_paired": 0
+          }
+        },
+        {
+          "kind": "核爆炸",
+          "n_people": 10,
+          "distances": {
+            "control": {
+              "mean_tvd": 0.3819849368318756,
+              "mean_mse": 0.17613862208773554,
+              "mean_mae": null,
+              "n_choice_scored": 40,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 400,
+              "n_people": 10
+            },
+            "treatment": {
+              "mean_tvd": 0.37521622934888244,
+              "mean_mse": 0.16672317019269184,
+              "mean_mae": null,
+              "n_choice_scored": 40,
+              "n_numeric_scored": 0,
+              "n_invalid": 0,
+              "n_answers": 400,
+              "n_people": 10
+            },
+            "mean_tvd_diff": -0.006768707482993186,
+            "mean_mse_diff": -0.009415451895043697,
+            "mean_mae_diff": null
+          },
+          "paired": {
+            "change_rate": 0.06,
+            "n_changed": 24,
+            "n_comparable": 400,
+            "choice_mean_diff": 0.0,
+            "n_choice_paired": 40,
+            "numeric_mean_diff": null,
+            "n_numeric_paired": 0
+          }
+        }
+      ]
+    }
+  ]
+}

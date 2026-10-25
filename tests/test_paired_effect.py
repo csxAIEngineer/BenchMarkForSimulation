@@ -436,7 +436,7 @@ def test_score_fixed_batch_reports_both_endpoints_without_calling_a_model(
     assert model["seeds"][0]["card"][0]["change_rate"] == pytest.approx(1.0)
     assert [row["label"] for row in model["seeds"][0]["focus"]] == ["家庭收入", "政治倾向", "党派", "宗教活动"]
     assert model["seeds"][0]["focus"][0]["n_changed"] == FIXED_N
-    assert report["recent"]["7"]["counts"] == {"中彩票": 9, "日常琐事": 8, "核爆炸": 8}
+    assert report["recent"]["7"]["counts"] == {"flash-00": 9, "flash-01": 8, "flash-02": 8}
     text = render_paired_report(report)
     assert "平均 TVD 差" in text
     assert "平均份额 MSE 差" in text
@@ -470,7 +470,7 @@ def _write_arm(
     (folder / "human_baseline.json").write_text(json.dumps(baseline), encoding="utf-8")
     ids = [f"s{seed}-{index}" for index in range(n_people)]
     if recent:
-        kinds = ("中彩票", "日常琐事", "核爆炸")
+        kinds = ("flash-00", "flash-01", "flash-02")
         payload = {
             "kinds": list(kinds),
             "people": [{"id": person_id, "kind": kinds[index % 3]} for index, person_id in enumerate(ids)],

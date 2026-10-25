@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.popbench.jin10-recent</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/shaneson/AI Agent/.venv/bin/python</string>
+		<string>-u</string>
+		<string>/Users/shaneson/AI Agent/scripts/jin10_fetch.py</string>
+		<string>once</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/shaneson/AI Agent</string>
+	<key>StartInterval</key>
+	<integer>14400</integer>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/Users/shaneson/AI Agent/data/recent/fetch.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/shaneson/AI Agent/data/recent/fetch.log</string>
+</dict>
+</plist>

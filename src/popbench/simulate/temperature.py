@@ -25,14 +25,11 @@ from popbench.simulate.recent import (
     FAR_ITEMS,
     FROZEN_ITEMS,
     NEAR_ITEMS,
-    UNDILUTED_EVENT_KINDS,
-    UNDILUTED_EVENT_LABEL,
+    RECENT_EVENT_HEADING,
     UNDILUTED_EVENT_SEED,
-    attach_undiluted_event,
-    event_places,
+    append_recent,
     score_frozen,
-    undiluted_event_counts,
-    undiluted_event_of_kind,
+    undiluted_event_payload,
 )
 from popbench.simulate.survey import answer_survey
 
@@ -165,6 +162,7 @@ def render_t08_recent(
     *,
     human_extreme: float,
     counts: Mapping[str, int],
+    events: Sequence[Mapping[str, Any]],
 ) -> str:
     """Markdown for temperature 0.8 with one recent event, against 0.8 without it."""
     delta = _tier_delta(recent, plain)
@@ -173,7 +171,7 @@ def render_t08_recent(
         "",
         "温度仍是 0.8，模型是 `deepseek-flash`。题干和选项与 10.12 的 200 人基线相同。"
         "对照是已经答完的、没有 recent 的 0.8 档。"
-        "这一档在每人原人物卡末尾加一件已经发生、并且改变了现在做法的大事，标题是 `## Recent event`。"
+        "这一档在每人原人物卡末尾加一条金十快讯原文，标题是 `## Recent event`。"
         "人类份额来自 Twin-2K 基线。最远 8 题和最近 8 题沿用 10.12 冻结的题号。",
         "",
         "| 条件 | 44 题平均 TVD | 最远 8 题平均 TVD | 最近 8 题平均 TVD | 最近 8 题均分绝对差 | 两端份额 | 无效回答 |",
@@ -193,13 +191,13 @@ def render_t08_recent(
         "",
         _draw_sentence(counts),
         "",
-        "下面每段用 30-49 的地点。其他年龄段只换事发地点。",
+        "下面每段是库里的一条免费快讯。年龄段不改这段文字。",
         "",
     ]
-    for kind in UNDILUTED_EVENT_KINDS:
-        lines.append(f"### {UNDILUTED_EVENT_LABEL[kind]}")
+    for event in events:
+        lines.append(f"### {event['id']}")
         lines.append("")
-        lines.append(undiluted_event_of_kind(kind, "30-49"))
+        lines.append(str(event["text"]))
         lines.append("")
     lines.extend(
         [
@@ -226,12 +224,39 @@ def run_t08_recent(*, workers: int = 8, root: Path | None = None) -> dict[str, A
     plain_rows = _responses_by_id(sim / "temperature" / "t0.8" / "responses.jsonl", expected)
     plain = tier_metrics(plain_rows, human_by_item, item_ids)
     run_dir = sim / "temperature" / T08_RECENT_DIR
+    snapshot_path = run_dir / "recent.json"
     saved = _stored_responses(run_dir / "responses.jsonl", expected)
-    if saved is None:
+    if saved is not None:
+        if not snapshot_path.is_file():
+            raise SystemExit(f"reuse {run_dir / 'responses.jsonl'} but {snapshot_path} is missing")
+        print(f"reuse {run_dir / 'responses.jsonl'}", flush=True)
+        payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    else:
+        if snapshot_path.is_file():
+            payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        else:
+            payload = undiluted_event_payload(records)
+            snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+            snapshot_path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        text_of = {str(event["id"]): str(event["text"]) for event in payload["events"]}
+        kind_of = {str(row["id"]): str(row["kind"]) for row in payload["people"]}
+        attached = []
+        for record in records:
+            persona = dict(record["persona"])
+            persona["text"] = append_recent(
+                str(persona["text"]),
+                text_of[kind_of[str(record["id"])]],
+                heading=RECENT_EVENT_HEADING,
+            )
+            updated = dict(record)
+            updated["persona"] = persona
+            attached.append(updated)
         settings = model_settings_from_env()
         if settings.model != "deepseek-flash":
             raise SystemExit(f"expected deepseek-flash, found {settings.model}")
-        attached = [attach_undiluted_event(record) for record in records]
         answer_survey(
             attached,
             run_dir,
@@ -245,12 +270,18 @@ def run_t08_recent(*, workers: int = 8, root: Path | None = None) -> dict[str, A
         saved = _stored_responses(run_dir / "responses.jsonl", expected)
         if saved is None:
             raise SystemExit(f"{run_dir} is missing responses")
-    else:
-        print(f"reuse {run_dir / 'responses.jsonl'}", flush=True)
+    counts = {str(event["id"]): 0 for event in payload["events"]}
+    for row in payload["people"]:
+        counts[str(row["kind"])] += 1
     recent = tier_metrics(saved, human_by_item, item_ids)
-    counts = undiluted_event_counts(records)
     human_extreme = human_extreme_share(human_by_item, item_ids)
-    text = render_t08_recent(plain, recent, human_extreme=human_extreme, counts=counts)
+    text = render_t08_recent(
+        plain,
+        recent,
+        human_extreme=human_extreme,
+        counts=counts,
+        events=payload["events"],
+    )
     path = t08_recent_report_path(root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
@@ -428,14 +459,10 @@ def _metric_row(label: str, tier: Mapping[str, Any]) -> str:
 
 
 def _draw_sentence(counts: Mapping[str, int]) -> str:
-    places = event_places()
-    place_bits = "、".join(f"{band} 为 `{places[band]}`" for band in ("18-29", "30-49", "50-64", "65+"))
-    drawn = "，".join(
-        f"{UNDILUTED_EVENT_LABEL[kind]} {int(counts[kind])}" for kind in UNDILUTED_EVENT_KINDS
-    )
+    drawn = "，".join(f"{flash_id} {int(counts[flash_id])}" for flash_id in counts)
     return (
-        f"每人一件。抽取：{drawn}。种子是 `{UNDILUTED_EVENT_SEED}`。"
-        f"同一人重跑是同一件事。年龄段只改事发地点：{place_bits}。"
+        f"每人一条金十快讯。抽取：{drawn}。种子是 `{UNDILUTED_EVENT_SEED}`。"
+        "同一人重跑是同一条。"
     )
 
 

@@ -4,8 +4,10 @@ import json
 from pathlib import Path
 
 from popbench.simulate.client import ModelSettings
+from recent_db import FLASHES
 from popbench.simulate.recent import FROZEN_ITEMS
-from popbench.simulate.recent import UNDILUTED_EVENT_LABEL, UNDILUTED_EVENT_SEED
+from popbench.simulate.recent import UNDILUTED_EVENT_SEED
+from popbench.simulate.recent_store import upsert_flashes
 from popbench.simulate.temperature import (
     human_extreme_share,
     run_sweep,
@@ -207,15 +209,36 @@ def test_run_t08_recent_appends_one_event_and_compares_with_plain(tmp_path, monk
     assert "| 差值 | 0.2500 | 0.2500 | 0.2500 | 2.0000 | 1.0000 | — |" in report
     assert "人类基线的两端份额是 0.2500" in report
     assert "`runs/simulation/temperature/t0.8-recent`" in report
-    assert UNDILUTED_EVENT_LABEL["rupture"] in report
-    assert "shaping small figures out of clay" in report
+    assert "横财应酬" not in report
+    assert "核爆炸" not in report
+    assert FLASHES[0] in report
     again: list[dict] = []
     monkeypatch.setattr(
         "popbench.simulate.temperature.answer_survey",
         lambda *args, **kwargs: again.append(kwargs),
     )
-    run_t08_recent(workers=3, root=tmp_path)
+    upsert_flashes(
+        [
+            {
+                "id": "later",
+                "time": "2026-10-19 23:00:00",
+                "channel": [1],
+                "important": 0,
+                "type": 0,
+                "content": "A later headline that must stay off the reused card.",
+                "vip_locked": False,
+                "vip_title": "",
+                "vip_level": 0,
+                "site_tags": [],
+                "topics": ["股指市场"],
+            }
+        ]
+    )
+    reused = run_t08_recent(workers=3, root=tmp_path)
     assert again == []
+    reused_report = Path(reused["report"]).read_text(encoding="utf-8")
+    assert "A later headline" not in reused_report
+    assert FLASHES[0] in reused_report
 
 
 def _write_jsonl(path: Path, rows: list[dict]) -> None:
