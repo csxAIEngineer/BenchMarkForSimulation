@@ -21,6 +21,9 @@ def evaluate_economy_benchmark(
     seed: int,
     temperature: float | None,
     recent: Mapping[str, Any] | None = None,
+    emphasis: str | None = None,
+    splice_recent: bool | None = None,
+    human_simulation: bool = False,
 ) -> dict[str, Any]:
     """Score each saved family run and write one report for the slice."""
     summaries = []
@@ -41,6 +44,13 @@ def evaluate_economy_benchmark(
     report = _report(summaries, item_rows, seed=seed, temperature=temperature)
     if recent is not None:
         report["recent"] = _recent_block(recent)
+    stressed = str(emphasis or "").strip()
+    if stressed:
+        report["emphasis"] = stressed
+    if splice_recent is False:
+        report["splice_recent"] = False
+    if human_simulation:
+        report["human_simulation"] = True
     target = Path(root)
     target.mkdir(parents=True, exist_ok=True)
     (target / "compare.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
@@ -61,6 +71,15 @@ def render_economy_benchmark(report: dict[str, Any]) -> str:
     recent_line = _recent_line(report)
     if recent_line:
         lines.append(recent_line)
+    elif report.get("splice_recent") is False:
+        lines.append("- recent：不拼接。人物卡保持原样。")
+    if report.get("emphasis"):
+        lines.append(f"- 强调：{report['emphasis']}")
+    if report.get("human_simulation"):
+        lines.append(
+            "- 类人模拟：skill/humanSimulation（倾向卡 + 调查 framing；"
+            "定价 buy_prob→Bernoulli；其余选择题 soft probs→外层抽样）。"
+        )
     lines.extend([
         f"- 人数：{report['n_people']}。ATUS 成年人，按年龄段和性别配额抽取。",
         "- 题：固定数据集的 74 个作答列。经济偏好、行为经济学实验、定价各开一段访谈。",

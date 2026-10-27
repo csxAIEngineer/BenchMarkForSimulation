@@ -50,6 +50,7 @@ from popbench.evaluate.survey import evaluate_survey
 from popbench.evaluate.visitors import VisitorEvalError, evaluate_visitors
 from popbench.simulate.client import (
     COMPARE_MODELS,
+    DEFAULT_BASE_URL,
     ModelSettings,
     SettingsError,
     model_settings_for,
@@ -155,13 +156,22 @@ def main(argv: list[str] | None = None) -> int:
         help="score responses already saved under the run directory",
     )
     answer_benchmark.add_argument(
+        "--human-simulation",
+        action="store_true",
+        help=(
+            "use skill/humanSimulation prompting: tendency card, survey framing, "
+            "pricing buy_prob + Bernoulli, soft option weights on other choices"
+        ),
+    )
+    answer_benchmark.add_argument(
         "--run",
         type=Path,
         default=None,
         dest="run_dir",
         help=(
             "output directory "
-            "(default: runs/compare/twin2K-economy-bechmark-n<n>-seed<seed>-t<temperature>)"
+            "(default: runs/compare/twin2K-economy-bechmark-n<n>-seed<seed>-t<temperature>"
+            "[-human-sim])"
         ),
     )
     answer_benchmark.set_defaults(func=cmd_answer_economy_benchmark)
@@ -176,6 +186,16 @@ def main(argv: list[str] | None = None) -> int:
     _add_data_dir(answer_recent)
     answer_recent.add_argument("--n", type=int, default=50)
     answer_recent.add_argument("--workers", type=int, default=4)
+    answer_recent.add_argument(
+        "--no-recent",
+        action="store_true",
+        help="do not append a recent flash; the ATUS card is sent unchanged",
+    )
+    answer_recent.add_argument(
+        "--emphasis",
+        default=None,
+        help="stressed instruction placed above the persona card when answering",
+    )
     answer_recent.add_argument(
         "--score-only",
         action="store_true",
@@ -526,9 +546,23 @@ def cmd_answer_economy_benchmark(args: argparse.Namespace) -> int:
     """Answer the fixed economy slice from ATUS cards, then score wave 1–3 shares."""
     data_dir = _resolve(args.data_dir)
     root = _benchmark_root(args)
-    settings = model_settings_for(args.model)
-    if args.temperature is not None:
-        settings = replace(settings, temperature=args.temperature)
+    human_simulation = bool(getattr(args, "human_simulation", False))
+    if human_simulation and run_slug(args.model) == "deepseek-v4-pro":
+        # Official DeepSeek + thinking off so temperature 0 is honored.
+        base = model_settings_from_env()
+        settings = replace(
+            base,
+            base_url=DEFAULT_BASE_URL,
+            model="deepseek-v4-pro",
+            temperature=float(args.temperature),
+            max_tokens=None,
+            extra_body={"thinking": {"type": "disabled"}},
+            transport="deepseek",
+        )
+    else:
+        settings = model_settings_for(args.model)
+        if args.temperature is not None:
+            settings = replace(settings, temperature=args.temperature)
     slug = run_slug(settings.model)
     built = build_economy_benchmark_panels(
         data_dir,
@@ -536,13 +570,17 @@ def cmd_answer_economy_benchmark(args: argparse.Namespace) -> int:
         seed=args.seed,
         out_dir=root,
     )
+    mode = " human-sim" if human_simulation else ""
     print(
         f"answer {built['n']} ATUS personas on twin2K-economy-bechmark "
         f"model={settings.model} temperature={format(args.temperature, 'g')} "
-        f"seed={args.seed} -> {root}",
+        f"seed={args.seed}{mode} -> {root}",
         flush=True,
     )
     for panel in built["panels"]:
+        records = panel["records"]
+        if human_simulation:
+            records = share_blank_instrument(records, panel["family"])
         run_dir = root / slug / panel["family"]
         if args.score_only or responses_cover(run_dir / "responses.jsonl", panel["records"]):
             print(f"scoring {settings.model} {panel['family']}", flush=True)
@@ -553,13 +591,14 @@ def cmd_answer_economy_benchmark(args: argparse.Namespace) -> int:
                 flush=True,
             )
             answer_survey(
-                panel["records"],
+                records,
                 run_dir,
                 workers=args.workers,
                 settings=settings,
                 panel="atus",
                 seed=args.seed,
                 family=panel["family"],
+                human_simulation=human_simulation,
             )
     report = evaluate_economy_benchmark(
         root,
@@ -567,6 +606,7 @@ def cmd_answer_economy_benchmark(args: argparse.Namespace) -> int:
         slug=slug,
         seed=args.seed,
         temperature=args.temperature,
+        human_simulation=human_simulation,
     )
     for row in report["families"]:
         print(f"  {row['label']} tvd={row['mean_tvd']}", flush=True)
@@ -577,12 +617,19 @@ def cmd_answer_economy_benchmark(args: argparse.Namespace) -> int:
 
 def cmd_answer_economy_benchmark_recent(args: argparse.Namespace) -> int:
     """Splice one full-store flash onto each card, answer, then score the slice."""
+    kwargs: dict[str, object] = {}
+    if args.no_recent:
+        kwargs["splice_recent"] = False
+    emphasis = str(args.emphasis or "").strip()
+    if emphasis:
+        kwargs["emphasis"] = emphasis
     report = run_economy_benchmark_recent(
         _resolve(args.data_dir),
         n=args.n,
         workers=args.workers,
         run_dir=None if args.run_dir is None else _resolve(args.run_dir),
         score_only=args.score_only,
+        **kwargs,
     )
     for row in report["families"]:
         print(f"  {row['label']} tvd={row['mean_tvd']}", flush=True)
@@ -596,6 +643,8 @@ def _benchmark_root(args: argparse.Namespace) -> Path:
         return _resolve(args.run_dir)
     temperature = format(float(args.temperature), "g")
     name = f"twin2K-economy-bechmark-n{args.n}-seed{args.seed}-t{temperature}"
+    if getattr(args, "human_simulation", False):
+        name += "-human-sim"
     return Path.cwd() / "runs" / "compare" / name
 
 

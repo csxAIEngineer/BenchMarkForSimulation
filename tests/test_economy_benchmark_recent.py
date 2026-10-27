@@ -12,6 +12,7 @@ from recent_db import FLASHES
 from popbench.cli import main
 from popbench.evaluate.economy_benchmark import evaluate_economy_benchmark, render_economy_benchmark
 from popbench.simulate.client import ModelSettings
+from popbench.simulate.interview import system_message
 from popbench.simulate.economy_benchmark_recent import (
     DRAW,
     MODEL,
@@ -76,11 +77,29 @@ def test_each_card_gets_one_flash_from_the_full_store():
     assert len(set(kinds)) > 1
 
 
+EMPHASIS = (
+    "你是一个人类，具有懒的性格，随机性，不会有同一锚点，还有库存、习惯、冲动、随便点一下的坏习惯。"
+)
+
+
 def test_default_directory_locks_model_conditions(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.chdir(tmp_path)
     assert default_run_dir(50) == (
         tmp_path / "runs" / "compare" / "twin2K-economy-bechmark-n50-seed0-t0-recent"
     )
+    assert default_run_dir(50, splice_recent=False, emphasis=EMPHASIS) == (
+        tmp_path / "runs" / "compare" / "twin2K-economy-bechmark-n50-seed0-t0-emphasis"
+    )
+
+
+def test_emphasis_replaces_the_consistency_instruction():
+    text = system_message("card one\n", emphasis=EMPHASIS)
+    assert text.index(f"强调：{EMPHASIS}") < text.index("card one")
+    assert "stay consistent" not in text
+    assert "Choose exactly one of the listed options." in text
+    plain = system_message("card one\n")
+    assert "stay consistent across questions" in plain
+    assert "强调：" not in plain
 
 
 def test_report_names_the_full_recent_store():
@@ -153,11 +172,11 @@ def test_run_appends_one_full_store_flash_then_scores(
         build,
     )
     monkeypatch.setattr(
-        "popbench.simulate.economy_benchmark_recent.model_settings_for",
-        lambda name: ModelSettings(
+        "popbench.simulate.economy_benchmark_recent.model_settings_from_env",
+        lambda: ModelSettings(
             base_url="https://example.test",
             api_key="test",
-            model=name,
+            model="ignored",
             temperature=None,
             transport="cr",
         ),
@@ -174,6 +193,9 @@ def test_run_appends_one_full_store_flash_then_scores(
                 "workers": workers,
                 "model": settings.model,
                 "temperature": settings.temperature,
+                "transport": settings.transport,
+                "base_url": settings.base_url,
+                "thinking": settings.extra_body["thinking"]["type"],
                 "panel": panel,
                 "seed": seed,
                 "family": family,
@@ -203,6 +225,9 @@ def test_run_appends_one_full_store_flash_then_scores(
     assert [call["family"] for call in calls] == ["economic", "experiments", "pricing"]
     assert {call["model"] for call in calls} == {MODEL}
     assert {call["temperature"] for call in calls} == {0.0}
+    assert {call["transport"] for call in calls} == {"deepseek"}
+    assert {call["base_url"] for call in calls} == {"https://api.deepseek.com"}
+    assert {call["thinking"] for call in calls} == {"disabled"}
     assert {call["seed"] for call in calls} == {0}
     assert {call["panel"] for call in calls} == {"atus"}
     assert {call["workers"] for call in calls} == {3}
@@ -288,11 +313,11 @@ def test_unfinished_recent_file_still_answers(
         lambda *_args, **_kwargs: _built(tmp_path),
     )
     monkeypatch.setattr(
-        "popbench.simulate.economy_benchmark_recent.model_settings_for",
-        lambda name: ModelSettings(
+        "popbench.simulate.economy_benchmark_recent.model_settings_from_env",
+        lambda: ModelSettings(
             base_url="https://example.test",
             api_key="test",
-            model=name,
+            model="ignored",
             temperature=None,
             transport="cr",
         ),
@@ -341,7 +366,7 @@ def test_finished_recent_file_skips_saved_answers(
         raise AssertionError("a finished recent run must not call the model again")
 
     monkeypatch.setattr("popbench.simulate.economy_benchmark_recent.answer_survey", forbid)
-    monkeypatch.setattr("popbench.simulate.economy_benchmark_recent.model_settings_for", forbid)
+    monkeypatch.setattr("popbench.simulate.economy_benchmark_recent.model_settings_from_env", forbid)
     monkeypatch.setattr(
         "popbench.simulate.economy_benchmark_recent.evaluate_economy_benchmark",
         lambda root, panels, *, slug, seed, temperature, recent: {
@@ -397,7 +422,7 @@ def test_score_only_reads_the_saved_recent_file(
     def forbid(*_args, **_kwargs):
         raise AssertionError("score-only must not call the model")
 
-    monkeypatch.setattr("popbench.simulate.economy_benchmark_recent.model_settings_for", forbid)
+    monkeypatch.setattr("popbench.simulate.economy_benchmark_recent.model_settings_from_env", forbid)
     monkeypatch.setattr("popbench.simulate.economy_benchmark_recent.answer_survey", forbid)
     seen: dict = {}
 
@@ -494,6 +519,204 @@ def test_cli_locks_the_recent_economy_run(
     captured = capsys.readouterr()
     assert "定价" in captured.out
     assert "0.25" in captured.out
+
+
+def test_plain_run_keeps_the_card_and_passes_emphasis(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    calls: list[dict] = []
+
+    def build(_data_dir, *, n, seed, out_dir):
+        assert n == 2
+        assert seed == 0
+        return _built(out_dir)
+
+    monkeypatch.setattr(
+        "popbench.simulate.economy_benchmark_recent.build_economy_benchmark_panels",
+        build,
+    )
+    monkeypatch.setattr(
+        "popbench.simulate.economy_benchmark_recent.model_settings_from_env",
+        lambda: ModelSettings(
+            base_url="https://example.test",
+            api_key="test",
+            model="ignored",
+            temperature=None,
+            transport="cr",
+        ),
+    )
+    monkeypatch.setattr(
+        "popbench.simulate.economy_benchmark_recent.responses_cover",
+        lambda *_args, **_kwargs: False,
+    )
+
+    def answer(records, run_dir, workers, settings, *, panel, seed, family, emphasis):
+        calls.append(
+            {
+                "records": records,
+                "model": settings.model,
+                "temperature": settings.temperature,
+                "transport": settings.transport,
+                "base_url": settings.base_url,
+                "thinking": settings.extra_body["thinking"]["type"],
+                "panel": panel,
+                "seed": seed,
+                "family": family,
+                "emphasis": emphasis,
+            }
+        )
+
+    seen: dict = {}
+
+    def evaluate(root, panels, *, slug, seed, temperature, recent, emphasis, splice_recent):
+        seen.update(
+            {
+                "slug": slug,
+                "seed": seed,
+                "temperature": temperature,
+                "recent": recent,
+                "emphasis": emphasis,
+                "splice_recent": splice_recent,
+            }
+        )
+        return {
+            "model": slug,
+            "seed": seed,
+            "temperature": temperature,
+            "mean_tvd": 0.2,
+            "families": [{"label": panel["family"], "mean_tvd": 0.2} for panel in panels],
+            "out_dir": str(root),
+        }
+
+    monkeypatch.setattr("popbench.simulate.economy_benchmark_recent.answer_survey", answer)
+    monkeypatch.setattr(
+        "popbench.simulate.economy_benchmark_recent.evaluate_economy_benchmark",
+        evaluate,
+    )
+
+    report = run_economy_benchmark_recent(
+        tmp_path,
+        n=2,
+        workers=3,
+        run_dir=tmp_path / "plain",
+        splice_recent=False,
+        emphasis=EMPHASIS,
+    )
+
+    assert report["model"] == MODEL
+    assert seen == {
+        "slug": MODEL,
+        "seed": SEED,
+        "temperature": TEMPERATURE,
+        "recent": None,
+        "emphasis": EMPHASIS,
+        "splice_recent": False,
+    }
+    assert [call["family"] for call in calls] == ["economic", "experiments", "pricing"]
+    assert {call["emphasis"] for call in calls} == {EMPHASIS}
+    assert {call["model"] for call in calls} == {MODEL}
+    assert {call["temperature"] for call in calls} == {0.0}
+    assert {call["transport"] for call in calls} == {"deepseek"}
+    assert {call["base_url"] for call in calls} == {"https://api.deepseek.com"}
+    assert {call["thinking"] for call in calls} == {"disabled"}
+    assert {call["seed"] for call in calls} == {0}
+    assert {call["panel"] for call in calls} == {"atus"}
+    for call in calls:
+        for record in call["records"]:
+            assert "## Recent event" not in record["persona"]["text"]
+            assert record["persona"]["text"] in {"card one\n", "card two\n"}
+    note = json.loads((tmp_path / "plain" / "run.json").read_text())
+    assert note["splice_recent"] is False
+    assert note["emphasis"] == EMPHASIS
+    assert note["model"] == MODEL
+    assert note["temperature"] == 0.0
+    assert note["seed"] == 0
+    assert note["transport"] == "deepseek"
+    assert note["base_url"] == "https://api.deepseek.com"
+    assert note["answered"] is True
+    assert not (tmp_path / "plain" / "recent.json").exists()
+
+
+def test_plain_run_refuses_a_directory_that_already_spliced_recent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        "popbench.simulate.economy_benchmark_recent.build_economy_benchmark_panels",
+        lambda *_args, **_kwargs: _built(tmp_path),
+    )
+
+    def forbid(*_args, **_kwargs):
+        raise AssertionError("must not answer a spliced directory without recent")
+
+    monkeypatch.setattr("popbench.simulate.economy_benchmark_recent.answer_survey", forbid)
+    root = tmp_path / "out"
+    root.mkdir()
+    (root / "recent.json").write_text("{}\n")
+    with pytest.raises(EconomyBenchmarkRecentError, match="splices recent flashes"):
+        run_economy_benchmark_recent(
+            tmp_path,
+            n=2,
+            run_dir=root,
+            splice_recent=False,
+            emphasis=EMPHASIS,
+        )
+
+
+def test_report_names_an_unspliced_emphasis():
+    report = _scored_report()
+    report.pop("recent")
+    report["splice_recent"] = False
+    report["emphasis"] = EMPHASIS
+    text = render_economy_benchmark(report)
+    assert "- recent：不拼接。人物卡保持原样。" in text
+    assert f"- 强调：{EMPHASIS}" in text
+
+
+def test_cli_can_skip_recent_and_set_emphasis(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    seen: dict = {}
+
+    def fake(data_dir, *, n, workers, run_dir, score_only, splice_recent, emphasis):
+        seen.update(
+            {
+                "data_dir": data_dir,
+                "n": n,
+                "workers": workers,
+                "run_dir": run_dir,
+                "score_only": score_only,
+                "splice_recent": splice_recent,
+                "emphasis": emphasis,
+            }
+        )
+        return {
+            "mean_tvd": 0.25,
+            "families": [{"label": "定价", "mean_tvd": 0.25}],
+            "out_dir": str(run_dir),
+        }
+
+    monkeypatch.setattr("popbench.cli.run_economy_benchmark_recent", fake)
+    code = main(
+        [
+            "answer-economy-benchmark-recent",
+            "--data-dir",
+            str(tmp_path),
+            "--no-recent",
+            "--emphasis",
+            EMPHASIS,
+            "--run",
+            str(tmp_path / "out"),
+        ]
+    )
+    assert code == 0
+    assert seen["splice_recent"] is False
+    assert seen["emphasis"] == EMPHASIS
+    assert seen["score_only"] is False
+    assert seen["n"] == 50
+    assert seen["run_dir"] == tmp_path / "out"
 
 
 def test_cli_rejects_model_temperature_and_seed_overrides():

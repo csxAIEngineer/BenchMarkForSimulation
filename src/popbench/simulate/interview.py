@@ -27,7 +27,20 @@ from popbench.simulate.client import (
 )
 
 
-def system_message(persona_text: str) -> str:
+def system_message(persona_text: str, *, emphasis: str | None = None) -> str:
+    """Survey system text. The persona card stays below any stressed instruction.
+
+    The default asks the model to stay consistent. A stressed instruction
+    replaces that sentence, because the two would compete.
+    """
+    stressed = str(emphasis or "").strip()
+    if stressed:
+        return (
+            "You are taking a survey as the person described below. "
+            "Choose exactly one of the listed options.\n\n"
+            f"强调：{stressed}\n\n"
+            f"{persona_text}"
+        )
     return (
         "You are taking a survey as the person described below. "
         "Answer as that person would, and stay consistent across questions. "

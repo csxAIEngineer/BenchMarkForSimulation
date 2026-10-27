@@ -21,7 +21,12 @@ from popbench.dao.economy_benchmark import (
 )
 from popbench.dao.interview import InterviewError
 from popbench.evaluate.economy_benchmark import evaluate_economy_benchmark
-from popbench.simulate.client import ModelSettings, model_settings_for, run_slug
+from popbench.simulate.client import (
+    DEFAULT_BASE_URL,
+    ModelSettings,
+    model_settings_from_env,
+    run_slug,
+)
 from popbench.simulate.recent import AGE_BANDS, RECENT_EVENT_HEADING, age_band_of, append_recent
 from popbench.simulate.recent_store import EMPTY_STORE_MESSAGE, free_flashes
 from popbench.simulate.survey import answer_survey
@@ -37,9 +42,23 @@ class EconomyBenchmarkRecentError(InterviewError):
     """This recent economy-benchmark run cannot use the saved directory."""
 
 
-def default_run_dir(n: int) -> Path:
-    """Directory for this locked model, temperature, and seed."""
-    return Path.cwd() / "runs" / "compare" / f"{DATASET_NAME}-n{n}-seed{SEED}-t0-recent"
+def default_run_dir(
+    n: int,
+    *,
+    splice_recent: bool = True,
+    emphasis: str | None = None,
+) -> Path:
+    """Directory for this locked model, temperature, and seed.
+
+    A stressed instruction gets its own suffix. Leaving recent off removes
+    the ``-recent`` suffix, so those answers cannot reuse a spliced cache.
+    """
+    name = f"{DATASET_NAME}-n{n}-seed{SEED}-t0"
+    if splice_recent:
+        name += "-recent"
+    if str(emphasis or "").strip():
+        name += "-emphasis"
+    return Path.cwd() / "runs" / "compare" / name
 
 
 def economy_benchmark_recent_kind(person_id: str) -> str:
@@ -109,13 +128,26 @@ def run_economy_benchmark_recent(
     workers: int = 4,
     run_dir: Path | None = None,
     score_only: bool = False,
+    splice_recent: bool = True,
+    emphasis: str | None = None,
 ) -> dict[str, Any]:
-    """Splice one full-store flash onto each card, answer, then score."""
+    """Answer the locked economy slice, then score it.
+
+    The default splices one full-store flash onto each card. ``splice_recent``
+    false leaves the ATUS card unchanged. ``emphasis`` is a stressed
+    instruction placed above that card when the questions are asked.
+    """
     _require_positive("n", n)
     _require_positive("workers", workers)
-    root = Path(run_dir) if run_dir is not None else default_run_dir(n)
+    stressed = str(emphasis or "").strip()
+    root = (
+        Path(run_dir)
+        if run_dir is not None
+        else default_run_dir(n, splice_recent=splice_recent, emphasis=stressed)
+    )
     slug = run_slug(MODEL)
-    if score_only:
+    recent_report = None
+    if score_only and splice_recent:
         payload = _read_saved_recent(root)
         saved_n = len(payload["people"])
         if saved_n != n:
@@ -124,24 +156,47 @@ def run_economy_benchmark_recent(
             )
         print(f"scoring saved {DATASET_NAME} recent run -> {root}", flush=True)
         built = build_economy_benchmark_panels(Path(data_dir), n=n, seed=SEED, out_dir=root)
+        recent_report = economy_benchmark_recent_report(payload)
+    elif score_only:
+        stressed = _read_plain_note(root, stressed)
+        print(f"scoring saved {DATASET_NAME} plain run -> {root}", flush=True)
+        built = build_economy_benchmark_panels(Path(data_dir), n=n, seed=SEED, out_dir=root)
     else:
         built = build_economy_benchmark_panels(Path(data_dir), n=n, seed=SEED, out_dir=root)
-        payload, reuse = _prepare_recent(root, built, slug)
+        if splice_recent:
+            payload, reuse = _prepare_recent(root, built, slug)
+            recent_report = economy_benchmark_recent_report(payload)
+            detail = f"recent={len(payload['kinds'])}"
+        else:
+            reuse = _prepare_plain(root, built, slug, stressed)
+            detail = "recent=0"
+        if stressed:
+            detail += " emphasis=1"
         print(
             f"answer {built['n']} ATUS personas on {DATASET_NAME} "
-            f"model={MODEL} temperature=0 seed={SEED} "
-            f"recent={len(payload['kinds'])} -> {root}",
+            f"model={MODEL} temperature=0 seed={SEED} api={DEFAULT_BASE_URL} {detail} -> {root}",
             flush=True,
         )
-        _answer_panels(built, root, slug, workers=workers, reuse=reuse)
-    return evaluate_economy_benchmark(
-        root,
-        built["panels"],
-        slug=slug,
-        seed=SEED,
-        temperature=TEMPERATURE,
-        recent=economy_benchmark_recent_report(payload),
-    )
+        _answer_panels(
+            built,
+            root,
+            slug,
+            workers=workers,
+            reuse=reuse,
+            emphasis=stressed,
+            splice_recent=splice_recent,
+        )
+    eval_kwargs: dict[str, Any] = {
+        "slug": slug,
+        "seed": SEED,
+        "temperature": TEMPERATURE,
+        "recent": recent_report,
+    }
+    if stressed:
+        eval_kwargs["emphasis"] = stressed
+    if not splice_recent:
+        eval_kwargs["splice_recent"] = False
+    return evaluate_economy_benchmark(root, built["panels"], **eval_kwargs)
 
 
 def _person_row(rows: Sequence[Mapping[str, Any]], person: Mapping[str, Any]) -> dict[str, Any]:
@@ -205,6 +260,8 @@ def _answer_panels(
     *,
     workers: int,
     reuse: bool,
+    emphasis: str = "",
+    splice_recent: bool = True,
 ) -> None:
     settings = None
     for panel in built["panels"]:
@@ -219,16 +276,24 @@ def _answer_panels(
             f"({len(panel['items'])} items) -> {run_dir}",
             flush=True,
         )
+        answer_kwargs: dict[str, Any] = {
+            "panel": "atus",
+            "seed": SEED,
+            "family": panel["family"],
+        }
+        if emphasis:
+            answer_kwargs["emphasis"] = emphasis
         answer_survey(
             panel["records"],
             run_dir,
             workers=workers,
             settings=settings,
-            panel="atus",
-            seed=SEED,
-            family=panel["family"],
+            **answer_kwargs,
         )
-    _mark_answered(Path(root) / "recent.json")
+    if splice_recent:
+        _mark_answered(Path(root) / "recent.json")
+    else:
+        _mark_plain_answered(Path(root) / "run.json")
 
 
 def _read_saved_recent(root: Path) -> dict[str, Any]:
@@ -252,10 +317,103 @@ def _read_saved_recent(root: Path) -> dict[str, Any]:
     return payload
 
 
+def _prepare_plain(
+    root: Path,
+    built: Mapping[str, Any],
+    slug: str,
+    emphasis: str,
+) -> bool:
+    """Record a run that does not splice recent. Reuse only the same instruction."""
+    path = Path(root) / "recent.json"
+    if path.is_file():
+        raise EconomyBenchmarkRecentError(
+            f"{path} splices recent flashes; choose a new --run directory"
+        )
+    note = _plain_note(emphasis)
+    note_path = Path(root) / "run.json"
+    reuse = False
+    if note_path.is_file():
+        saved = _load_recent(note_path)
+        if _same_plain(saved, note):
+            reuse = saved.get("answered") is True
+        elif _has_saved_work(root, slug, built["panels"]):
+            raise EconomyBenchmarkRecentError(
+                f"saved emphasis differs from {note_path}; choose a new --run directory"
+            )
+    elif _has_saved_work(root, slug, built["panels"]):
+        raise EconomyBenchmarkRecentError(
+            f"saved answers have no run note; choose a new --run directory"
+        )
+    note["answered"] = reuse
+    _write_recent(note_path, note)
+    return reuse
+
+
+def _plain_note(emphasis: str) -> dict[str, Any]:
+    return {
+        "dataset": DATASET_NAME,
+        "model": MODEL,
+        "temperature": TEMPERATURE,
+        "seed": SEED,
+        "splice_recent": False,
+        "emphasis": emphasis,
+        "transport": "deepseek",
+        "base_url": DEFAULT_BASE_URL,
+    }
+
+
+def _same_plain(saved: Mapping[str, Any], note: Mapping[str, Any]) -> bool:
+    return (
+        saved.get("splice_recent") is False
+        and saved.get("model") == note["model"]
+        and saved.get("emphasis") == note["emphasis"]
+        and saved.get("transport") == note["transport"]
+        and saved.get("base_url") == note["base_url"]
+    )
+
+
+def _read_plain_note(root: Path, emphasis: str) -> str:
+    path = Path(root) / "run.json"
+    if not path.is_file():
+        raise EconomyBenchmarkRecentError(f"missing {path}")
+    saved = _load_recent(path)
+    if saved.get("splice_recent") is not False:
+        raise EconomyBenchmarkRecentError(f"{path} is not a plain economy run")
+    stored = str(saved.get("emphasis") or "").strip()
+    supplied = emphasis.strip()
+    if supplied and stored and supplied != stored:
+        raise EconomyBenchmarkRecentError(f"{path} emphasis differs from this command")
+    return stored or supplied
+
+
+def _mark_plain_answered(path: Path) -> None:
+    payload = dict(_load_recent(path))
+    if payload.get("answered") is True:
+        return
+    payload["answered"] = True
+    _write_recent(path, payload)
+
+
 def _model_settings() -> ModelSettings:
-    settings = replace(model_settings_for(MODEL), temperature=TEMPERATURE)
-    if settings.model != MODEL:
+    """deepseek-v4-pro on https://api.deepseek.com. This command does not use CR.
+
+    Thinking is disabled. The official API ignores temperature while thinking
+    is enabled, so temperature 0 would not apply.
+    """
+    base = model_settings_from_env()
+    settings = replace(
+        base,
+        base_url=DEFAULT_BASE_URL,
+        model=MODEL,
+        temperature=TEMPERATURE,
+        max_tokens=None,
+        extra_body={"thinking": {"type": "disabled"}},
+        transport="deepseek",
+    )
+    if settings.model != MODEL or settings.transport != "deepseek":
         raise EconomyBenchmarkRecentError(f"model resolved to {settings.model}")
+    if settings.base_url != DEFAULT_BASE_URL:
+        raise EconomyBenchmarkRecentError(f"DeepSeek base URL resolved to {settings.base_url}")
     return settings
 
 

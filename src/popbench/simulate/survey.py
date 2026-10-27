@@ -28,6 +28,16 @@ from popbench.simulate.client import (
     response_cache_key,
     with_cr_temperature_support,
 )
+from popbench.simulate.human_simulation import (
+    human_system_message,
+    is_pricing_purchase,
+    parse_buy_probs,
+    parse_soft_probs,
+    pricing_reply_instruction,
+    purchase_answer,
+    soft_choice_answer,
+    soft_choice_reply_instruction,
+)
 from popbench.simulate.interview import system_message
 
 # Shared stems shorter than this stay on each question.
@@ -89,7 +99,12 @@ def instrument_groups(turns: list[dict[str, Any]]) -> list[list[dict[str, Any]]]
     return groups
 
 
-def batch_message(turns: list[dict[str, Any]], n_items: int) -> str:
+def batch_message(
+    turns: list[dict[str, Any]],
+    n_items: int,
+    *,
+    human_simulation: bool = False,
+) -> str:
     """One user message for a scale. Shared options are written once. No rationale."""
     if not turns:
         raise ValueError("batch has no questions")
@@ -100,7 +115,7 @@ def batch_message(turns: list[dict[str, Any]], n_items: int) -> str:
     prefix, bodies = _shared_prompt_prefix(turns)
     if prefix:
         lines.extend(["", prefix])
-    lines.extend(["", _reply_instruction(turns), ""])
+    lines.extend(["", _reply_instruction(turns, human_simulation=human_simulation), ""])
     lines.extend(_render_questions(turns, bodies))
     return "\n".join(lines).rstrip() + "\n"
 
@@ -116,11 +131,15 @@ def answer_survey(
     family: str | None = None,
     resume: bool = False,
     batch: bool = False,
+    emphasis: str | None = None,
+    human_simulation: bool = False,
 ) -> list[dict[str, Any]]:
     """Write one response row per persona. Does not score.
 
     ``resume`` appends each finished person and skips ids already in
     ``responses.jsonl``. Item cache still fills any person who stopped midway.
+    ``human_simulation`` follows skill/humanSimulation: tendency card, survey
+    framing, pricing buy_prob + Bernoulli, soft option weights elsewhere.
     """
     try:
         if settings is None:
@@ -128,6 +147,7 @@ def answer_survey(
     except RuntimeError as exc:
         raise InterviewError(str(exc)) from exc
     settings = with_cr_temperature_support(settings)
+    sample_seed = 0 if seed is None else int(seed)
     run_dir = Path(run_dir)
     cache_dir = run_dir / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -144,7 +164,14 @@ def answer_survey(
 
     def _one(record: dict[str, Any]) -> dict[str, Any]:
         nonlocal finished
-        result = _answer_record(settings, record, cache_dir)
+        result = _answer_record(
+            settings,
+            record,
+            cache_dir,
+            emphasis=emphasis,
+            human_simulation=human_simulation,
+            sample_seed=sample_seed,
+        )
         with lock:
             if resume:
                 _append_jsonl(response_path, result)
@@ -174,6 +201,11 @@ def answer_survey(
         meta["family"] = family
     if batch:
         meta["batch"] = True
+    stressed = str(emphasis or "").strip()
+    if stressed:
+        meta["emphasis"] = stressed
+    if human_simulation:
+        meta["human_simulation"] = True
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
     return responses
 
@@ -201,8 +233,23 @@ def _append_jsonl(path: Path, row: dict[str, Any]) -> None:
         handle.flush()
 
 
-def _answer_record(settings: ModelSettings, record: dict[str, Any], cache_dir: Path) -> dict[str, Any]:
-    system = system_message(record["persona"]["text"])
+def _answer_record(
+    settings: ModelSettings,
+    record: dict[str, Any],
+    cache_dir: Path,
+    *,
+    emphasis: str | None = None,
+    human_simulation: bool = False,
+    sample_seed: int = 0,
+) -> dict[str, Any]:
+    if human_simulation:
+        system = human_system_message(
+            record["persona"]["text"],
+            person_id=str(record["id"]),
+            seed=sample_seed,
+        )
+    else:
+        system = system_message(record["persona"]["text"], emphasis=emphasis)
     n_items = len(record["turns"])
     by_id: dict[str, dict[str, Any]] = {}
     for group in instrument_groups(record["turns"]):
@@ -212,10 +259,26 @@ def _answer_record(settings: ModelSettings, record: dict[str, Any], cache_dir: P
             if cached is None:
                 pending.append(turn)
                 continue
-            by_id[turn["item_id"]] = _answer_from_raw(turn, cached)
+            by_id[turn["item_id"]] = _cached_answer(
+                turn,
+                cached,
+                person_id=str(record["id"]),
+                sample_seed=sample_seed,
+                human_simulation=human_simulation,
+            )
         if not pending:
             continue
-        _fill_pending(settings, system, pending, n_items, cache_dir, record["id"], by_id)
+        _fill_pending(
+            settings,
+            system,
+            pending,
+            n_items,
+            cache_dir,
+            record["id"],
+            by_id,
+            human_simulation=human_simulation,
+            sample_seed=sample_seed,
+        )
     return {"id": record["id"], "answers": [by_id[turn["item_id"]] for turn in record["turns"]]}
 
 
@@ -227,23 +290,56 @@ def _fill_pending(
     cache_dir: Path,
     persona_id: str,
     by_id: dict[str, dict[str, Any]],
+    *,
+    human_simulation: bool = False,
+    sample_seed: int = 0,
 ) -> None:
     """Ask one scale. If the reply is short or unmatched, ask the two halves."""
     if not pending:
         return
     label = str(pending[0].get("instrument") or "").strip() or f"question {pending[0]['turn']}"
     print(f"  {persona_id} {label} asking {len(pending)}", flush=True)
-    parsed, raw, error = _request_batch(settings, system, pending, n_items, persona_id, label)
+    parsed, raw, error = _request_batch(
+        settings,
+        system,
+        pending,
+        n_items,
+        persona_id,
+        label,
+        human_simulation=human_simulation,
+        sample_seed=sample_seed,
+    )
     if parsed is not None:
         for turn, row in zip(pending, parsed, strict=True):
-            _write_cache(_cache_path(cache_dir, settings.model, persona_id, turn["item_id"]), row["raw"])
-            by_id[turn["item_id"]] = row
+            cache_raw = row.get("model_raw") or row["raw"]
+            _write_cache(_cache_path(cache_dir, settings.model, persona_id, turn["item_id"]), cache_raw)
+            by_id[turn["item_id"]] = {key: value for key, value in row.items() if key != "model_raw"}
         return
     if len(pending) > 1:
         middle = len(pending) // 2
         print(f"  {persona_id} {label} splitting {len(pending)}", flush=True)
-        _fill_pending(settings, system, pending[:middle], n_items, cache_dir, persona_id, by_id)
-        _fill_pending(settings, system, pending[middle:], n_items, cache_dir, persona_id, by_id)
+        _fill_pending(
+            settings,
+            system,
+            pending[:middle],
+            n_items,
+            cache_dir,
+            persona_id,
+            by_id,
+            human_simulation=human_simulation,
+            sample_seed=sample_seed,
+        )
+        _fill_pending(
+            settings,
+            system,
+            pending[middle:],
+            n_items,
+            cache_dir,
+            persona_id,
+            by_id,
+            human_simulation=human_simulation,
+            sample_seed=sample_seed,
+        )
         return
     by_id[pending[0]["item_id"]] = {
         "item_id": pending[0]["item_id"],
@@ -261,8 +357,11 @@ def _request_batch(
     n_items: int,
     persona_id: str,
     label: str,
+    *,
+    human_simulation: bool = False,
+    sample_seed: int = 0,
 ) -> tuple[list[dict[str, Any]] | None, str, str]:
-    user = batch_message(pending, n_items)
+    user = batch_message(pending, n_items, human_simulation=human_simulation)
     call_settings = _call_settings(settings, pending)
     attempts = _PARSE_ATTEMPTS if len(pending) > 1 else _PARSE_ATTEMPTS + 1
     raw = ""
@@ -278,7 +377,17 @@ def _request_batch(
                 return None, raw, str(exc)
             raise InterviewError(str(exc)) from exc
         try:
-            return _parse_batch(raw, pending), raw, ""
+            return (
+                _parse_batch(
+                    raw,
+                    pending,
+                    person_id=persona_id,
+                    sample_seed=sample_seed,
+                    human_simulation=human_simulation,
+                ),
+                raw,
+                "",
+            )
         except ValueError as exc:
             last_error = str(exc)
             print(
@@ -299,7 +408,11 @@ def _span(turns: list[dict[str, Any]], n_items: int) -> str:
     return f"Questions {listed} of {n_items}."
 
 
-def _reply_instruction(turns: list[dict[str, Any]]) -> str:
+def _reply_instruction(turns: list[dict[str, Any]], *, human_simulation: bool = False) -> str:
+    if human_simulation and turns and all(is_pricing_purchase(turn) for turn in turns):
+        return pricing_reply_instruction(len(turns))
+    if human_simulation and _soft_choice_batch(turns):
+        return soft_choice_reply_instruction(len(turns), len(turns[0]["options"]))
     kinds = {turn.get("kind") for turn in turns}
     if kinds == {"numeric"}:
         slot = "<a number>"
@@ -311,6 +424,18 @@ def _reply_instruction(turns: list[dict[str, Any]]) -> str:
         f'Reply with JSON only: {{"answers":["{slot}", ...]}} '
         f"with exactly {len(turns)} strings, one per question, in the order below."
     )
+
+
+def _soft_choice_batch(turns: list[dict[str, Any]]) -> bool:
+    """True when every item is a non-pricing choice with the same option count."""
+    if not turns:
+        return False
+    if any(is_pricing_purchase(turn) for turn in turns):
+        return False
+    if any(turn.get("kind") != "choice" for turn in turns):
+        return False
+    counts = {len(turn.get("options") or []) for turn in turns}
+    return len(counts) == 1 and next(iter(counts)) >= 2
 
 
 def _render_questions(turns: list[dict[str, Any]], bodies: list[str]) -> list[str]:
@@ -412,16 +537,90 @@ def _output_token_cap(turns: list[dict[str, Any]]) -> int:
         else:
             chars += 32
     # A short cap stops a runaway reply. Slack covers JSON quotes and the longest option.
-    tokens = chars // 3 + 32 * len(turns) + 64
-    return min(4096, max(256, tokens))
+    # Soft-prob / buy_prob replies also need gut lines per item.
+    tokens = chars // 3 + 48 * len(turns) + 128
+    return min(8192, max(256, tokens))
 
 
-def _parse_batch(raw: str, turns: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _parse_batch(
+    raw: str,
+    turns: list[dict[str, Any]],
+    *,
+    person_id: str = "",
+    sample_seed: int = 0,
+    human_simulation: bool = False,
+) -> list[dict[str, Any]]:
+    if human_simulation and turns and all(is_pricing_purchase(turn) for turn in turns):
+        parsed = parse_buy_probs(raw, turns)
+        return [
+            purchase_answer(
+                turn,
+                buy_prob=row["buy_prob"],
+                gut=row["gut"],
+                person_id=person_id,
+                seed=sample_seed,
+                raw=raw,
+            )
+            for turn, row in zip(turns, parsed, strict=True)
+        ]
+    if human_simulation and _soft_choice_batch(turns):
+        parsed = parse_soft_probs(raw, turns)
+        return [
+            soft_choice_answer(
+                turn,
+                probs=row["probs"],
+                gut=row["gut"],
+                person_id=person_id,
+                seed=sample_seed,
+                raw=raw,
+            )
+            for turn, row in zip(turns, parsed, strict=True)
+        ]
     answers = _answer_strings(_json_payload(raw), turns)
     rows = []
     for turn, answer in zip(turns, answers, strict=True):
         rows.append(_answer_from_text(turn, answer))
     return rows
+
+
+def _cached_answer(
+    turn: dict[str, Any],
+    raw: str,
+    *,
+    person_id: str,
+    sample_seed: int,
+    human_simulation: bool,
+) -> dict[str, Any]:
+    """Rebuild one answer from the on-disk model string."""
+    if human_simulation and is_pricing_purchase(turn):
+        try:
+            row = parse_buy_probs(raw, [turn])[0]
+            answer = purchase_answer(
+                turn,
+                buy_prob=row["buy_prob"],
+                gut=row["gut"],
+                person_id=person_id,
+                seed=sample_seed,
+                raw=raw,
+            )
+            return {key: value for key, value in answer.items() if key != "model_raw"}
+        except ValueError:
+            return _answer_from_raw(turn, raw)
+    if human_simulation and turn.get("kind") == "choice" and not is_pricing_purchase(turn):
+        try:
+            row = parse_soft_probs(raw, [turn])[0]
+            answer = soft_choice_answer(
+                turn,
+                probs=row["probs"],
+                gut=row["gut"],
+                person_id=person_id,
+                seed=sample_seed,
+                raw=raw,
+            )
+            return {key: value for key, value in answer.items() if key != "model_raw"}
+        except ValueError:
+            return _answer_from_raw(turn, raw)
+    return _answer_from_raw(turn, raw)
 
 
 def _answer_from_raw(turn: dict[str, Any], raw: str) -> dict[str, Any]:
