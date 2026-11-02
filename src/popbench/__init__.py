@@ -1,7 +1,13 @@
-"""Benchmark that compares LLM population simulations on a fixed dataset."""
+"""Population simulation benchmark, split into three layers.
 
-__version__ = "0.1.0"
+- ``popbench.datasets`` loads Twin-2K-500, Twin-2K-500-Mega-Study, and SimBench.
+- ``popbench.models`` turns a case into a persona prompt. One directory per method.
+- ``popbench.comms`` sends that prompt to an LLM provider.
 
-from popbench.dao.schema import Item
+The package name stays ``popbench`` so it does not shadow the Hugging Face
+``datasets`` library.
+"""
 
-__all__ = ["Item", "__version__"]
+__version__ = "0.2.0"
+
+__all__ = ["__version__"]

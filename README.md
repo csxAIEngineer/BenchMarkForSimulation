@@ -1,26 +1,51 @@
 # popbench
 
-给其他项目用的人口模拟基准。主路径是五步：准备 ATUS 与 Twin-2K、两边分组、用已写好的人物卡、按七个论文类别作答、对照 Twin-2K 份额打分。
+用大语言模型做人口模拟的基准。代码分成三层，互不越界：
 
-要比的是：模型拿着人物卡作答之后，答案分布离 Twin-2K 里真人的选项份额有多近。
+| 层 | 目录 | 做什么 |
+| --- | --- | --- |
+| 数据 | `src/popbench/datasets/` | 下载、缓存、读出统一 schema |
+| 模拟 | `src/popbench/models/` | 一种人物卡方法一个目录，只生成 persona + 题目输入包 |
+| 通信 | `src/popbench/comms/` | 把输入包发给 LLM：provider、重试、磁盘缓存、JSON 解析 |
+
+包名仍叫 `popbench`，避免和 Hugging Face 的 `datasets` 库撞名。命令行入口是 `benchmark`，`popbench` 是同一个程序。
 
 ```mermaid
 flowchart LR
-  fetch[fetch]
-  splitPop[split-populations]
-  splitCat[split-categories]
-  cards[simulate-population-personas]
-  answer[compare-categories]
-  score[compare.md]
-  fetch --> splitPop
-  fetch --> splitCat
-  splitPop --> cards
-  cards --> answer
-  splitCat --> answer
-  answer --> score
+  datasets[datasets]
+  models[models]
+  comms[comms]
+  datasets -->|"DatasetBundle"| models
+  models -->|"PromptPackage"| comms
 ```
 
-换作答模型时，人和题不动。写人物卡用的 DeepSeek 和作答用的模型是分开的。
+模拟层不导入 `httpx` 或 `cr_api`。通信层不决定人物卡怎么写。
+
+## 三个数据集
+
+| 注册名 | 目录 | 来源 | 单位 |
+| --- | --- | --- | --- |
+| `twin2k_500` | `datasets/twin2k_500/` | [LLM-Digital-Twin/Twin-2K-500](https://huggingface.co/datasets/LLM-Digital-Twin/Twin-2K-500) | 真人受访者 |
+| `twin2k_mega_study` | `datasets/twin2k_mega_study/` | [Twin-2K-500-Mega-Study](https://huggingface.co/datasets/LLM-Digital-Twin/Twin-2K-500-Mega-Study) | 同一批 pid 上的 19 个后续研究 |
+| `simbench` | `datasets/simbench/` | [pitehu/SimBench](https://huggingface.co/datasets/pitehu/SimBench) | **群体分布**，不生成个体 |
+
+SimBench 的正式拼写是 SimBench。`SimBechMark` 只在命令行里被认成 `simbench`。每一行是一个群体提示加选项份额（`human_answer`），加载器拒绝带 `pid` 的个体微数据。
+
+Mega-Study 的行只有新问卷和真人答案。人物卡字段在 Twin-2K-500 上，模拟时加 `--attach-twin2k`，按 pid 接上，不另造受访者。
+
+缓存写在 `data/`，已在 `.gitignore` 里，不要提交。
+
+## 人物卡方法
+
+| 目录 | 用什么 | 不用于 |
+| --- | --- | --- |
+| `models/demographics_only/` | 人口学第一块，对应 Mega-Study 的 demographic 变体 | SimBench 群体 |
+| `models/full_persona/` | Twin-2K `persona_text` | 群体 |
+| `models/persona_summary/` | Twin-2K `persona_summary` | 群体 |
+| `models/atus_expanded/` | 在已有人口学（和可选的 ATUS 分钟）上做确定性生活史扩写 | 不会凭空造人，也拒绝 SimBench |
+| `models/group_prompt/` | SimBench 公布的群体提示，输出选项分布 | 个体问卷 |
+
+题目的标准答案放在 `Gold` 上。人物卡方法读不到它。
 
 ## 安装
 
@@ -32,86 +57,79 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-写人物卡读 `DEEPSEEK_API_KEY` 和 `DEEPSEEK_MODEL`（现为 `deepseek-flash`）。`compare-categories` 的 `--models` 默认是 `gpt-5.5`、`glm-5.3`、`deepseek-v4-pro`，经 `cr_api.CRClient` 调 CR API。把 `CR_API_KEY` 写进 `.env`（见 `.env.example`）。
+没有密钥时用 `--provider mock`。要打真实接口，把密钥写进 `.env`（见 `.env.example`）：
 
-## 1. 数据介绍
+- `openai`：`OPENAI_API_KEY` / `OPENAI_BASE_URL`，或 DeepSeek 的 `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL`
+- `cr`：`CR_API_KEY`，走仓库里的 `cr_api.CRClient`
 
-两套数据。
-
-- **ATUS 2023**：活动汇总与复权权重，8382 名成年人。人群划分见 [HumanReadme.md](HumanReadme.md)。
-- **Twin-2K-500**：题库按论文七类，闭卷作答 654 道。类别见 [DataReadme.md](DataReadme.md)。
+## 拉取数据
 
 ```bash
-popbench fetch
-popbench fetch --visitors-only
+benchmark fetch twin2k_500
+benchmark fetch twin2k_mega_study --study privacy --limit 20
+benchmark fetch simbench --split SimBenchPop --limit 20
 ```
 
-`fetch` 缓存 Twin-2K。`--visitors-only` 只缓存 ATUS（以及同一批访问者源文件里的 ACS、普查表）。
+`twin2k_500` 读 Hub 上的 `full_persona` 和 `wave_split`。Mega-Study 默认会拉全部 19 个 study，体积大约几百 MB，试跑请加 `--study` 和 `--limit`。SimBench 的 split 是 `SimBenchPop` 和 `SimBenchGrouped`。
 
-## 2. 分组
-
-ATUS 人群：九个因子、27 组。同一成年人可以出现在多组。
+也可以：
 
 ```bash
-popbench split-populations
-popbench build-population-visitors
+python scripts/fetch_datasets.py simbench --split SimBenchPop --limit 20
 ```
 
-Twin-2K 题目按论文七类切开：`demographics`、`personality`、`cognitive`、`economic`、`heuristics`、`experiments`、`pricing`。
+## 最小模拟
+
+用 mock，不访问网络上的模型：
 
 ```bash
-popbench split-categories
+benchmark fetch twin2k_500 --limit 2
+benchmark simulate \
+  --dataset twin2k_500 \
+  --method demographics_only \
+  --provider mock \
+  --limit 1 \
+  --out runs/minimal
 ```
 
-## 3. 人物卡
+结果在 `runs/minimal/responses.jsonl`。同一输入会进 `runs/minimal/cache/`。
 
-`popbench simulate-population-personas` 为每个成年人写一张卡。人物 id 是 `visitor-atus-{TUCASEID}`，正文在 `data/visitors/by_population/adults/personas.jsonl`。同一个人出现在哪些组里，那些组都复用这一张。写卡的模型是 DeepSeek API（`DEEPSEEK_MODEL`）。
-
-这一步已经写好，不需要重跑。
-
-## 4. 用人物卡回答七类题
-
-`popbench compare-categories` 用上面的人物卡回答七类闭卷题。谁作答仍由 `--n` 和 `--seed` 决定，默认 50 人。人物卡按 `TUCASEID` 从 `adults/personas.jsonl` 读取。找不到文件，或抽中的人没有卡，会提示先跑 `popbench simulate-population-personas`。
-
-七类各开一场访谈，后一类看不到前一类的答案。问卷系统提示用人物卡正文。`--families` 可以只跑其中几类。作答模型由 `--models` 指定，和写人物卡的 DeepSeek 分开。
+SimBench 群体：
 
 ```bash
-popbench compare-categories --n 50 --seed 0
-popbench compare-categories --n 50 --seed 0 --families heuristics pricing
+benchmark fetch simbench --split SimBenchPop --limit 5
+benchmark simulate \
+  --dataset simbench \
+  --split SimBenchPop \
+  --method group_prompt \
+  --provider mock \
+  --limit 1
 ```
 
-## 5. 评估
-
-同一条命令按类对照 Twin-2K 第 1–3 波选项份额，写到 `runs/compare/atus-categories-n<n>-seed<seed>/compare.md`。选择题用总变异距离，数值题用均分绝对误差。已经有回答、只想重算时加 `--score-only`。
-
-## 其余命令
-
-下面三条是访问者访谈、twin-2k-50 和 6 道探针。
-
-6 道探针是大五人格每个维度 1 道正向题，加 1 道绿色消费题。同一 `--n` 和 `--seed` 抽出同一批 ATUS 成年人，人物卡同样来自已写好的成年人卡。
+Mega-Study 接上 Twin-2K 人物卡后再模拟：
 
 ```bash
-popbench compare --n 50 --seed 0
+benchmark fetch twin2k_500 --limit 50
+benchmark fetch twin2k_mega_study --study privacy --limit 5
+benchmark simulate \
+  --dataset twin2k_mega_study \
+  --study privacy \
+  --method persona_summary \
+  --attach-twin2k \
+  --provider mock \
+  --limit 1
 ```
 
-结果在 `runs/compare/atus-twin2k-n<n>-seed<seed>/compare.md`。n=50、seed=0 的一份分析见 [reports/atus-twin2k-n50-seed0-compare.md](reports/atus-twin2k-n50-seed0-compare.md)。
+换真实模型时把 `--provider mock` 换成 `openai` 或 `cr`，并用 `--model` 指定模型名。`cr` 的默认模型是 `deepseek-v4-pro`。
 
-访问者访谈先组装 ACS、普查州和 ATUS 分钟，再做 8 轮访问。`expand_persona` 只在这条路径上扩写经历。
+## 测试
 
 ```bash
-popbench fetch --visitors-only
-popbench build-visitors --n 50 --seed 0
-popbench simulate --panel visitors --n 50 --seed 0
-popbench evaluate --panel visitors --run runs/visitors-n50-seed0
+pytest
 ```
 
-也可以合成一步：`popbench run-visitors --n 50 --seed 0`。人设扩写约定见 [docs/skills/simulate-persona-prompting](docs/skills/simulate-persona-prompting/SKILL.md)。
+测试使用本地夹具和 mock provider，不下载 Hub 数据。
 
-twin-2k-50 的人数、种子和人物条件写在 `configs/v1.yaml`（`full_twin2k`、`demographics_only` 或 `nemotron_usa`）。
+## 这一版删掉了什么
 
-```bash
-popbench fetch
-popbench run --config configs/v1.yaml
-```
-
-分步是 `popbench build`、`popbench simulate --panel nemotron`（或 `twin2k`）、`popbench evaluate`。
+旧的实验入口（ATUS 人群划分、七类题 TVD 对比、jin10 时事拼接、经济切片、访问者访谈）混在取数、提示词和 HTTP 里。它们已从本分支移除，历史仍在 `main`。数据缓存本来就不入库。
