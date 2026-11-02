@@ -6,6 +6,7 @@ call an LLM.
 
 from __future__ import annotations
 
+from popbench.datasets.bdm_lettuce.loader import BDM_LETTUCE as BDM_LETTUCE
 from popbench.datasets.simbench.loader import SIMBENCH as SIMBENCH
 from popbench.datasets.twin2k_500.loader import TWIN2K_500 as TWIN2K_500
 from popbench.datasets.twin2k_mega_study.loader import TWIN2K_MEGA_STUDY as TWIN2K_MEGA_STUDY
@@ -14,6 +15,7 @@ DATASETS = {
     TWIN2K_500.name: TWIN2K_500,
     TWIN2K_MEGA_STUDY.name: TWIN2K_MEGA_STUDY,
     SIMBENCH.name: SIMBENCH,
+    BDM_LETTUCE.name: BDM_LETTUCE,
 }
 
 # Accept the spelling used in papers and the user's earlier notes.
@@ -27,6 +29,8 @@ ALIASES = {
     "SimBench": SIMBENCH.name,
     "simbechmark": SIMBENCH.name,
     "SimBechMark": SIMBENCH.name,
+    "canada_bdm": BDM_LETTUCE.name,
+    "canadian_bdm": BDM_LETTUCE.name,
 }
 
 
@@ -44,6 +48,7 @@ def resolve_dataset(name: str) -> str:
 __all__ = [
     "ALIASES",
     "DATASETS",
+    "BDM_LETTUCE",
     "SIMBENCH",
     "TWIN2K_500",
     "TWIN2K_MEGA_STUDY",

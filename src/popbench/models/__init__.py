@@ -9,6 +9,8 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from popbench.schema import Case, PromptPackage
+from popbench.models.bdm_survey_persona import NAME as BDM_SURVEY_PERSONA
+from popbench.models.bdm_survey_persona import build as build_bdm_survey_persona
 from popbench.models.atus_expanded import NAME as ATUS_EXPANDED
 from popbench.models.atus_expanded import build as build_atus_expanded
 from popbench.models.demographics_only import NAME as DEMOGRAPHICS_ONLY
@@ -27,6 +29,7 @@ METHODS: dict[str, Builder] = {
     FULL_PERSONA: build_full_persona,
     PERSONA_SUMMARY: build_persona_summary,
     ATUS_EXPANDED: build_atus_expanded,
+    BDM_SURVEY_PERSONA: build_bdm_survey_persona,
     GROUP_PROMPT: build_group_prompt,
 }
 
