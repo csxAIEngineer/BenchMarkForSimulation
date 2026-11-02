@@ -42,12 +42,12 @@ Mega-Study 的行只有新问卷和真人答案。人物卡字段在 Twin-2K-500
 
 | 目录 | 用什么 | 不用于 |
 | --- | --- | --- |
-| `models/demographics_only/` | 人口学第一块，对应 Mega-Study 的 demographic 变体 | SimBench 群体 |
-| `models/full_persona/` | Twin-2K `persona_text` | 群体 |
-| `models/persona_summary/` | Twin-2K `persona_summary` | 群体 |
+| `models/demographics_only/` | 人口学事实，收成 `## Basics` | 不写生活史，也不用于 SimBench |
+| `models/full_persona/` | 人口学事实加 `persona_text` 的短摘录（`## Basics` 与 `## Life history`） | 不贴完整长文 |
+| `models/persona_summary/` | 摘要拆成同样的短小节 | 不留成一整段自由文本 |
 | `models/atus_expanded/` | 在已有人口学（和可选的 ATUS 分钟）上做确定性生活史扩写 | 不会凭空造人，也拒绝 SimBench |
 | `models/group_prompt/` | SimBench 公布的群体提示，输出选项分布 | 个体问卷 |
-| `models/bdm_survey_persona/` | 加拿大 BDM 调查的人口学和消费习惯 | 不读 WTP 出价，也不用于其他数据集 |
+| `models/bdm_survey_persona/` | 调查背景写成 `## Basics`，再用这些字段做短 `## Life history` | 不读 WTP 出价或购买结果 |
 
 题目的标准答案放在 `Gold` 上。人物卡方法读不到它。
 

@@ -42,7 +42,7 @@ def simulate(
         raise PersonaMethodError(f"{bundle.name} has no question cases to simulate")
     results: list[SimulationResult] = []
     for case in chosen.cases:
-        kwargs = {"seed": seed} if method == "atus_expanded" else {}
+        kwargs = {"seed": seed} if method in {"atus_expanded", "bdm_survey_persona"} else {}
         package = build_prompt(method, case, **kwargs)
         results.append(client.complete(package))
     return tuple(results)

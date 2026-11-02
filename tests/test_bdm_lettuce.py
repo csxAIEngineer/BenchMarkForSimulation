@@ -75,11 +75,19 @@ def test_persona_method_does_not_read_gold_or_other_datasets():
     )
     package = build(case)
     assert package.method == "bdm_survey_persona"
+    assert "## Basics" in package.user
+    assert "## Life history" in package.user
+    assert "Childhood:" in package.user
+    assert "Age: 32" in package.user
+    assert "Sex: Female" in package.user
     assert BID not in package.user
     assert BID not in package.system
-    assert "Age: 32" in package.user
-    assert "not a long narrative persona" in package.user
+    assert "1.25" not in package.user.split("Question:")[0]
     assert case.question.prompt in package.user
+    again = build(case, seed=0)
+    assert package.user == again.user
+    variants = {build(case, seed=seed).user for seed in range(8)}
+    assert len(variants) > 1
 
     other = Case(
         dataset="twin2k_500",

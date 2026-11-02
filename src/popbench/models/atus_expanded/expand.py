@@ -12,6 +12,8 @@ import random
 from collections.abc import Mapping
 from typing import Any
 
+from popbench.models.card import render_card
+
 _CHILDHOOD = (
     "Grew up in a small town where weekends meant yard work and church potlucks.",
     "Raised in a dense suburb; after-school time was split between homework and siblings.",
@@ -152,30 +154,34 @@ def _compose(
 ) -> str:
     income = "over $50,000" if income_over_50k else "$50,000 or less"
     hours = "unknown" if work_hours is None else f"{work_hours:.0f}"
-    lines = [
-        "## Basics",
-        f"Age: {age}",
-        f"Sex: {sex}",
-        f"State: {state or 'Unknown'}",
-        f"Education: {education}",
-        f"Marital status: {marital}",
-        f"Race: {race}",
-        f"Personal income: {income}",
-        f"Usual weekly work hours: {hours}",
-        "",
-        "## Life history",
-        f"Childhood: {childhood}",
-        f"Schooling: {schooling}",
-        f"Work path: {work_path}",
-        f"Family: {family}",
-        f"Moves: {moves}",
-        f"Turning point: {turning}",
-    ]
+    basics = (
+        ("Age", str(age)),
+        ("Sex", sex),
+        ("State", state or "Unknown"),
+        ("Education", education),
+        ("Marital status", marital),
+        ("Race", race),
+        ("Personal income", income),
+        ("Usual weekly work hours", hours),
+    )
+    life = (
+        ("Childhood", childhood),
+        ("Schooling", schooling),
+        ("Work path", work_path),
+        ("Family", family),
+        ("Moves", moves),
+        ("Turning point", turning),
+    )
+    extra: list[tuple[str, list[str]]] = []
     if routine:
-        lines.extend(["", "## Typical day (ATUS minutes)"])
         ranked = sorted(routine.items(), key=lambda item: (-item[1], item[0]))
-        lines.extend(f"- {key}: {minutes:.0f} minutes" for key, minutes in ranked)
-    return "\n".join(lines).strip()
+        extra.append(
+            (
+                "Typical day (ATUS minutes)",
+                [f"- {key}: {minutes:.0f} minutes" for key, minutes in ranked],
+            )
+        )
+    return render_card(basics, life, extra)
 
 
 def _rng(seed: int, subject_id: str) -> random.Random:

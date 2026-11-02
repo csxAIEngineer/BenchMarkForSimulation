@@ -1,8 +1,13 @@
-"""Published persona summary, without the raw answer transcript."""
+"""Compact card for a Twin-2K persona summary.
 
-from popbench.schema import Case, PromptPackage
+Basics reuse demographic facts already on the respondent. The summary itself
+is split into short Life history lines instead of one free paragraph.
+"""
+
 from popbench.models._prompt import build_package
+from popbench.models.card import condense_notes, demographic_facts, render_card
 from popbench.models.errors import PersonaMethodError
+from popbench.schema import Case, PromptPackage
 
 NAME = "persona_summary"
 
@@ -18,4 +23,9 @@ def build(case: Case) -> PromptPackage:
             f"{case.subject.id} has no persona_summary. "
             "That field comes from Twin-2K-500 full_persona."
         )
-    return build_package(case, method=NAME, persona=summary, response_mode="answer")
+    basics = demographic_facts(case.subject.demographics, case.subject.demographic_text)
+    life = [("Summary", note) for note in condense_notes(summary, max_lines=4, max_chars=160)]
+    if not basics and not life:
+        raise PersonaMethodError(f"{case.subject.id} persona_summary did not yield a card")
+    persona = render_card(basics, life)
+    return build_package(case, method=NAME, persona=persona, response_mode="answer")

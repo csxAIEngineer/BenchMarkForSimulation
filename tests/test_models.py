@@ -92,17 +92,49 @@ def test_individual_methods_omit_gold_and_refuse_groups():
 def test_method_text_uses_only_its_own_fields():
     case = _twin()
     demographic = build_prompt("demographics_only", case)
+    assert "## Basics" in demographic.user
+    assert "## Life history" not in demographic.user
     assert "Age: 40" in demographic.user
+    assert "Sex: Female" in demographic.user
     assert "Full card" not in demographic.user
     assert "short published summary" not in demographic.user.casefold()
 
     full = build_prompt("full_persona", case)
-    assert "Full card about this respondent." in full.user
-    assert "Age: 40" not in full.user
+    assert "## Basics" in full.user
+    assert "## Life history" in full.user
+    assert "Age: 40" in full.user
+    assert "Note:" in full.user
+    assert "short published summary" not in full.user.casefold()
 
     summary = build_prompt("persona_summary", case)
-    assert "A short published summary." in summary.user
+    assert "## Basics" in summary.user
+    assert "## Life history" in summary.user
+    assert "Summary: A short published summary." in summary.user
     assert "Full card" not in summary.user
+
+
+def test_full_persona_drops_the_long_essay():
+    bundle = twin_bundle(
+        [
+            {
+                "id": "7",
+                "demographics": {"age": "40", "sex": "Female"},
+                "demographic_text": "What is your age?\nAnswer: 40\nWhat is your sex?\nAnswer: Female",
+                "persona_text": (
+                    "She grew up in Ohio and later moved for work. She cooks on weeknights. Work is steady. "
+                    + ("UNIQUE_ESSAY_TAIL describes another uneventful afternoon in detail. " * 30)
+                ),
+                "persona_summary": "Summary only.",
+                "questions": [{"id": "Q9", "prompt": "Pick one", "kind": "text", "gold": "SECRET_GOLD"}],
+            }
+        ]
+    )
+    package = build_prompt("full_persona", bundle.cases[0])
+    assert package.user.count("UNIQUE_ESSAY_TAIL") == 0
+    assert "She grew up in Ohio and later moved for work." in package.user
+    assert "What is your age?" not in package.user
+    assert "Age: 40" in package.user
+    assert "SECRET_GOLD" not in package.user
 
 
 def test_atus_expanded_is_deterministic_and_keeps_the_same_person():
