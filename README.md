@@ -30,24 +30,17 @@ flowchart LR
 | `simbench` | `datasets/simbench/` | [pitehu/SimBench](https://huggingface.co/datasets/pitehu/SimBench) | **群体分布**，不生成个体 |
 | `bdm_lettuce` | `datasets/bdm_lettuce/` | [Gibson & Li, Borealis 10.5683/SP3/CDLUEZ](https://doi.org/10.5683/SP3/CDLUEZ) | 610 名加拿大受访者 |
 
-SimBench 的正式拼写是 SimBench。`SimBechMark` 只在命令行里被认成 `simbench`。每一行是一个群体提示加选项份额（`human_answer`），加载器拒绝带 `pid` 的个体微数据。
+SimBench 的正式拼写是 SimBench。`SimBechMark` 只在命令行里被认成 `simbench`。每一行是一个群体提示加选项份额（`human_answer`），加载器拒绝带 `pid` 的个体微数据。当前人物卡 `atus_expanded` 只扩写有人口学的个体，不会把 SimBench 群体拆成虚构的人。群体模拟要等以后的方法。
 
-Mega-Study 的行只有新问卷和真人答案。人物卡字段在 Twin-2K-500 上，模拟时加 `--attach-twin2k`，按 pid 接上，不另造受访者。
+Mega-Study 的行只有新问卷和真人答案。用 `atus_expanded` 前加 `--attach-twin2k`，按 pid 接上 Twin-2K-500 的人口学，不另造受访者。
 
-`bdm_lettuce` 是 Gibson 与 Li 的加拿大生菜支付意愿实验（CC-BY 4.0）。别名 `canada_bdm`。每一行是一个 `pid`。人物卡只用 `survey_*` 人口学和消费习惯，不是 Twin-2K 那种长篇叙事。六项 WTP（`local_field`、`local_greenhouse`、`local_vertical`、`nonlocal_field`、`nonlocal_greenhouse`、`nonlocal_vertical`）和可选的 `conclusion_purchased_product` 只放在 `Gold` 上。`benchmark fetch bdm_lettuce` 从 Borealis 把 CSV、README 和问卷 docx 缓存到 `data/bdm_lettuce/`。
+`bdm_lettuce` 是 Gibson 与 Li 的加拿大生菜支付意愿实验（CC-BY 4.0）。别名 `canada_bdm`。每一行是一个 `pid`。`atus_expanded` 读取 `survey_*` 里的年龄、性别、教育和收入：收入短语用来判断是否超过 5 万美元，学历短语用来选择生活史模板。家庭规模、政治倾向、谁买菜、谁做饭会作为 Basics 里的标签。六项 WTP 和 `conclusion_purchased_product` 只放在 `Gold` 上。`benchmark fetch bdm_lettuce` 从 Borealis 把 CSV、README 和问卷 docx 缓存到 `data/bdm_lettuce/`。
 
 缓存写在 `data/`，已在 `.gitignore` 里，不要提交。
 
 ## 人物卡方法
 
-| 目录 | 用什么 | 不用于 |
-| --- | --- | --- |
-| `models/demographics_only/` | 人口学事实，收成 `## Basics` | 不写生活史，也不用于 SimBench |
-| `models/full_persona/` | 人口学事实加 `persona_text` 的短摘录（`## Basics` 与 `## Life history`） | 不贴完整长文 |
-| `models/persona_summary/` | 摘要拆成同样的短小节 | 不留成一整段自由文本 |
-| `models/atus_expanded/` | 在已有人口学（和可选的 ATUS 分钟）上做确定性生活史扩写 | 不会凭空造人，也拒绝 SimBench |
-| `models/group_prompt/` | SimBench 公布的群体提示，输出选项分布 | 个体问卷 |
-| `models/bdm_survey_persona/` | 调查背景写成 `## Basics`，再用这些字段做短 `## Life history` | 不读 WTP 出价或购买结果 |
+目前只有 `models/atus_expanded/`。它根据已有人口学（以及可选的 ATUS 分钟）写成 `## Basics` 和短的 `## Life history`。没有人口学就不会造一个人。SimBench 的群体行会被拒绝。
 
 题目的标准答案放在 `Gold` 上。人物卡方法读不到它。
 
@@ -91,7 +84,7 @@ python scripts/fetch_datasets.py simbench --split SimBenchPop --limit 20
 benchmark fetch twin2k_500 --limit 2
 benchmark simulate \
   --dataset twin2k_500 \
-  --method demographics_only \
+  --method atus_expanded \
   --provider mock \
   --limit 1 \
   --out runs/minimal
@@ -101,19 +94,9 @@ benchmark simulate \
 
 同一个人的多道题合成一次模型请求：人物卡写在消息顶部，后面跟一批题目。`--batch-size` 默认 15。返回的 JSON 是 `{"answers": [{"question_id", "answer", "rationale"}, ...]}`；SimBench 的分布题用 `distribution` 代替 `answer`。`responses.jsonl` 仍是一题一行。磁盘缓存按整批请求计算，不是按单题。成功的批次会留下缓存，重跑时可以接着未完成的批次。
 
-SimBench 群体：
+SimBench 仍然可以 `benchmark fetch simbench` 下载。现在没有对应的人物卡方法，`atus_expanded` 会拒绝这些群体行。
 
-```bash
-benchmark fetch simbench --split SimBenchPop --limit 5
-benchmark simulate \
-  --dataset simbench \
-  --split SimBenchPop \
-  --method group_prompt \
-  --provider mock \
-  --limit 1
-```
-
-Mega-Study 接上 Twin-2K 人物卡后再模拟：
+Mega-Study 接上 Twin-2K 人口学后再模拟：
 
 ```bash
 benchmark fetch twin2k_500 --limit 50
@@ -121,19 +104,19 @@ benchmark fetch twin2k_mega_study --study privacy --limit 5
 benchmark simulate \
   --dataset twin2k_mega_study \
   --study privacy \
-  --method persona_summary \
+  --method atus_expanded \
   --attach-twin2k \
   --provider mock \
   --limit 1
 ```
 
-加拿大 BDM 生菜支付意愿：
+加拿大 BDM 生菜支付意愿，用同一张人物卡：
 
 ```bash
 benchmark fetch bdm_lettuce
 benchmark simulate \
   --dataset bdm_lettuce \
-  --method bdm_survey_persona \
+  --method atus_expanded \
   --provider mock \
   --limit 1
 ```

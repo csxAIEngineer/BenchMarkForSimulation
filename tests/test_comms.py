@@ -13,6 +13,7 @@ from popbench.comms.providers.mock import MockProvider
 from popbench.comms.providers.openai_compat import OpenAICompatProvider
 from popbench.comms.retry import call_with_retry
 from popbench.models import build_prompt
+from popbench.models._prompt import build_package
 from popbench.schema import PromptPackage, Question, Subject, Case
 from popbench.datasets.twin2k_500.loader import bundle_from_records
 
@@ -32,7 +33,7 @@ def _package(mode="answer"):
         ]
     )
     if mode == "answer":
-        return build_prompt("demographics_only", bundle.cases[0])
+        return build_prompt("atus_expanded", bundle.cases[0], seed=0)
     subject = Subject(
         id="ESS:population",
         dataset="simbench",
@@ -45,7 +46,12 @@ def _package(mode="answer"):
         subject=subject,
         question=Question(id="trust", prompt="Trust most people?", options=("A", "B"), kind="distribution"),
     )
-    return build_prompt("group_prompt", case)
+    return build_package(
+        case,
+        method="distribution",
+        persona="You are an ESS respondent.",
+        response_mode="distribution",
+    )
 
 
 def test_parse_json_object_accepts_fences_and_prose():

@@ -34,7 +34,7 @@ def main(argv: list[str] | None = None) -> int:
 
     run = sub.add_parser("simulate", help="用一种人物卡方法走通最小问答路径")
     run.add_argument("--dataset", required=True)
-    run.add_argument("--method", default="demographics_only", choices=sorted(METHODS))
+    run.add_argument("--method", default="atus_expanded", choices=sorted(METHODS))
     run.add_argument("--provider", default="mock", choices=("mock", "openai", "cr"))
     run.add_argument("--model", default=None, help="provider 上的模型名；mock 默认为 mock-llm")
     run.add_argument("--data-dir", type=Path, default=Path("data"))
@@ -90,7 +90,7 @@ def cmd_simulate(args: argparse.Namespace) -> int:
     data_dir = _resolve(args.data_dir)
     bundle = loader.load(data_dir, limit=None, study=args.study, split=args.split)
     twin = None
-    if name == "twin2k_mega_study" and args.method != "group_prompt":
+    if name == "twin2k_mega_study":
         if not args.attach_twin2k:
             raise PersonaMethodError(
                 "Mega-Study 行里没有人物卡。请先 benchmark fetch twin2k_500，"

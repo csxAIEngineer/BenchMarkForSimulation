@@ -9,10 +9,24 @@ from __future__ import annotations
 
 import hashlib
 import random
+import re
 from collections.abc import Mapping
 from typing import Any
 
 from popbench.models.card import render_card
+
+# Survey outcomes. They are never copied onto the card.
+_OUTCOME_KEYS = {
+    "local_field",
+    "local_greenhouse",
+    "local_vertical",
+    "nonlocal_field",
+    "nonlocal_greenhouse",
+    "nonlocal_vertical",
+    "conclusion_purchased_product",
+    "conclusion_selected_product",
+    "conclusion_generated_price",
+}
 
 _CHILDHOOD = (
     "Grew up in a small town where weekends meant yard work and church potlucks.",
@@ -98,17 +112,19 @@ def expand_persona(
     routine: Mapping[str, float] | None,
     seed: int = 0,
 ) -> str:
+    demographics = _adapt_demographics(demographics)
     rng = _rng(seed, subject_id)
     age = demographics.get("age", "unknown")
     sex = demographics.get("sex") or "Unknown"
     state = demographics.get("state") or demographics.get("state_name")
     education = str(demographics.get("education") or "unknown")
+    education_bucket = str(demographics.get("education_bucket") or education)
     marital = str(demographics.get("marital_status") or "Unknown")
     race = demographics.get("race") or "Unknown"
     income_over_50k = _truthy(demographics.get("income_over_50k"))
     work_hours = _hours(demographics.get("work_hours"))
     childhood = _pick(rng, _CHILDHOOD)
-    schooling = _pick(rng, _SCHOOLING.get(education, _SCHOOLING["unknown"]))
+    schooling = _pick(rng, _SCHOOLING.get(education_bucket, _SCHOOLING["unknown"]))
     work_path = _work_line(rng, income_over_50k=income_over_50k, work_hours=work_hours)
     family = _pick(rng, _FAMILY.get(marital, _FAMILY["Unknown"]))
     moves = _pick(rng, _MOVES)
@@ -131,6 +147,7 @@ def expand_persona(
         moves=moves,
         turning=turning,
         routine=dict(routine or {}),
+        extras=_extra_basics(demographics),
     )
 
 
@@ -151,6 +168,7 @@ def _compose(
     moves: str,
     turning: str,
     routine: dict[str, float],
+    extras: tuple[tuple[str, str], ...] = (),
 ) -> str:
     income = "over $50,000" if income_over_50k else "$50,000 or less"
     hours = "unknown" if work_hours is None else f"{work_hours:.0f}"
@@ -163,6 +181,7 @@ def _compose(
         ("Race", race),
         ("Personal income", income),
         ("Usual weekly work hours", hours),
+        *extras,
     )
     life = (
         ("Childhood", childhood),
@@ -215,6 +234,69 @@ def _turning_line(rng: random.Random, routine: Mapping[str, float] | None) -> st
         f"{base} Time-use note: {top_key} averages about {float(top_minutes):.0f} "
         "minutes on a diary day."
     )
+
+
+def _adapt_demographics(raw: Mapping[str, Any]) -> dict[str, Any]:
+    """Map survey fields onto the keys this card already prints.
+
+    BDM stores household income and education as phrases. Those phrases pick
+    the same schooling and income templates as the ATUS buckets. Outcome
+    columns are dropped.
+    """
+    adapted: dict[str, Any] = {}
+    for key, value in raw.items():
+        if key in _OUTCOME_KEYS or value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            adapted[str(key)] = text
+    education = adapted.get("education")
+    if isinstance(education, str) and education:
+        adapted["education_bucket"] = _education_bucket(education)
+    if "income_over_50k" not in adapted and adapted.get("income"):
+        adapted["income_over_50k"] = "true" if _income_over_50k(str(adapted["income"])) else "false"
+    return adapted
+
+
+def _extra_basics(demographics: Mapping[str, Any]) -> tuple[tuple[str, str], ...]:
+    labels = (
+        ("income", "Household income"),
+        ("household_size", "Household size"),
+        ("political", "Political leaning"),
+        ("primary_grocery_shopper", "Primary grocery shopper"),
+        ("primary_cook", "Primary cook"),
+    )
+    rows: list[tuple[str, str]] = []
+    for key, label in labels:
+        value = demographics.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            rows.append((label, text))
+    return tuple(rows)
+
+
+def _education_bucket(value: str) -> str:
+    if value in _SCHOOLING:
+        return value
+    text = value.casefold()
+    if "some university" in text or "college" in text:
+        return "some_college"
+    if any(token in text for token in ("graduate", "university", "professional", "bachelor")):
+        return "bachelor_or_higher"
+    if "high school" in text:
+        return "high_school"
+    if "less than" in text or "no formal" in text:
+        return "less_than_high_school"
+    return "unknown"
+
+
+def _income_over_50k(value: str) -> bool:
+    numbers = [int(piece.replace(",", "")) for piece in re.findall(r"\d[\d,]*", value)]
+    if not numbers:
+        return False
+    return numbers[0] >= 50_000
 
 
 def _truthy(value: object) -> bool:

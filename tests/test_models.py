@@ -1,4 +1,4 @@
-"""Persona methods build prompt packages and do not call an LLM."""
+"""The only persona method is atus_expanded."""
 
 from pathlib import Path
 
@@ -63,9 +63,17 @@ def _group():
     return bundle.cases[0]
 
 
-def test_each_method_has_its_own_directory():
-    for name in METHODS:
-        assert (ROOT / "src" / "popbench" / "models" / name).is_dir()
+def test_only_atus_expanded_is_registered():
+    assert list(METHODS) == ["atus_expanded"]
+    assert (ROOT / "src" / "popbench" / "models" / "atus_expanded").is_dir()
+    for removed in (
+        "demographics_only",
+        "full_persona",
+        "persona_summary",
+        "group_prompt",
+        "bdm_survey_persona",
+    ):
+        assert not (ROOT / "src" / "popbench" / "models" / removed).exists()
 
 
 def test_models_do_not_import_http_clients():
@@ -76,67 +84,6 @@ def test_models_do_not_import_http_clients():
     assert "load_dataset" not in text
 
 
-def test_individual_methods_omit_gold_and_refuse_groups():
-    case = _twin()
-    group = _group()
-    for name in ("demographics_only", "full_persona", "persona_summary", "atus_expanded"):
-        kwargs = {"seed": 0} if name == "atus_expanded" else {}
-        package = build_prompt(name, case, **kwargs)
-        assert package.method == name
-        assert "SECRET_GOLD" not in package.user
-        assert package.response_mode == "answer"
-        with pytest.raises(PersonaMethodError):
-            build_prompt(name, group, **kwargs)
-
-
-def test_method_text_uses_only_its_own_fields():
-    case = _twin()
-    demographic = build_prompt("demographics_only", case)
-    assert "## Basics" in demographic.user
-    assert "## Life history" not in demographic.user
-    assert "Age: 40" in demographic.user
-    assert "Sex: Female" in demographic.user
-    assert "Full card" not in demographic.user
-    assert "short published summary" not in demographic.user.casefold()
-
-    full = build_prompt("full_persona", case)
-    assert "## Basics" in full.user
-    assert "## Life history" in full.user
-    assert "Age: 40" in full.user
-    assert "Note:" in full.user
-    assert "short published summary" not in full.user.casefold()
-
-    summary = build_prompt("persona_summary", case)
-    assert "## Basics" in summary.user
-    assert "## Life history" in summary.user
-    assert "Summary: A short published summary." in summary.user
-    assert "Full card" not in summary.user
-
-
-def test_full_persona_drops_the_long_essay():
-    bundle = twin_bundle(
-        [
-            {
-                "id": "7",
-                "demographics": {"age": "40", "sex": "Female"},
-                "demographic_text": "What is your age?\nAnswer: 40\nWhat is your sex?\nAnswer: Female",
-                "persona_text": (
-                    "She grew up in Ohio and later moved for work. She cooks on weeknights. Work is steady. "
-                    + ("UNIQUE_ESSAY_TAIL describes another uneventful afternoon in detail. " * 30)
-                ),
-                "persona_summary": "Summary only.",
-                "questions": [{"id": "Q9", "prompt": "Pick one", "kind": "text", "gold": "SECRET_GOLD"}],
-            }
-        ]
-    )
-    package = build_prompt("full_persona", bundle.cases[0])
-    assert package.user.count("UNIQUE_ESSAY_TAIL") == 0
-    assert "She grew up in Ohio and later moved for work." in package.user
-    assert "What is your age?" not in package.user
-    assert "Age: 40" in package.user
-    assert "SECRET_GOLD" not in package.user
-
-
 def test_atus_expanded_is_deterministic_and_keeps_the_same_person():
     case = _twin()
     first = build_prompt("atus_expanded", case, seed=3)
@@ -144,12 +91,21 @@ def test_atus_expanded_is_deterministic_and_keeps_the_same_person():
     other = build_prompt("atus_expanded", case, seed=4)
     assert first.user == second.user
     assert first.user != other.user
+    assert "## Basics" in first.user
+    assert "## Life history" in first.user
     assert "Age: 40" in first.user
+    assert "Education: high_school" in first.user
     assert "work:" in first.user
     assert "SECRET_GOLD" not in first.user
+    assert "Full card" not in first.user
 
 
-def test_missing_persona_fields_name_the_dataset_to_fetch():
+def test_atus_expanded_refuses_simbench_groups():
+    with pytest.raises(PersonaMethodError, match="SimBench"):
+        build_prompt("atus_expanded", _group())
+
+
+def test_missing_demographics_are_rejected():
     bundle = twin_bundle(
         [
             {
@@ -158,22 +114,10 @@ def test_missing_persona_fields_name_the_dataset_to_fetch():
             }
         ]
     )
-    case = bundle.cases[0]
-    with pytest.raises(PersonaMethodError, match="persona_text"):
-        build_prompt("full_persona", case)
-    with pytest.raises(PersonaMethodError, match="persona_summary"):
-        build_prompt("persona_summary", case)
-    with pytest.raises(PersonaMethodError, match="demographic"):
-        build_prompt("demographics_only", case)
     with pytest.raises(PersonaMethodError, match="does not invent"):
-        build_prompt("atus_expanded", case)
+        build_prompt("atus_expanded", bundle.cases[0])
 
 
-def test_group_prompt_asks_for_a_distribution_and_refuses_people():
-    package = build_prompt("group_prompt", _group())
-    assert package.response_mode == "distribution"
-    assert "Do not invent an individual respondent" in package.system
-    assert "ESS respondent" in package.user
-    assert "SECRET" not in package.user
-    with pytest.raises(PersonaMethodError):
-        build_prompt("group_prompt", _twin())
+def test_unknown_method_is_rejected():
+    with pytest.raises(KeyError, match="demographics_only"):
+        build_prompt("demographics_only", _twin())

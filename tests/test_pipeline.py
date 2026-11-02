@@ -58,7 +58,7 @@ def test_simulate_with_mock_does_not_leak_gold(tmp_path):
         ]
     )
     client = LLMClient(MockProvider(), model="mock-llm", cache_dir=tmp_path / "cache")
-    results = simulate(bundle, method="demographics_only", client=client, limit=1)
+    results = simulate(bundle, method="atus_expanded", client=client, limit=1)
     assert results[0].parsed["answer"] == "mock"
     assert results[0].parse_error is None
 
@@ -72,7 +72,7 @@ def test_cli_simulate_writes_a_run(tmp_path, monkeypatch):
             "--dataset",
             "twin2k_500",
             "--method",
-            "demographics_only",
+            "atus_expanded",
             "--provider",
             "mock",
             "--limit",
@@ -83,7 +83,7 @@ def test_cli_simulate_writes_a_run(tmp_path, monkeypatch):
     )
     assert code == 0
     payload = json.loads((tmp_path / "runs" / "minimal" / "responses.jsonl").read_text())
-    assert payload["method"] == "demographics_only"
+    assert payload["method"] == "atus_expanded"
     assert payload["provider"] == "mock"
     assert payload["parsed"]["answer"] == "mock"
     manifest = json.loads((tmp_path / "runs" / "minimal" / "manifest.json").read_text())
@@ -103,7 +103,7 @@ def test_mega_study_requires_a_twin2k_bundle_before_an_individual_method():
         ]
     )
     with pytest.raises(PersonaMethodError, match="attach"):
-        prepare_bundle(mega, method="persona_summary", twin=None)
+        prepare_bundle(mega, method="atus_expanded", twin=None)
 
 
 def test_help_names_the_layers(capsys):

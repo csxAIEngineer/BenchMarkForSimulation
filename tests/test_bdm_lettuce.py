@@ -15,7 +15,7 @@ from popbench.datasets.bdm_lettuce.loader import (
     record_from_row,
 )
 from popbench.datasets.io import DatasetError, write_jsonl
-from popbench.models.bdm_survey_persona import build
+from popbench.models import build_prompt
 from popbench.models.errors import PersonaMethodError
 from popbench.schema import Case, Gold, Question, Subject
 
@@ -73,36 +73,32 @@ def test_persona_method_does_not_read_gold_or_other_datasets():
         question=case.question,
         gold=Gold(answer=BID),
     )
-    package = build(case)
-    assert package.method == "bdm_survey_persona"
-    assert "## Basics" in package.user
-    assert "## Life history" in package.user
-    assert "Childhood:" in package.user
-    assert "Age: 32" in package.user
-    assert "Sex: Female" in package.user
-    assert BID not in package.user
-    assert BID not in package.system
-    assert "1.25" not in package.user.split("Question:")[0]
+    package = build_prompt("atus_expanded", case, seed=0)
+    persona = package.user.split("Question:")[0]
+    assert package.method == "atus_expanded"
+    assert "## Basics" in persona
+    assert "## Life history" in persona
+    assert "Age: 32" in persona
+    assert "Sex: Female" in persona
+    assert "Completed university" in persona
+    assert "$100,000-$149,999 CAD" in persona
+    assert "Household size: 3" in persona
+    assert BID not in persona
+    assert "1.25" not in persona
+    assert "FALSE" not in persona
     assert case.question.prompt in package.user
-    again = build(case, seed=0)
+    again = build_prompt("atus_expanded", case, seed=0)
     assert package.user == again.user
-    variants = {build(case, seed=seed).user for seed in range(8)}
+    variants = {build_prompt("atus_expanded", case, seed=seed).user for seed in range(8)}
     assert len(variants) > 1
 
-    other = Case(
-        dataset="twin2k_500",
-        subject=Subject(id="1", dataset="twin2k_500", unit="individual", demographics={"age": "32"}),
-        question=Question(id="Q", prompt="Pick one", kind="text"),
-    )
-    with pytest.raises(PersonaMethodError):
-        build(other)
     empty = Case(
         dataset="bdm_lettuce",
         subject=Subject(id="9", dataset="bdm_lettuce", unit="individual", demographics={}),
         question=Question(id="local_field", prompt=wtp_prompt("local field-grown lettuce"), kind="numeric"),
     )
     with pytest.raises(PersonaMethodError, match="does not invent"):
-        build(empty)
+        build_prompt("atus_expanded", empty)
 
 
 def test_download_caches_the_csv_and_mock_simulate_runs(tmp_path, monkeypatch):
@@ -139,7 +135,7 @@ def test_download_caches_the_csv_and_mock_simulate_runs(tmp_path, monkeypatch):
             "--dataset",
             "canada_bdm",
             "--method",
-            "bdm_survey_persona",
+            "atus_expanded",
             "--provider",
             "mock",
             "--limit",
@@ -154,7 +150,7 @@ def test_download_caches_the_csv_and_mock_simulate_runs(tmp_path, monkeypatch):
     lines = (tmp_path / "runs" / "bdm" / "responses.jsonl").read_text(encoding="utf-8").splitlines()
     assert len(lines) == 2
     saved = [json.loads(line) for line in lines]
-    assert saved[0]["method"] == "bdm_survey_persona"
+    assert saved[0]["method"] == "atus_expanded"
     assert saved[0]["parsed"]["answer"] == "mock"
     raw = (tmp_path / "runs" / "bdm" / "responses.jsonl").read_text(encoding="utf-8")
     assert BID not in raw

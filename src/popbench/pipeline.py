@@ -19,10 +19,10 @@ def prepare_bundle(
     twin: DatasetBundle | None = None,
 ) -> DatasetBundle:
     """Attach Twin-2K personas when a Mega-Study run asks for an individual card."""
-    if bundle.name == "twin2k_mega_study" and method != "group_prompt":
+    if bundle.name == "twin2k_mega_study":
         if twin is None:
             raise PersonaMethodError(
-                "Mega-Study rows do not include persona text. "
+                f"{method} needs Twin-2K demographics on Mega-Study rows. "
                 "Pass a Twin-2K-500 bundle or fetch twin2k_500 and use --attach-twin2k."
             )
         return attach_twin2k(bundle, twin)
@@ -44,8 +44,7 @@ def simulate(
     chosen = bundle.limited(limit)
     if not chosen.cases:
         raise PersonaMethodError(f"{bundle.name} has no question cases to simulate")
-    kwargs = {"seed": seed} if method in {"atus_expanded", "bdm_survey_persona"} else {}
-    packages = [build_prompt(method, case, **kwargs) for case in chosen.cases]
+    packages = [build_prompt(method, case, seed=seed) for case in chosen.cases]
     results: list[SimulationResult] = []
     for group in _by_subject(packages):
         for start in range(0, len(group), batch_size):
