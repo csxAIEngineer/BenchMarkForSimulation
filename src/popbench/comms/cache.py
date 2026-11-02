@@ -17,12 +17,30 @@ def cache_key(
     model: str,
     temperature: float | None,
 ) -> str:
+    return cache_key_messages(
+        package.messages(),
+        provider=provider,
+        model=model,
+        temperature=temperature,
+        response_mode=package.response_mode,
+    )
+
+
+def cache_key_messages(
+    messages: list[dict[str, str]],
+    *,
+    provider: str,
+    model: str,
+    temperature: float | None,
+    response_mode: str,
+) -> str:
+    """Hash one provider call. A batched request is one key, not one key per question."""
     material = {
         "provider": provider,
         "model": model,
         "temperature": temperature,
-        "messages": package.messages(),
-        "response_mode": package.response_mode,
+        "messages": messages,
+        "response_mode": response_mode,
     }
     encoded = json.dumps(material, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(encoded.encode()).hexdigest()

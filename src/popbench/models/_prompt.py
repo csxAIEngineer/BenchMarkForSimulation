@@ -31,15 +31,23 @@ def build_package(
     if not text:
         raise ValueError(f"{method} produced an empty persona")
     system = ANSWER_SYSTEM if response_mode == "answer" else DISTRIBUTION_SYSTEM
-    lines = ["Persona:", text, "", "Question:", case.question.prompt.strip()]
-    if case.question.options and "Options:" not in case.question.prompt:
-        lines.extend(["", "Options:", *[f"- {option}" for option in case.question.options]])
+    question_body = _question_body(case)
+    user = "\n".join(["Persona:", text, "", "Question:", question_body])
     return PromptPackage(
         dataset=case.dataset,
         subject_id=case.subject.id,
         question_id=case.question.id,
         method=method,
         system=system,
-        user="\n".join(lines),
+        user=user,
         response_mode=response_mode,  # type: ignore[arg-type]
+        persona=text,
+        question_body=question_body,
     )
+
+
+def _question_body(case: Case) -> str:
+    lines = [case.question.prompt.strip()]
+    if case.question.options and "Options:" not in case.question.prompt:
+        lines.extend(["", "Options:", *[f"- {option}" for option in case.question.options]])
+    return "\n".join(lines)

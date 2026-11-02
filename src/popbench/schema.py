@@ -161,6 +161,8 @@ class PromptPackage:
     system: str
     user: str
     response_mode: Literal["answer", "distribution"]
+    persona: str = ""
+    question_body: str = ""
 
     def messages(self) -> list[dict[str, str]]:
         return [
@@ -177,6 +179,8 @@ class PromptPackage:
             "system": self.system,
             "user": self.user,
             "response_mode": self.response_mode,
+            "persona": self.persona,
+            "question_body": self.question_body,
         }
 
 

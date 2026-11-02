@@ -99,6 +99,8 @@ benchmark simulate \
 
 结果在 `runs/minimal/responses.jsonl`。同一输入会进 `runs/minimal/cache/`。
 
+同一个人的多道题合成一次模型请求：人物卡写在消息顶部，后面跟一批题目。`--batch-size` 默认 15。返回的 JSON 是 `{"answers": [{"question_id", "answer", "rationale"}, ...]}`；SimBench 的分布题用 `distribution` 代替 `answer`。`responses.jsonl` 仍是一题一行。磁盘缓存按整批请求计算，不是按单题。成功的批次会留下缓存，重跑时可以接着未完成的批次。
+
 SimBench 群体：
 
 ```bash

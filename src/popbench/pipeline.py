@@ -36,16 +36,33 @@ def simulate(
     client: LLMClient,
     limit: int | None = None,
     seed: int = 0,
+    batch_size: int = 15,
 ) -> tuple[SimulationResult, ...]:
+    """Ask each subject's questions in batches. The persona card is built once per batch."""
+    if isinstance(batch_size, bool) or not isinstance(batch_size, int) or batch_size < 1:
+        raise PersonaMethodError("batch_size must be a positive integer")
     chosen = bundle.limited(limit)
     if not chosen.cases:
         raise PersonaMethodError(f"{bundle.name} has no question cases to simulate")
+    kwargs = {"seed": seed} if method in {"atus_expanded", "bdm_survey_persona"} else {}
+    packages = [build_prompt(method, case, **kwargs) for case in chosen.cases]
     results: list[SimulationResult] = []
-    for case in chosen.cases:
-        kwargs = {"seed": seed} if method in {"atus_expanded", "bdm_survey_persona"} else {}
-        package = build_prompt(method, case, **kwargs)
-        results.append(client.complete(package))
+    for group in _by_subject(packages):
+        for start in range(0, len(group), batch_size):
+            results.extend(client.complete_batch(group[start : start + batch_size]))
     return tuple(results)
+
+
+def _by_subject(packages: list) -> list[list]:
+    """Keep each subject's questions together, in their original order."""
+    order: list[str] = []
+    grouped: dict[str, list] = {}
+    for package in packages:
+        if package.subject_id not in grouped:
+            order.append(package.subject_id)
+            grouped[package.subject_id] = []
+        grouped[package.subject_id].append(package)
+    return [grouped[subject_id] for subject_id in order]
 
 
 def write_results(directory: Path, results: tuple[SimulationResult, ...], *, manifest: dict) -> Path:

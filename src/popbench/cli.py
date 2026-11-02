@@ -39,6 +39,12 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--model", default=None, help="provider 上的模型名；mock 默认为 mock-llm")
     run.add_argument("--data-dir", type=Path, default=Path("data"))
     run.add_argument("--limit", type=int, default=1)
+    run.add_argument(
+        "--batch-size",
+        type=int,
+        default=15,
+        help="同一人物卡下每次请求合并的题数（默认 15）",
+    )
     run.add_argument("--seed", type=int, default=0)
     run.add_argument("--study", default=None)
     run.add_argument("--split", default=None)
@@ -101,7 +107,14 @@ def cmd_simulate(args: argparse.Namespace) -> int:
         cache_dir=cache_dir,
         temperature=None if args.provider == "mock" else args.temperature,
     )
-    results = simulate(prepared, method=args.method, client=client, limit=args.limit, seed=args.seed)
+    results = simulate(
+        prepared,
+        method=args.method,
+        client=client,
+        limit=args.limit,
+        seed=args.seed,
+        batch_size=args.batch_size,
+    )
     out = _resolve(args.out)
     write_results(
         out,
@@ -112,6 +125,7 @@ def cmd_simulate(args: argparse.Namespace) -> int:
             "provider": args.provider,
             "model": model,
             "n": len(results),
+            "batch_size": args.batch_size,
         },
     )
     print(f"模拟 {len(results)} 条，方法 {args.method}，provider {args.provider} -> {out / 'responses.jsonl'}")
