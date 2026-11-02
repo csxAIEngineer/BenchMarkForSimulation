@@ -9,7 +9,15 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from popbench.comms.errors import CommsError
+from popbench.comms.sample import question_contract
 from popbench.schema import PromptPackage
+
+SKILL_BATCH_APPENDIX = """按每题的 response 字段作答，只输出 JSON：
+{"answers": [{"question_id": "...", "gut": "...", "buy_prob": 0.5, "probs": {"选项": 0.5}, "answer": "...", "rationale": "..."}]}
+- pricing：只要 question_id、gut、buy_prob（0.15–0.85），不要给买/不买。
+- choice：只要 question_id 和 probs（键为该题选项，非负且和为 1）。
+- direct：question_id、answer、rationale。
+每道题一个对象。"""
 
 ANSWER_BATCH_SYSTEM = (
     "You answer as the person described in the persona. "
@@ -40,12 +48,22 @@ def pack_batch(packages: Sequence[PromptPackage]) -> tuple[str, str, tuple[str, 
             raise CommsError("a batch must be one subject and one persona method")
         if package.response_mode != first.response_mode or package.persona != first.persona:
             raise CommsError("a batch must share one persona and one response mode")
+        if package.outer_sample != first.outer_sample:
+            raise CommsError("a batch must share one sampling contract")
         if package.question_id in question_ids:
             raise CommsError(f"duplicate question_id in batch: {package.question_id}")
         question_ids.append(package.question_id)
         body = package.question_body or package.user
-        blocks.append(f"question_id: {package.question_id}\n{body}")
-    system = ANSWER_BATCH_SYSTEM if first.response_mode == "answer" else DISTRIBUTION_BATCH_SYSTEM
+        if first.outer_sample:
+            blocks.append(
+                f"question_id: {package.question_id}\nresponse: {question_contract(package)}\n{body}"
+            )
+        else:
+            blocks.append(f"question_id: {package.question_id}\n{body}")
+    if first.outer_sample:
+        system = first.system.strip() + "\n\n" + SKILL_BATCH_APPENDIX
+    else:
+        system = ANSWER_BATCH_SYSTEM if first.response_mode == "answer" else DISTRIBUTION_BATCH_SYSTEM
     user = "\n\n".join(
         [
             "Persona:",
@@ -71,6 +89,7 @@ def per_question_payloads(
     *,
     response_mode: str,
     parse_error: str | None,
+    outer_sample: bool = False,
 ) -> list[tuple[dict | None, str | None]]:
     """Map a batch JSON object onto one payload per requested question."""
     if parse_error or parsed is None:
@@ -89,11 +108,26 @@ def per_question_payloads(
         if item is None:
             rows.append((None, f"missing question_id {question_id}"))
             continue
-        rows.append(_one_answer(item, question_id, response_mode))
+        rows.append(_one_answer(item, question_id, response_mode, outer_sample=outer_sample))
     return rows
 
 
-def _one_answer(item: dict, question_id: str, response_mode: str) -> tuple[dict | None, str | None]:
+def _one_answer(
+    item: dict,
+    question_id: str,
+    response_mode: str,
+    *,
+    outer_sample: bool,
+) -> tuple[dict | None, str | None]:
+    if outer_sample:
+        kept = {
+            key: item.get(key)
+            for key in ("answer", "rationale", "gut", "buy_prob", "probs")
+            if key in item
+        }
+        if not any(key in kept for key in ("answer", "buy_prob", "probs")):
+            return None, f"{question_id} is missing buy_prob, probs, or answer"
+        return kept, None
     rationale = item.get("rationale")
     if response_mode == "distribution":
         distribution = item.get("distribution")

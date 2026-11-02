@@ -43,8 +43,8 @@ class MockProvider:
 
 def _batch_reply(user: str, *, model: str, distribution: bool) -> str:
     answers = []
-    for question_id, options in _question_blocks(user):
-        if distribution:
+    for question_id, options, response in _question_blocks(user):
+        if distribution or response == "distribution":
             labels = options or ("A", "B")
             weight = 1 / len(labels)
             answers.append(
@@ -52,6 +52,17 @@ def _batch_reply(user: str, *, model: str, distribution: bool) -> str:
                     "question_id": question_id,
                     "distribution": {label: weight for label in labels},
                     "rationale": f"mock reply from {model}",
+                }
+            )
+        elif response == "pricing":
+            answers.append({"question_id": question_id, "gut": "随便", "buy_prob": 0.42})
+        elif response == "choice":
+            labels = options or ("A", "B")
+            weight = 1 / len(labels)
+            answers.append(
+                {
+                    "question_id": question_id,
+                    "probs": {label: weight for label in labels},
                 }
             )
         else:
@@ -65,20 +76,26 @@ def _batch_reply(user: str, *, model: str, distribution: bool) -> str:
     return json.dumps({"answers": answers}, ensure_ascii=False)
 
 
-def _question_blocks(user: str) -> list[tuple[str, tuple[str, ...]]]:
-    blocks: list[tuple[str, tuple[str, ...]]] = []
+def _question_blocks(user: str) -> list[tuple[str, tuple[str, ...], str]]:
+    blocks: list[tuple[str, tuple[str, ...], str]] = []
     current: str | None = None
+    response = ""
     options: list[str] = []
     collecting = False
     for line in user.splitlines():
         if line.startswith("question_id:"):
             if current is not None:
-                blocks.append((current, tuple(options)))
+                blocks.append((current, tuple(options), response))
             current = line.split(":", 1)[1].strip()
+            response = ""
             options = []
             collecting = False
             continue
         if current is None:
+            continue
+        if line.startswith("response:"):
+            response = line.split(":", 1)[1].strip()
+            collecting = False
             continue
         if line.strip() == "Options:":
             collecting = True
@@ -88,7 +105,7 @@ def _question_blocks(user: str) -> list[tuple[str, tuple[str, ...]]]:
         elif collecting and line.strip():
             collecting = False
     if current is not None:
-        blocks.append((current, tuple(options)))
+        blocks.append((current, tuple(options), response))
     return blocks
 
 

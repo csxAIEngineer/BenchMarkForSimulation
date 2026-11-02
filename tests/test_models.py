@@ -63,9 +63,10 @@ def _group():
     return bundle.cases[0]
 
 
-def test_only_atus_expanded_is_registered():
-    assert list(METHODS) == ["atus_expanded"]
+def test_registered_methods_are_atus_cards():
+    assert set(METHODS) == {"atus_expanded", "atus_expanded_skill"}
     assert (ROOT / "src" / "popbench" / "models" / "atus_expanded").is_dir()
+    assert (ROOT / "src" / "popbench" / "models" / "atus_expanded_skill").is_dir()
     for removed in (
         "demographics_only",
         "full_persona",

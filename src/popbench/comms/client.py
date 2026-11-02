@@ -7,6 +7,7 @@ from pathlib import Path
 
 from popbench.schema import PromptPackage, SimulationResult
 from popbench.comms.batch import messages_for_batch, pack_batch, per_question_payloads
+from popbench.comms.sample import apply_outer_sample
 from popbench.comms.cache import cache_key, cache_key_messages, read_cache, write_cache
 from popbench.comms.parse import ParseError, parse_json_object
 from popbench.comms.providers.base import Provider
@@ -53,7 +54,12 @@ class LLMClient:
             write_cache(self.cache_dir, key, raw, parsed)
         return _result(package, self.provider.name, self.model, raw, parsed, error, cached=False)
 
-    def complete_batch(self, packages: Sequence[PromptPackage]) -> tuple[SimulationResult, ...]:
+    def complete_batch(
+        self,
+        packages: Sequence[PromptPackage],
+        *,
+        sample_seed: int = 0,
+    ) -> tuple[SimulationResult, ...]:
         """One provider call for several questions that share a persona."""
         if not packages:
             return ()
@@ -69,7 +75,7 @@ class LLMClient:
         )
         cached_raw = None if self.cache_dir is None else read_cache(self.cache_dir, key)
         if cached_raw is not None:
-            return self._rows(packages, question_ids, cached_raw, cached=True)
+            return self._rows(packages, question_ids, cached_raw, cached=True, sample_seed=sample_seed)
         raw = call_with_retry(
             lambda: self.provider.complete(
                 messages,
@@ -78,7 +84,7 @@ class LLMClient:
             ),
             attempts=self.attempts,
         )
-        rows = self._rows(packages, question_ids, raw, cached=False)
+        rows = self._rows(packages, question_ids, raw, cached=False, sample_seed=sample_seed)
         if self.cache_dir is not None and all(row.parse_error is None for row in rows):
             parsed, _error = _parse(raw)
             write_cache(self.cache_dir, key, raw, parsed)
@@ -91,16 +97,21 @@ class LLMClient:
         raw: str,
         *,
         cached: bool,
+        sample_seed: int = 0,
     ) -> tuple[SimulationResult, ...]:
         parsed, error = _parse(raw)
+        outer = packages[0].outer_sample
         payloads = per_question_payloads(
             parsed,
             question_ids,
             response_mode=packages[0].response_mode,
             parse_error=error,
+            outer_sample=outer,
         )
         rows: list[SimulationResult] = []
         for package, (item, item_error) in zip(packages, payloads, strict=True):
+            if outer and item is not None and item_error is None:
+                item, item_error = apply_outer_sample(item, package, sample_seed)
             rows.append(
                 SimulationResult(
                     subject_id=package.subject_id,

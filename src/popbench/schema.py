@@ -163,6 +163,9 @@ class PromptPackage:
     response_mode: Literal["answer", "distribution"]
     persona: str = ""
     question_body: str = ""
+    options: tuple[str, ...] = ()
+    kind: str = ""
+    outer_sample: bool = False
 
     def messages(self) -> list[dict[str, str]]:
         return [
@@ -181,6 +184,9 @@ class PromptPackage:
             "response_mode": self.response_mode,
             "persona": self.persona,
             "question_body": self.question_body,
+            "options": list(self.options),
+            "kind": self.kind,
+            "outer_sample": self.outer_sample,
         }
 
 

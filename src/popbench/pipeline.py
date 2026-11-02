@@ -48,7 +48,9 @@ def simulate(
     results: list[SimulationResult] = []
     for group in _by_subject(packages):
         for start in range(0, len(group), batch_size):
-            results.extend(client.complete_batch(group[start : start + batch_size]))
+            results.extend(
+                client.complete_batch(group[start : start + batch_size], sample_seed=seed)
+            )
     return tuple(results)
 
 

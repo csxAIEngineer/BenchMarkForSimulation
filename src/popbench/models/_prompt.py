@@ -24,13 +24,16 @@ def build_package(
     method: str,
     persona: str,
     response_mode: str,
+    system: str | None = None,
+    outer_sample: bool = False,
 ) -> PromptPackage:
     if response_mode not in {"answer", "distribution"}:
         raise ValueError(f"unknown response mode: {response_mode}")
     text = persona.strip()
     if not text:
         raise ValueError(f"{method} produced an empty persona")
-    system = ANSWER_SYSTEM if response_mode == "answer" else DISTRIBUTION_SYSTEM
+    if system is None:
+        system = ANSWER_SYSTEM if response_mode == "answer" else DISTRIBUTION_SYSTEM
     question_body = _question_body(case)
     user = "\n".join(["Persona:", text, "", "Question:", question_body])
     return PromptPackage(
@@ -43,6 +46,9 @@ def build_package(
         response_mode=response_mode,  # type: ignore[arg-type]
         persona=text,
         question_body=question_body,
+        options=tuple(case.question.options),
+        kind=case.question.kind,
+        outer_sample=outer_sample,
     )
 
 

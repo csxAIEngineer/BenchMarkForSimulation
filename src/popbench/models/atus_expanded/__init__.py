@@ -8,7 +8,8 @@ from popbench.models.errors import PersonaMethodError
 NAME = "atus_expanded"
 
 
-def build(case: Case, *, seed: int = 0) -> PromptPackage:
+def render_atus_persona(case: Case, *, seed: int = 0) -> str:
+    """Shared compact card. Other methods must call this instead of copying it."""
     if case.subject.unit != "individual":
         raise PersonaMethodError(
             "atus_expanded expands one existing person. "
@@ -22,10 +23,14 @@ def build(case: Case, *, seed: int = 0) -> PromptPackage:
             f"{case.subject.id} has no demographics to expand. "
             "atus_expanded does not invent a respondent."
         )
-    persona = expand_persona(
+    return expand_persona(
         subject_id=case.subject.id,
         demographics=demographics,
         routine=case.subject.routine,
         seed=seed,
     )
+
+
+def build(case: Case, *, seed: int = 0) -> PromptPackage:
+    persona = render_atus_persona(case, seed=seed)
     return build_package(case, method=NAME, persona=persona, response_mode="answer")
