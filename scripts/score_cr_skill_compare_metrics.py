@@ -11,6 +11,8 @@ compare table):
 3) Glass Δ = (mean_twin - mean_human) / sd_human   (per-item, then unweighted mean)
 4) SD ratio = sd_twin / sd_human                   (per-item, then unweighted mean)
 5) mean_tvd = mean over items of 0.5 Σ|p_i-q_i|
+6) mean_top1_acc = mean over items of mode agreement (1 if argmax shares
+   overlap, else 0). Higher is better. Same categorical labels as TVD.
 
 Categorical encoding (project convention / Twin-2K CSV):
 - Closed-ended options: 1-based index in option/column order (span = n_options - 1).
@@ -36,6 +38,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from popbench.evaluate.metrics import (  # noqa: E402
+    distribution_top1_accuracy,
     fisher_z_mean_correlation,
     glass_delta,
     individual_accuracy,
@@ -178,7 +181,15 @@ def shares_from_labels(labels: list[str], vocabulary: list[str]) -> list[float]:
 
 
 def mean_tvd_by_item(pairs_by_item: dict[str, list[tuple[str, str]]]) -> dict[str, Any]:
+    """Per-item TVD and Top-1 mode agreement on the same categorical labels.
+
+    An item is scored when the union of human and model labels is non-empty.
+    Top-1 is 1 when some label is a mode on both sides (see
+    ``distribution_top1_accuracy``), else 0. ``mean_top1_acc`` is the
+    unweighted mean; higher is better.
+    """
     tvds: list[float] = []
+    top1s: list[float] = []
     for item_id in sorted(pairs_by_item):
         pairs = pairs_by_item[item_id]
         human = [h for h, _ in pairs]
@@ -186,15 +197,15 @@ def mean_tvd_by_item(pairs_by_item: dict[str, list[tuple[str, str]]]) -> dict[st
         vocab = sorted(set(human) | set(model))
         if not vocab:
             continue
-        tvds.append(
-            total_variation_distance(
-                shares_from_labels(model, vocab),
-                shares_from_labels(human, vocab),
-            )
-        )
+        model_shares = shares_from_labels(model, vocab)
+        human_shares = shares_from_labels(human, vocab)
+        tvds.append(total_variation_distance(model_shares, human_shares))
+        top1s.append(distribution_top1_accuracy(model_shares, human_shares))
     return {
         "mean_tvd": (sum(tvds) / len(tvds)) if tvds else None,
         "n_items_tvd": len(tvds),
+        "mean_top1_acc": (sum(top1s) / len(top1s)) if top1s else None,
+        "n_items_top1": len(top1s),
     }
 
 
@@ -713,6 +724,19 @@ def main() -> None:
             "source": "popbench.evaluate.metrics.total_variation_distance",
             "note": "lower is closer to human answer distribution",
         },
+        "mean_top1_acc": {
+            "name": "Top-1 Accuracy (mode agreement)",
+            "formula": (
+                "per item, 1 if a label is a mode of both human and model shares, else 0; "
+                "unweighted mean over items with a categorical label vocabulary"
+            ),
+            "source": "popbench.evaluate.metrics.distribution_top1_accuracy",
+            "note": (
+                "higher is better (which side is higher, for binary items). "
+                "Ties: match only when some index is maximal on both sides. "
+                "delta_skill_minus_base is skill minus base, so a positive delta is an improvement."
+            ),
+        },
     }
 
     def delta(a: Any, b: Any) -> float | None:
@@ -740,6 +764,7 @@ def main() -> None:
                     "glass_delta": base.get("glass_delta"),
                     "sd_ratio": base.get("sd_ratio"),
                     "mean_tvd": base.get("mean_tvd"),
+                    "mean_top1_acc": base.get("mean_top1_acc"),
                 },
                 "atus_expanded_skill": {
                     "indiv_acc": skill.get("indiv_acc"),
@@ -747,6 +772,7 @@ def main() -> None:
                     "glass_delta": skill.get("glass_delta"),
                     "sd_ratio": skill.get("sd_ratio"),
                     "mean_tvd": skill.get("mean_tvd"),
+                    "mean_top1_acc": skill.get("mean_top1_acc"),
                 },
                 "delta_skill_minus_base": {
                     "indiv_acc": delta(base.get("indiv_acc"), skill.get("indiv_acc")),
@@ -754,6 +780,7 @@ def main() -> None:
                     "glass_delta": delta(base.get("glass_delta"), skill.get("glass_delta")),
                     "sd_ratio": delta(base.get("sd_ratio"), skill.get("sd_ratio")),
                     "mean_tvd": delta(base.get("mean_tvd"), skill.get("mean_tvd")),
+                    "mean_top1_acc": delta(base.get("mean_top1_acc"), skill.get("mean_top1_acc")),
                 },
                 "encoding_base": base.get("encoding"),
                 "n_items_coded_base": base.get("n_items_coded"),
@@ -800,6 +827,8 @@ def main() -> None:
         old["sd_ratio_skill"] = row["atus_expanded_skill"]["sd_ratio"]
         old["mean_tvd_base"] = row["atus_expanded"]["mean_tvd"]
         old["mean_tvd_skill"] = row["atus_expanded_skill"]["mean_tvd"]
+        old["mean_top1_acc_base"] = row["atus_expanded"]["mean_top1_acc"]
+        old["mean_top1_acc_skill"] = row["atus_expanded_skill"]["mean_top1_acc"]
         old["delta_metrics_skill_minus_base"] = row["delta_skill_minus_base"]
         extended.append(old)
     legacy_path.write_text(json.dumps(extended, ensure_ascii=False, indent=2) + "\n")

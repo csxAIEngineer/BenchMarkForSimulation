@@ -37,6 +37,42 @@ def total_variation_distance(simulated_shares: list[float], human_shares: list[f
     return 0.5 * sum(abs(a - b) for a, b in zip(left, right))
 
 
+def _mode_indices(shares: list[float]) -> set[int]:
+    """Indices whose share equals the maximum. Exact equality after normalization."""
+    peak = max(shares)
+    return {index for index, value in enumerate(shares) if value == peak}
+
+
+def distribution_top1_accuracy(simulated_shares: list[float], human_shares: list[float]) -> float:
+    """Top-1 accuracy: 1.0 when the modes of two answer distributions agree.
+
+    The mode is the argmax share (most frequent answer). On a binary item this
+    is whether the same option has the higher share. Returns 0.0 when the
+    modes do not overlap.
+
+    Ties: after the same normalization as ``total_variation_distance``, every
+    index whose share equals the maximum is a mode. If either side has more
+    than one mode, the distributions match only when at least one index is
+    maximal on both sides.
+
+    >>> distribution_top1_accuracy([0.2, 0.8], [0.45, 0.55])
+    1.0
+    >>> distribution_top1_accuracy([0.7, 0.3], [0.4, 0.6])
+    0.0
+    >>> distribution_top1_accuracy([1, 1], [1, 2])
+    1.0
+    >>> distribution_top1_accuracy([2, 1, 2], [1, 3, 1])
+    0.0
+    """
+    if len(simulated_shares) != len(human_shares):
+        raise ValueError("share vectors must have the same length")
+    left = _as_shares(simulated_shares)
+    right = _as_shares(human_shares)
+    if _mode_indices(left) & _mode_indices(right):
+        return 1.0
+    return 0.0
+
+
 def jensen_shannon(simulated_shares: list[float], human_shares: list[float]) -> float:
     """Jensen-Shannon divergence, in bits, between two answer distributions."""
     if len(simulated_shares) != len(human_shares):
