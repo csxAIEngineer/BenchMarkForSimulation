@@ -15,7 +15,13 @@ NAME = "atus_expanded_skill"
 
 def build(case: Case, *, seed: int = 0) -> PromptPackage:
     card = render_atus_persona(case, seed=seed)
-    persona = "\n\n".join([card, tendency_card(case.subject.id), SKILL_UNDER_PERSONA.strip()])
+    tendency = tendency_card(
+        case.subject.id,
+        case.subject.demographics,
+        seed=seed,
+        demographic_text=case.subject.demographic_text,
+    )
+    persona = "\n\n".join([card, tendency, SKILL_UNDER_PERSONA.strip()])
     return build_package(
         case,
         method=NAME,
