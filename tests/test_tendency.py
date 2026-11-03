@@ -92,6 +92,35 @@ def test_politics_and_novelty_are_verbatim_clear_cues():
     _assert_no_axis_lottery(card)
 
 
+def test_bare_numbers_stay_prior_answers_unless_the_field_is_age():
+    tendency = persona_tendency({"age": "40", "QID5": "45"})
+    assert ("年龄", "40") in tendency.soft
+    assert ("既往回答 QID5", "45") in tendency.clear
+    counted = "How many years have you shopped here?\nAnswer: 20\n"
+    echoed = persona_tendency({}, demographic_text=counted)
+    assert ("年龄", "20") not in echoed.soft
+    assert any(value == "20" for _, value in echoed.clear)
+    asked = "What is your age?\nAnswer: 40\n"
+    assert ("年龄", "40") in persona_tendency({}, demographic_text=asked).soft
+
+
+def test_first_stated_politics_wins_when_text_disagrees():
+    text = "Political leaning: Very conservative"
+    tendency = persona_tendency({"political": "Very liberal"}, demographic_text=text)
+    assert [value for label, value in tendency.clear if label == "政治倾向"] == ["Very liberal"]
+
+
+def test_identity_answers_do_not_become_clear_rank_anchors():
+    tendency = persona_tendency({"QID2": "Female", "QID8": "Married", "QID9": "Often"})
+    values = [value for _, value in (*tendency.clear, *tendency.soft)]
+    assert "Female" not in values
+    assert "Married" not in values
+    assert ("既往回答 QID9", "Often") in tendency.clear
+    text = "Pick a group\nAnswer: Female\n"
+    echoed = persona_tendency({}, demographic_text=text)
+    assert all(value != "Female" for _, value in echoed.clear)
+
+
 def test_structural_fields_are_not_promoted_over_a_stated_habit():
     tendency = persona_tendency(
         {"primary_grocery_shopper": "Yes", "household_size": "3", "sex": "Female"}
