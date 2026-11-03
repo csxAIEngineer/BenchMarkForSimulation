@@ -42,7 +42,7 @@ Mega-Study 的行只有新问卷和真人答案。用 `atus_expanded` 前加 `--
 
 `models/atus_expanded/` 根据已有人口学（以及可选的 ATUS 分钟）写成 `## Basics` 和短的 `## Life history`。没有人口学就不会造一个人。SimBench 的群体行会被拒绝。
 
-`models/atus_expanded_skill/` 使用同一张卡，并在卡下附上「类人问卷孪生」说明。倾向卡由收入、学历、年龄和写明的偏好锁定，同一人同一 seed 固定；没有字段的轴最多动一档，不再按人物 id 抽签。定价题模型只交 `buy_prob`，外层按 `seed:person_id:buy:item_id` 做 Bernoulli（概率夹在 0.15–0.85）。选择题交 `probs`，外层按 `seed:person_id:choice:item_id` 抽样。数值题仍直接作答。
+`models/atus_expanded_skill/` 使用同一张卡，并在卡下附上「类人问卷孪生」说明和一张按人物 id 固定的倾向卡。定价题模型只交 `buy_prob`，外层按 `seed:person_id:buy:item_id` 做 Bernoulli（概率夹在 0.15–0.85）。选择题交 `probs`，外层按 `seed:person_id:choice:item_id` 抽样。数值题仍直接作答。
 
 题目的标准答案放在 `Gold` 上。人物卡方法读不到它。
 
