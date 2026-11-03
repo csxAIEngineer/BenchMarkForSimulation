@@ -10,7 +10,8 @@ after normalizing non-negative share vectors to sum to 1.
 For twin2k_500 / bdm_lettuce: for each question_id, build empirical answer
 share vectors from human gold.answer and model parsed.answer over the union of
 observed labels among rows with both sides present; mean_tvd is the unweighted
-mean of those per-question TVDs.
+mean of those per-question TVDs. mean_top1_acc is the unweighted mean of
+mode agreement on the same share vectors (higher is better).
 
 For twin2k_mega_study: gold.answer is null; extract ordered Answers from
 gold.payload (SelectedByPosition / SelectedText / Values) and align to model
@@ -26,7 +27,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-from popbench.evaluate.metrics import total_variation_distance
+from popbench.evaluate.metrics import distribution_top1_accuracy, total_variation_distance
 
 ROOT = Path(__file__).resolve().parents[1]
 RUN = ROOT / "runs" / "cr-skill-compare-income50"
@@ -66,6 +67,7 @@ def mean_tvd_by_item(
 ) -> dict[str, Any]:
     item_rows: list[dict[str, Any]] = []
     tvds: list[float] = []
+    top1s: list[float] = []
     for item_id in sorted(pairs_by_item):
         pairs = pairs_by_item[item_id]
         human = [h for h, _ in pairs]
@@ -73,22 +75,26 @@ def mean_tvd_by_item(
         vocab = sorted(set(human) | set(model))
         if not vocab:
             continue
-        tvd = total_variation_distance(
-            shares_from_labels(model, vocab),
-            shares_from_labels(human, vocab),
-        )
+        model_shares = shares_from_labels(model, vocab)
+        human_shares = shares_from_labels(human, vocab)
+        tvd = total_variation_distance(model_shares, human_shares)
+        top1 = distribution_top1_accuracy(model_shares, human_shares)
         tvds.append(tvd)
+        top1s.append(top1)
         item_rows.append(
             {
                 "item_id": item_id,
                 "n": len(pairs),
                 "n_labels": len(vocab),
                 "tvd": tvd,
+                "top1_acc": top1,
             }
         )
     return {
         "mean_tvd": (sum(tvds) / len(tvds)) if tvds else None,
         "n_items_tvd": len(tvds),
+        "mean_top1_acc": (sum(top1s) / len(top1s)) if top1s else None,
+        "n_items_top1": len(top1s),
         "n_pairs": sum(row["n"] for row in item_rows),
         "items": item_rows,
     }
@@ -128,6 +134,8 @@ def score_simple(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "n_rows": len(rows),
         "mean_tvd": tvd["mean_tvd"],
         "n_items_tvd": tvd["n_items_tvd"],
+        "mean_top1_acc": tvd["mean_top1_acc"],
+        "n_items_top1": tvd["n_items_top1"],
         "n_pairs_tvd": tvd["n_pairs"],
         "tvd_items": tvd["items"],
     }
@@ -336,6 +344,8 @@ def score_mega(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "n_rows": len(rows),
         "mean_tvd": tvd["mean_tvd"],
         "n_items_tvd": tvd["n_items_tvd"],
+        "mean_top1_acc": tvd["mean_top1_acc"],
+        "n_items_top1": tvd["n_items_top1"],
         "n_pairs_tvd": tvd["n_pairs"],
         "aligned_cases": aligned_cases,
         "length_mismatch_cases": length_mismatch_cases,
@@ -390,12 +400,18 @@ def main() -> None:
                 "atus_expanded_mean_tvd": base.get("mean_tvd"),
                 "atus_expanded_skill_mean_tvd": skill.get("mean_tvd"),
                 "delta_tvd_skill_minus_base": delta(base.get("mean_tvd"), skill.get("mean_tvd")),
+                "atus_expanded_mean_top1_acc": base.get("mean_top1_acc"),
+                "atus_expanded_skill_mean_top1_acc": skill.get("mean_top1_acc"),
+                "delta_top1_acc_skill_minus_base": delta(
+                    base.get("mean_top1_acc"), skill.get("mean_top1_acc")
+                ),
                 "n_scored_base": base.get("n_scored"),
                 "n_scored_skill": skill.get("n_scored"),
                 "n_items_tvd_base": base.get("n_items_tvd"),
                 "n_items_tvd_skill": skill.get("n_items_tvd"),
                 "note": (
                     "lower TVD = closer to human answer shares; "
+                    "higher Top-1 = model mode matches the human mode; "
                     "mean over questions with both human and model labels"
                 ),
             }
@@ -411,8 +427,16 @@ def main() -> None:
         "source": "popbench.evaluate.metrics.total_variation_distance (restored from main)",
         "no_api_calls": True,
     }
+    top1_formula = {
+        "metric": "distribution_top1_accuracy",
+        "formula": "1 if mode(p) intersects mode(q) else 0, on the same normalized shares as TVD",
+        "tie_break": "match only when some index is maximal on both sides",
+        "aggregation": "unweighted mean_top1_acc over the same items as mean_tvd; higher is better",
+        "source": "popbench.evaluate.metrics.distribution_top1_accuracy",
+    }
     out = {
         "formula": formula,
+        "top1": top1_formula,
         "compare": compare,
         "methods": list(METHODS),
         "run_dir": str(RUN),
@@ -438,6 +462,9 @@ def main() -> None:
                 "atus_expanded_mean_tvd": row["atus_expanded_mean_tvd"],
                 "atus_expanded_skill_mean_tvd": row["atus_expanded_skill_mean_tvd"],
                 "delta_tvd_skill_minus_base": row["delta_tvd_skill_minus_base"],
+                "atus_expanded_mean_top1_acc": row["atus_expanded_mean_top1_acc"],
+                "atus_expanded_skill_mean_top1_acc": row["atus_expanded_skill_mean_top1_acc"],
+                "delta_top1_acc_skill_minus_base": row["delta_top1_acc_skill_minus_base"],
                 "n_items_tvd_base": row["n_items_tvd_base"],
                 "n_items_tvd_skill": row["n_items_tvd_skill"],
             }
@@ -450,7 +477,12 @@ def main() -> None:
     for row in details:
         detail_out.append({k: v for k, v in row.items() if k != "tvd_items"})
     (RUN / "tvd_score_details.json").write_text(
-        json.dumps({"formula": formula, "runs": detail_out}, ensure_ascii=False, indent=2) + "\n"
+        json.dumps(
+            {"formula": formula, "top1": top1_formula, "runs": detail_out},
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n"
     )
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
