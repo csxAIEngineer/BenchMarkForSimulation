@@ -299,3 +299,70 @@ def quadratic_weighted_kappa(predicted: list[int], human: list[int], *, categori
 def _sample_variance(values: list[float]) -> float:
     mean = sum(values) / len(values)
     return sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+
+
+def individual_accuracy(predicted: list[float], human: list[float], *, span: float) -> float:
+    """Paired twin closeness: 1 - MAD/range (alias of ordinal_accuracy)."""
+    return ordinal_accuracy(predicted, human, span=span)
+
+
+def fisher_z(correlation: float) -> float:
+    """Fisher z-transform of a Pearson correlation in (-1, 1)."""
+    if correlation >= 1:
+        correlation = 1 - 1e-12
+    elif correlation <= -1:
+        correlation = -1 + 1e-12
+    return 0.5 * math.log((1 + correlation) / (1 - correlation))
+
+
+def inverse_fisher_z(z_value: float) -> float:
+    """Inverse Fisher z-transform (tanh)."""
+    return math.tanh(z_value)
+
+
+def fisher_z_mean_correlation(correlations: list[float]) -> float | None:
+    """Average Pearson correlations on the Fisher-z scale, then transform back.
+
+    Primary personalization metric: can the twin rank who is high vs low.
+    Items/correlations that are None or non-finite are skipped.
+    """
+    zs: list[float] = []
+    for value in correlations:
+        if value is None:
+            continue
+        number = float(value)
+        if math.isnan(number) or math.isinf(number):
+            continue
+        zs.append(fisher_z(number))
+    if not zs:
+        return None
+    return inverse_fisher_z(sum(zs) / len(zs))
+
+
+def glass_delta(simulated: list[float], human: list[float]) -> float | None:
+    """Glass Δ mean shift: (mean_sim - mean_human) / sd_human (population sd).
+
+    None when the human side has zero variance.
+    """
+    if len(simulated) != len(human) or not human:
+        raise ValueError("Glass delta needs two equal-length non-empty series")
+    scale = population_std(human)
+    if scale is None or scale == 0:
+        return None
+    mean_sim = sum(simulated) / len(simulated)
+    mean_human = sum(human) / len(human)
+    return (mean_sim - mean_human) / scale
+
+
+def sd_ratio(simulated: list[float], human: list[float]) -> float | None:
+    """Twin/human standard-deviation ratio (population sd). Under-dispersion monitor.
+
+    None when the human side has zero variance.
+    """
+    if not simulated or not human:
+        raise ValueError("sd ratio needs non-empty series")
+    human_sd = population_std(human)
+    sim_sd = population_std(simulated)
+    if human_sd is None or sim_sd is None or human_sd == 0:
+        return None
+    return sim_sd / human_sd

@@ -4,16 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "popbench"
-version = "0.1.0"
-description = "Benchmark that compares how well different LLMs simulate people on a fixed survey dataset and human baseline."
+version = "0.2.0"
+description = "Three-layer benchmark for LLM population simulation: datasets, persona methods, and LLM communication."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "datasets>=3.0",
     "huggingface_hub>=0.26",
-    "pandas>=2.2",
-    "numpy>=2.0",
-    "pyyaml>=6.0",
     "httpx>=0.27",
 ]
 
@@ -22,9 +19,14 @@ dev = ["pytest>=8.2"]
 
 [project.scripts]
 popbench = "popbench.cli:main"
+benchmark = "popbench.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/popbench"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "cr_api" = "cr_api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src", "."]

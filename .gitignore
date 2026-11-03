@@ -1,4 +1,5 @@
-# Local benchmark inputs and outputs. Do not commit survey microdata.
+# Dataset caches and run output. Fetch with `benchmark fetch`.
+# Do not commit Twin-2K microdata, Mega-Study exports, or SimBench downloads.
 data/
 runs/
 
@@ -11,6 +12,8 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+.coverage
+htmlcov/
 .mypy_cache/
 .ruff_cache/
 .tools/
