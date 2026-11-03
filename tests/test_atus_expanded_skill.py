@@ -10,12 +10,21 @@ from popbench.pipeline import simulate
 from popbench.schema import PromptPackage
 
 
-def _case(person: str = "7", question: str = "Q1", kind: str = "multiple_choice", options=("red", "blue")):
+def _case(
+    person: str = "7",
+    question: str = "Q1",
+    kind: str = "multiple_choice",
+    options=("red", "blue"),
+    demographics: dict | None = None,
+):
+    demo = {"age": "40", "sex": "Female", "education": "high_school"}
+    if demographics:
+        demo.update(demographics)
     bundle = bundle_from_records(
         [
             {
                 "id": person,
-                "demographics": {"age": "40", "sex": "Female", "education": "high_school"},
+                "demographics": demo,
                 "questions": [
                     {
                         "id": question,
@@ -32,12 +41,13 @@ def _case(person: str = "7", question: str = "Q1", kind: str = "multiple_choice"
 
 
 def test_skill_prompt_reuses_the_card_and_embeds_the_skill():
-    demo = {"age": "40", "sex": "Female", "education": "high_school"}
-    first = build_prompt("atus_expanded_skill", _case("7", "Q1"), seed=0)
-    second = build_prompt("atus_expanded_skill", _case("7", "Q2"), seed=0)
-    other = build_prompt("atus_expanded_skill", _case("8", "Q1"), seed=0)
-    plain = build_prompt("atus_expanded", _case("7", "Q1"), seed=0)
-    card = tendency_card("7", demo, seed=0)
+    demo = {"price_importance": "Extremely important"}
+    first = build_prompt("atus_expanded_skill", _case("7", "Q1", demographics=demo), seed=0)
+    second = build_prompt("atus_expanded_skill", _case("7", "Q2", demographics=demo), seed=0)
+    other = build_prompt("atus_expanded_skill", _case("8", "Q1", demographics=demo), seed=0)
+    plain = build_prompt("atus_expanded", _case("7", "Q1", demographics=demo), seed=0)
+    card_demo = {"age": "40", "sex": "Female", "education": "high_school", **demo}
+    anchor = tendency_card("7", card_demo, seed=0)
     assert "## Basics" in first.user
     assert "## Life history" in first.user
     assert "类人问卷孪生" in first.user
@@ -46,13 +56,22 @@ def test_skill_prompt_reuses_the_card_and_embeds_the_skill():
     assert "谁高谁低" in first.user
     assert "公不公平" in first.user
     assert "没写宠物" in first.user
+    assert "明确线索" in first.user
+    assert "随机倾向" in first.user
     assert "个人倾向" in first.user
     assert "市场调查" in first.system
     assert "便宜就买" in first.system
+    assert "平均受访者" in first.system
+    assert "抽到的个人倾向" not in first.system
+    assert "抽到的个人倾向" not in first.user
     assert "SECRET_GOLD" not in first.user
-    assert card in first.user
-    assert card in second.user
-    assert tendency_card("8", demo, seed=0) in other.user
+    assert "Extremely important" in first.user
+    assert "价格敏感：" not in first.user
+    assert anchor == tendency_card("8", card_demo, seed=0)
+    assert anchor in first.user
+    assert anchor in second.user
+    assert anchor in other.user
+    assert first.user != other.user
     assert "buy_prob" not in plain.user
     assert first.outer_sample is True
     assert plain.outer_sample is False

@@ -1,116 +1,125 @@
-"""Persona-conditioned tendency card.
+"""Card-anchored tendency for cross-person rank.
 
-An earlier card drew every axis from a hash of ``person_id``. That spread
-people apart, but the spread did not follow income, education, age, or stated
-preferences, so cross-person rank (Fisher-z Pearson) fell while the SD ratio
-rose. Levels here are a deterministic function of those fields. At most one
-axis that no field locked moves by one step, from ``seed`` and ``person_id``,
-so identical cards are not clones and uncorrelated noise cannot reshuffle the
-ranking. Outer Bernoulli / categorical sampling stays the main stochasticity.
+An id-hash axis draw spreads people apart without tracking the persona, so
+Fisher-z Pearson falls. Binning income, education, and age into behavior
+levels can reverse ranks the card already implies. This card echoes stated
+preferences and prior answers verbatim, keeps those three fields as soft
+cues, and allows a tiny residual only when the card has no anchor.
 """
 
 from __future__ import annotations
 
 import hashlib
-import random
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-# Same adapter the persona card uses, so BDM phrases and outcome columns stay out.
 from popbench.models.atus_expanded.expand import _adapt_demographics
 
-_PRICE = "价格敏感"
-_NOVELTY = "对新奇零食 / 电子小件"
-_PRICEY = "对看起来贵的日用品"
-_UNKNOWN = "未知品类"
-_ATTITUDE = "态度题"
-
-_LEVELS: dict[str, tuple[str, str, str]] = {
-    _PRICE: ("低", "中", "高"),
-    _NOVELTY: ("排斥", "无所谓", "想试试"),
-    _PRICEY: ("死抠", "一般", "不在乎"),
-    _UNKNOWN: ("偏向不买", "五五开", "偏向买"),
-    _ATTITUDE: ("偏保守", "中间", "偏自由"),
+_MAX_CLEAR = 8
+_TILTS = ("略低", "居中", "略高")
+_SOFT_LABEL = (("income", "收入"), ("education", "学历"), ("age", "年龄"))
+_CLEAR_FIELDS = (
+    ("price_importance", "对价格的在意"),
+    ("try_novel_food_technology", "尝新意愿"),
+    ("political", "政治倾向"),
+    ("ideology", "政治倾向"),
+    ("food_resource_constraints", "食物资源约束"),
+    ("locally_grown_importance", "本地种植的在意"),
+    ("pesticide_free_importance", "无农药的在意"),
+    ("brand_importance", "品牌的在意"),
+    ("primary_grocery_shopper", "谁买菜"),
+    ("primary_cook", "谁做饭"),
+    ("grows_own_food", "是否自己种菜"),
+    ("food_variety_concern", "对食品种类的担心"),
+    ("leafy_green_meals", "叶菜餐次"),
+    ("meals_not_prepared_at_home", "外食餐次"),
+    ("heard_of_vertical_farming", "是否听说垂直农业"),
+    ("heard_of_greenhouse_growing", "是否听说温室种植"),
+)
+_SOFT_FIELDS = (
+    ("income", "income"),
+    ("household_income", "income"),
+    ("education", "education"),
+    ("age", "age"),
+)
+_SKIP = {
+    "education_bucket",
+    "sex",
+    "race",
+    "state",
+    "state_name",
+    "marital_status",
+    "employment",
+    "employment_status",
+    "work_hours",
+    "household_size",
+    "religion",
+    "income_over_50k",
 }
-
-_ANCHOR_LABEL = {
-    "income": "收入",
-    "income_flag": "收入是否超过5万美元",
-    "education": "学历",
-    "age": "年龄",
-    "politics": "政治倾向",
-    "price": "对价格的在意",
-    "novelty": "尝新意愿",
-    "employment": "就业",
-    "marital": "婚姻",
-    "household": "家庭规模",
-    "religion": "宗教",
-    "work": "每周工时",
-}
-_ANCHOR_ORDER = tuple(_ANCHOR_LABEL)
-_MAX_ANCHORS = 8
-
-_KEY_KIND = {
-    "income": "income",
-    "household_income": "income",
-    "qid21": "income",
-    "education": "education",
-    "age": "age",
-    "political": "politics",
-    "ideology": "politics",
-    "price_importance": "price",
-    "try_novel_food_technology": "novelty",
-    "marital_status": "marital",
-    "household_size": "household",
-    "work_hours": "work",
-    "employment": "employment",
-    "employment_status": "employment",
-    "religion": "religion",
-}
-_SKIP_KEYS = {"education_bucket", "income_over_50k"}
+_LINE_LABELS = (
+    ("household income:", "income"),
+    ("personal income:", "income"),
+    ("income:", "income"),
+    ("education:", "education"),
+    ("age:", "age"),
+    ("importance of price", "price"),
+    ("political leaning:", "politics"),
+    ("likelihood of trying", "novelty"),
+)
+_QID = re.compile(r"^(?:qid|q)\d+", re.I)
 _AGE_BAND = re.compile(
     r"(?<!\d)(?:18\s*[-–]\s*29|30\s*[-–]\s*49|50\s*[-–]\s*64|65\s*\+)",
     re.I,
 )
-_EMPLOYMENT = (
-    "full-time",
-    "part-time",
-    "self-employed",
-    "unemployed",
-    "retired",
-    "student",
-    "home-maker",
-    "homemaker",
+_EDUCATION = (
+    "high school",
+    "less than high",
+    "no formal",
+    "some college",
+    "some university",
+    "associate",
+    "bachelor",
+    "university",
+    "professional",
+    "college",
+    "postgrad",
+    "master",
+    "doctoral",
+    "phd",
 )
-_MARITAL = (
-    "never been married",
+_POLITICS = ("liberal", "conservative", "democrat", "republican", "moderate", "independent")
+_IDENTITY = {
+    "female",
+    "male",
+    "man",
+    "woman",
+    "non-binary",
+    "nonbinary",
+    "married",
     "never married",
-    "living with a partner",
     "divorced",
     "separated",
     "widowed",
-    "married",
-)
-
-
-@dataclass(frozen=True)
-class TendencyAxis:
-    label: str
-    level: str
-    pinned: bool
+    "white",
+    "black",
+    "asian",
+    "hispanic",
+}
+_STRUCTURAL = ("sex", "gender", "race", "ethnic", "marital")
 
 
 @dataclass(frozen=True)
 class Tendency:
-    """Field-locked axes, before the optional one-step nudge."""
+    """Verbatim rank anchors. Soft cues are not behavior bins."""
 
-    anchors: tuple[str, ...]
-    axes: tuple[TendencyAxis, ...]
+    clear: tuple[tuple[str, str], ...]
+    soft: tuple[tuple[str, str], ...]
 
-    def levels(self) -> dict[str, str]:
-        return {axis.label: axis.level for axis in self.axes}
+    @property
+    def has_anchor(self) -> bool:
+        return bool(self.clear or self.soft)
 
 
 def persona_tendency(
@@ -118,9 +127,13 @@ def persona_tendency(
     *,
     demographic_text: str | None = None,
 ) -> Tendency:
-    """Map card fields to axes. Ignores person id and seed."""
-    found = _collect(demographics or {}, demographic_text)
-    return Tendency(_anchors(found), _axes(found))
+    """Read card fields. Ignores person id and seed."""
+    clear: list[tuple[str, str]] = []
+    soft: dict[str, str] = {}
+    _take_fields(_adapt_demographics(demographics or {}), clear, soft)
+    _take_text(demographic_text, clear, soft)
+    ordered = tuple((label, soft[kind]) for kind, label in _SOFT_LABEL if kind in soft)
+    return Tendency(tuple(clear[:_MAX_CLEAR]), ordered)
 
 
 def tendency_card(
@@ -130,258 +143,249 @@ def tendency_card(
     seed: int = 0,
     demographic_text: str | None = None,
 ) -> str:
-    """Render the card the model sees. Same inputs always return the same text."""
+    """Render the card the model sees. Anchors do not depend on person id."""
     base = persona_tendency(demographics, demographic_text=demographic_text)
-    axes, nudge = _nudge(base.axes, person_id, seed)
-    return _render(base.anchors, axes, nudge)
+    return _render(base, _tilt(person_id, seed) if not base.has_anchor else None)
 
 
-def _collect(demographics: Mapping[str, Any], demographic_text: str | None) -> dict[str, str]:
-    adapted = _adapt_demographics(demographics)
-    found: dict[str, str] = {}
-    _put_flag(found, adapted)
-    keyed = [key for key in adapted if key not in _SKIP_KEYS and _kind_for_key(key)]
-    rest = [key for key in adapted if key not in _SKIP_KEYS and key not in keyed]
-    for key in (*keyed, *rest):
-        kind = _kind_for_key(key) or _kind_for_value(str(adapted[key]))
-        if kind:
-            _put(found, kind, str(adapted[key]))
-    for line in _text_lines(demographic_text):
-        parsed = _from_text_line(line)
-        if parsed is not None:
-            _put(found, parsed[0], parsed[1])
-    return found
-
-
-def _put_flag(found: dict[str, str], adapted: Mapping[str, Any]) -> None:
-    flag = adapted.get("income_over_50k")
-    if flag is not None and not adapted.get("income"):
-        _put(found, "income_flag", str(flag))
-
-
-def _put(found: dict[str, str], kind: str, value: str) -> None:
-    text = " ".join(value.split())
-    if kind not in found and text:
-        found[kind] = text[:180]
-
-
-def _anchors(found: Mapping[str, str]) -> tuple[str, ...]:
-    rows: list[str] = []
-    for kind in _ANCHOR_ORDER:
-        if kind not in found:
+def _take_fields(
+    adapted: Mapping[str, Any],
+    clear: list[tuple[str, str]],
+    soft: dict[str, str],
+) -> None:
+    handled = _named_fields(adapted, clear, soft)
+    _income_flag(adapted, soft)
+    for key, raw in adapted.items():
+        if key in handled or key in _SKIP:
             continue
-        value = found[kind]
-        if kind == "income_flag":
-            value = "是" if _truthy(value) else "否"
-        rows.append(f"{_ANCHOR_LABEL[kind]}：{value}")
-    return tuple(rows[:_MAX_ANCHORS])
+        value = _clean(raw)
+        loose = None if not value else _loose_key(key, value)
+        if loose is not None:
+            _store(loose, value, clear, soft)
 
 
-def _axes(found: Mapping[str, str]) -> tuple[TendencyAxis, ...]:
-    income = _income_tier(found.get("income", ""), found.get("income_flag"))
-    education = _education_tier(found.get("education", ""))
-    age = _age_band(found.get("age", ""))
-    politics = _politics(found.get("politics", ""))
-    stated_price = _stated_level(found.get("price", ""))
-    stated_novelty = _stated_level(found.get("novelty", ""))
-    price = _price_axis(income, stated_price)
-    novelty = _novelty_axis(age, education, stated_novelty)
-    pricey = _pricey_axis(income)
-    unknown = _unknown_axis(price, novelty)
-    axes = [price, novelty, pricey, unknown]
-    attitude = _attitude_axis(politics)
-    if attitude is not None:
-        axes.append(attitude)
-    return tuple(axes)
+def _named_fields(
+    adapted: Mapping[str, Any],
+    clear: list[tuple[str, str]],
+    soft: dict[str, str],
+) -> set[str]:
+    handled: set[str] = set()
+    for key, label in _CLEAR_FIELDS:
+        value = _clean(adapted.get(key))
+        if value:
+            _add_clear(clear, label, value)
+            handled.add(key)
+    for key, kind in _SOFT_FIELDS:
+        value = _clean(adapted.get(key))
+        if value:
+            _add_soft(soft, kind, value)
+            handled.add(key)
+    return handled
 
 
-def _price_axis(income: str | None, stated: str | None) -> TendencyAxis:
-    score = 1 if income is None else {"high": 0, "mid": 1, "low": 2}[income]
-    if stated == "high":
-        score += 1
-    elif stated == "low":
-        score -= 1
-    return TendencyAxis(_PRICE, _LEVELS[_PRICE][_clamp(score)], income is not None or stated is not None)
+def _income_flag(adapted: Mapping[str, Any], soft: dict[str, str]) -> None:
+    if "income" in soft or "income_over_50k" not in adapted:
+        return
+    text = "超过 5 万美元" if _truthy(adapted.get("income_over_50k")) else "不超过 5 万美元"
+    _add_soft(soft, "income", text)
 
 
-def _novelty_axis(age: str | None, education: str | None, stated: str | None) -> TendencyAxis:
-    score = 1
-    if age == "young":
-        score += 1
-    elif age == "older":
-        score -= 1
-    if education == "high":
-        score += 1
-    elif education == "low":
-        score -= 1
-    if stated == "high":
-        score += 1
-    elif stated == "low":
-        score -= 1
-    pinned = age is not None or education is not None or stated is not None
-    return TendencyAxis(_NOVELTY, _LEVELS[_NOVELTY][_clamp(score)], pinned)
+def _take_text(
+    demographic_text: str | None,
+    clear: list[tuple[str, str]],
+    soft: dict[str, str],
+) -> None:
+    for key, value in _text_items(demographic_text):
+        if not value:
+            continue
+        _store(_text_target(key, value), value, clear, soft)
 
 
-def _pricey_axis(income: str | None) -> TendencyAxis:
-    if income == "high":
-        level = "不在乎"
-    elif income == "low":
-        level = "死抠"
-    else:
-        level = "一般"
-    return TendencyAxis(_PRICEY, level, income is not None)
+def _store(
+    target: tuple[str, str] | None,
+    value: str,
+    clear: list[tuple[str, str]],
+    soft: dict[str, str],
+) -> None:
+    if target is None:
+        return
+    kind, label = target
+    if kind == "soft":
+        _add_soft(soft, label, value)
+        return
+    _add_clear(clear, label, value)
 
 
-def _unknown_axis(price: TendencyAxis, novelty: TendencyAxis) -> TendencyAxis:
-    if not price.pinned and not novelty.pinned:
-        return TendencyAxis(_UNKNOWN, "五五开", False)
-    price_index = _LEVELS[_PRICE].index(price.level)
-    novelty_index = _LEVELS[_NOVELTY].index(novelty.level)
-    if price_index >= 2 and novelty_index <= 1:
-        level = "偏向不买"
-    elif price_index <= 0 and novelty_index >= 1:
-        level = "偏向买"
-    else:
-        level = "五五开"
-    return TendencyAxis(_UNKNOWN, level, True)
+def _text_target(key: str, value: str) -> tuple[str, str] | None:
+    if key in {"income", "education", "age"}:
+        return ("soft", key)
+    if key == "price":
+        return ("clear", "对价格的在意")
+    if key == "novelty":
+        return ("clear", "尝新意愿")
+    if key == "politics":
+        return ("clear", "政治倾向")
+    route = _question_route(key)
+    if route in {"income", "education", "age"}:
+        return ("soft", route)
+    if route == "price":
+        return ("clear", "对价格的在意")
+    if route == "novelty":
+        return ("clear", "尝新意愿")
+    if route == "politics" or _is_politics(value):
+        return ("clear", "政治倾向")
+    if route == "skip" or _is_identity(value):
+        return None
+    shaped = _shape(value)
+    if shaped is not None:
+        return shaped
+    snippet = " ".join(key.split())[:42]
+    label = f"既往回答：{snippet}" if snippet else "既往回答"
+    return ("clear", label)
 
 
-def _attitude_axis(politics: str | None) -> TendencyAxis | None:
-    if politics == "liberal":
-        return TendencyAxis(_ATTITUDE, "偏自由", True)
-    if politics == "conservative":
-        return TendencyAxis(_ATTITUDE, "偏保守", True)
-    if politics == "mid":
-        return TendencyAxis(_ATTITUDE, "中间", True)
+def _loose_key(key: str, value: str) -> tuple[str, str] | None:
+    folded = key.casefold().replace("-", "_")
+    if "price" in folded and "income" not in folded:
+        return ("clear", "对价格的在意")
+    if "novel" in folded:
+        return ("clear", "尝新意愿")
+    if "politic" in folded or "ideolog" in folded:
+        return ("clear", "政治倾向")
+    if "income" in folded:
+        return ("soft", "income")
+    if "educat" in folded:
+        return ("soft", "education")
+    if folded == "age" or folded.endswith("_age"):
+        return ("soft", "age")
+    shaped = _shape(value)
+    if shaped is not None:
+        return shaped
+    if _QID.match(folded) and not _is_identity(value):
+        return ("clear", f"既往回答 {key}")
     return None
 
 
-def _nudge(
-    axes: tuple[TendencyAxis, ...],
-    person_id: str,
-    seed: int,
-) -> tuple[tuple[TendencyAxis, ...], tuple[str, str, str] | None]:
-    free = [index for index, axis in enumerate(axes) if not axis.pinned]
-    if not free:
-        return axes, None
-    rng = _rng(seed, person_id)
-    index = free[rng.randrange(len(free))]
-    axis = axes[index]
-    options = _LEVELS[axis.label]
-    current = options.index(axis.level)
-    step = -1 if rng.randrange(2) == 0 else 1
-    if not 0 <= current + step < len(options):
-        step = -step
-    updated = TendencyAxis(axis.label, options[current + step], False)
-    nudged = tuple(updated if i == index else item for i, item in enumerate(axes))
-    return nudged, (axis.label, axis.level, updated.level)
+def _shape(value: str) -> tuple[str, str] | None:
+    if _is_income(value):
+        return ("soft", "income")
+    if _is_education(value):
+        return ("soft", "education")
+    if _is_age(value):
+        return ("soft", "age")
+    if _is_politics(value):
+        return ("clear", "政治倾向")
+    return None
 
 
-def _render(
-    anchors: tuple[str, ...],
-    axes: tuple[TendencyAxis, ...],
-    nudge: tuple[str, str, str] | None,
-) -> str:
-    lines = ["【个人倾向｜由人物卡字段锁定，整场不变】"]
-    if anchors:
-        lines.append("锚点（用来把这个人跟别人分开）：")
-        lines.extend(f"- {item}" for item in anchors)
-    else:
-        lines.append("锚点：没有收入、学历、年龄或写明的偏好。不要改用全体共用的默认。")
-    lines.append("作答用：")
-    lines.extend(f"- {axis.label}：{axis.level}" for axis in axes)
-    if nudge is None:
-        lines.append("未锁定轴的一档抖动：无。已有字段的轴保持不动。")
-    else:
-        label, old, new = nudge
-        lines.append(f"未锁定轴的一档抖动：{label} {old}→{new}。已由字段锁定的轴不动。")
-    lines.append("用这些锚点回答所有题；不要每题重新发明一套价值观。")
-    return "\n".join(lines)
+def _text_items(demographic_text: str | None) -> tuple[tuple[str, str], ...]:
+    if not demographic_text:
+        return ()
+    question: list[str] = []
+    found: list[tuple[str, str]] = []
+    for line in _lines(demographic_text):
+        labeled = _labeled_line(line)
+        if labeled is not None:
+            found.append(labeled)
+            question = []
+            continue
+        if line.casefold().startswith("answer:"):
+            found.append((" ".join(question), line.split(":", 1)[1].strip()))
+            question = []
+            continue
+        question.append(line)
+    return tuple(found)
 
 
-def _rng(seed: int, person_id: str) -> random.Random:
-    digest = hashlib.sha256(f"tendency-nudge:{seed}:{person_id}".encode()).hexdigest()
-    return random.Random(int(digest[:16], 16))
+def _labeled_line(line: str) -> tuple[str, str] | None:
+    folded = line.casefold()
+    if folded.startswith("answer:"):
+        return None
+    for prefix, kind in _LINE_LABELS:
+        if not folded.startswith(prefix) or ":" not in line:
+            continue
+        value = line.split(":", 1)[1].strip()
+        return (kind, value) if value else None
+    return None
 
 
-def _clamp(score: int) -> int:
-    return max(0, min(2, score))
+def _lines(text: str) -> tuple[str, ...]:
+    kept: list[str] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("- ") or line.casefold().startswith("options"):
+            continue
+        kept.append(line)
+    return tuple(kept)
 
 
-def _kind_for_key(key: str) -> str | None:
-    folded = key.casefold().replace("-", "_")
-    if folded in _KEY_KIND:
-        return _KEY_KIND[folded]
-    if "income" in folded:
+def _question_route(question: str) -> str | None:
+    folded = question.casefold()
+    if any(token in folded for token in _STRUCTURAL):
+        return "skip"
+    if "income" in folded or "收入" in folded:
         return "income"
-    if "educat" in folded:
+    if "educat" in folded or "学历" in folded or "school" in folded:
         return "education"
-    if folded == "age" or folded.endswith("_age"):
+    if "年龄" in folded or "how old" in folded or re.search(r"\bage\b", folded):
         return "age"
-    if "politic" in folded or "ideolog" in folded:
-        return "politics"
     if "price" in folded:
         return "price"
     if "novel" in folded:
         return "novelty"
-    if "marital" in folded:
-        return "marital"
-    if "household" in folded and "size" in folded:
-        return "household"
-    if "employ" in folded:
-        return "employment"
-    if "relig" in folded:
-        return "religion"
-    if "work_hour" in folded:
-        return "work"
-    return None
-
-
-def _kind_for_value(value: str) -> str | None:
-    if _looks_like_income(value):
-        return "income"
-    if _education_tier(value):
-        return "education"
-    if _AGE_BAND.search(value):
-        return "age"
-    if _politics(value):
+    if "politic" in folded or "ideolog" in folded:
         return "politics"
-    if _employment(value):
-        return "employment"
-    lowered = value.casefold()
-    if any(token in lowered for token in _MARITAL):
-        return "marital"
     return None
 
 
-def _from_text_line(line: str) -> tuple[str, str] | None:
-    """Read a labeled field or an Answer line. Option bullets are not answers."""
-    if line.startswith("- "):
-        return None
-    label, value = _split_label(line)
-    if label.casefold() == "answer":
-        kind = _kind_for_value(value)
-        return None if kind is None else (kind, value)
-    kind = _kind_for_key(label) if label else None
-    if kind is None or not value:
-        return None
-    return kind, value
+def _render(base: Tendency, tilt: str | None) -> str:
+    lines = ["【个人倾向｜跟人物卡排序，整场不变】", _clear_block(base.clear), _soft_block(base.soft)]
+    if tilt is None:
+        lines.append("残差：关闭。已有卡上锚点，人物 id 不再抽取倾向轴。")
+    else:
+        lines.append(f"残差（没有卡上锚点时才用，偏移不超过 0.04）：{tilt}")
+    lines.append("用这些锚点回答所有题；不要答成平均受访者，也不要每题重新发明一套价值观。")
+    return "\n".join(lines)
 
 
-def _split_label(line: str) -> tuple[str, str]:
-    if ":" not in line:
-        return "", line.strip()
-    label, value = line.split(":", 1)
-    return label.strip(), value.strip()
+def _clear_block(clear: tuple[tuple[str, str], ...]) -> str:
+    if not clear:
+        return "明确线索：无。不要改用全体共用的默认。"
+    rows = "\n".join(f"- {label}：{value}" for label, value in clear)
+    return "明确线索（跨人高低以这些为准，随机倾向不得覆盖）：\n" + rows
 
 
-def _text_lines(demographic_text: str | None) -> tuple[str, ...]:
-    if not demographic_text:
-        return ()
-    return tuple(line.strip() for line in demographic_text.splitlines() if line.strip())
+def _soft_block(soft: tuple[tuple[str, str], ...]) -> str:
+    if not soft:
+        return "软线索：无。"
+    rows = "\n".join(f"- {label}：{value}" for label, value in soft)
+    header = "软线索（只在题目直接相关时保持原文上的相对位置，禁止收成三档行为锁）："
+    return header + "\n" + rows
 
 
-def _looks_like_income(value: str) -> bool:
+def _add_clear(clear: list[tuple[str, str]], label: str, value: str) -> None:
+    if any(existing_label == label or existing == value for existing_label, existing in clear):
+        return
+    clear.append((label, value))
+
+
+def _add_soft(soft: dict[str, str], kind: str, value: str) -> None:
+    if kind not in soft and value:
+        soft[kind] = value
+
+
+def _tilt(person_id: str, seed: int) -> str:
+    digest = hashlib.sha256(f"tendency-residual:{seed}:{person_id}".encode()).hexdigest()
+    return _TILTS[int(digest[:8], 16) % 3]
+
+
+def _clean(value: object) -> str:
+    if value is None:
+        return ""
+    return " ".join(str(value).split())
+
+
+def _is_income(value: str) -> bool:
     if not re.search(r"\d", value):
         return False
     folded = value.casefold()
@@ -392,102 +396,26 @@ def _looks_like_income(value: str) -> bool:
     )
 
 
-def _income_tier(text: str, flag: str | None) -> str | None:
-    folded = text.casefold()
-    money = [int(piece.replace(",", "")) for piece in re.findall(r"\d[\d,]*", text)]
-    money = [number for number in money if number >= 1_000]
-    if money:
-        return _tier_from_money(folded, money[0])
-    if flag is None:
-        return None
-    return "mid" if _truthy(flag) else "low"
+def _is_education(value: str) -> bool:
+    folded = value.casefold().replace("_", " ")
+    return any(token in folded for token in _EDUCATION)
 
 
-def _tier_from_money(folded: str, low_end: int) -> str:
-    if any(token in folded for token in ("or less", "or under", "≤")) and low_end <= 50_000:
-        return "low"
-    if low_end >= 75_000:
-        return "high"
-    if low_end >= 50_000:
-        return "mid"
-    return "low"
+def _is_age(value: str) -> bool:
+    """Band text only. A bare 15–100 is a count or a score, not an age."""
+    if _is_income(value):
+        return False
+    return _AGE_BAND.search(value) is not None
 
 
-def _education_tier(text: str) -> str | None:
-    if not text.strip():
-        return None
-    folded = text.casefold().replace("_", " ")
-    if "less than high" in folded or "no formal" in folded:
-        return "low"
-    if "high school" in folded and not any(token in folded for token in ("college", "bachelor", "university")):
-        return "low"
-    if "some college" in folded or "some university" in folded:
-        return "mid"
-    if "associate" in folded:
-        return "mid"
-    high_tokens = ("postgrad", "bachelor", "university", "professional", "college graduate", "master", "doctoral")
-    if any(token in folded for token in high_tokens) or folded == "bachelor or higher":
-        return "high"
-    return None
-
-
-def _age_band(text: str) -> str | None:
-    if not text.strip():
-        return None
-    if _AGE_BAND.search(text):
-        folded = text.casefold()
-        if "18" in folded and "29" in folded:
-            return "young"
-        if "65" in folded:
-            return "older"
-        return "mid"
-    numbers = [int(piece) for piece in re.findall(r"\d+", text)]
-    if len(numbers) != 1 or not 15 <= numbers[0] <= 100:
-        return None
-    age = numbers[0]
-    if age < 35:
-        return "young"
-    if age >= 65:
-        return "older"
-    return "mid"
-
-
-def _politics(text: str) -> str | None:
-    folded = text.casefold()
-    if not folded.strip():
-        return None
-    liberal = any(token in folded for token in ("liberal", "democrat"))
-    conservative = any(token in folded for token in ("conservative", "republican"))
-    if liberal and conservative:
-        return "mid"
-    if liberal:
-        return "liberal"
-    if conservative:
-        return "conservative"
-    if any(token in folded for token in ("moderate", "independent")):
-        return "mid"
-    return None
-
-
-def _stated_level(text: str) -> str | None:
-    folded = text.casefold()
-    if not folded.strip():
-        return None
-    if any(token in folded for token in ("not important", "unimportant", "unlikely", "not likely")):
-        return "low"
-    if any(token in folded for token in ("somewhat", "moderate", "medium")):
-        return "mid"
-    if any(token in folded for token in ("very", "extremely", "important", "likely", "high")):
-        return "high"
-    if folded in {"low", "mid", "high"}:
-        return folded
-    return None
-
-
-def _employment(value: str) -> bool:
+def _is_politics(value: str) -> bool:
     folded = value.casefold()
-    return any(token in folded for token in _EMPLOYMENT)
+    return any(token in folded for token in _POLITICS)
 
 
-def _truthy(value: str) -> bool:
-    return value.strip().casefold() in {"1", "true", "yes", "y"}
+def _is_identity(value: str) -> bool:
+    return value.casefold().strip() in _IDENTITY
+
+
+def _truthy(value: object) -> bool:
+    return str(value).strip().casefold() in {"1", "true", "yes", "y"}

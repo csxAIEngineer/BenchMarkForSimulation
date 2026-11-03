@@ -1,7 +1,9 @@
 """atus_expanded card plus the human-like survey-twin skill.
 
-The compact card is built by ``render_atus_persona``. This module only adds
-the skill text and a person-level tendency card. It does not call an API.
+The compact card is built by ``render_atus_persona``. This module appends
+rank anchors and the skill text. It does not call an API. Cross-person
+order follows stated preferences and prior answers. Income, education,
+and age stay soft cues. An id hash does not draw behavior axes.
 """
 
 from popbench.models._prompt import build_package
