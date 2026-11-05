@@ -8,6 +8,7 @@ income under $30,000.
 
 from popbench.datasets.twin2k_500.loader import bundle_from_records
 from popbench.models import build_prompt
+from popbench.schema import Case, Question, Subject
 
 # Fields the pricing cache actually has for pid 1732, plus the rest of the
 # wave-1 block so the card is not half empty. Only QID12, QID13, QID14, and
@@ -50,7 +51,7 @@ HIGH_INCOME = {
 }
 
 
-def _persona(record: dict) -> str:
+def _persona(record: dict[str, object]) -> str:
     case = bundle_from_records([record]).cases[0]
     package = build_prompt("atus_expanded", case, seed=0)
     return package.user.split("Question:")[0]
@@ -121,6 +122,26 @@ def test_income_brackets_around_50k_follow_the_lower_bound():
     assert "Personal income: over $50,000" in over
 
 
+def test_card_maps_raw_qids_without_the_loader():
+    """Pricing code can hand the jsonl demographics dict straight to the card."""
+    case = Case(
+        dataset="twin2k_500",
+        subject=Subject(
+            id="1732",
+            dataset="twin2k_500",
+            unit="individual",
+            demographics=dict(SUBJECT_1732["demographics"]),
+        ),
+        question=Question(id="QID9_1", prompt="Would you buy this?", kind="text"),
+    )
+    persona = build_prompt("atus_expanded", case, seed=0).user.split("Question:")[0]
+    basics = _basics(persona)
+    assert "Sex: Female" in basics
+    assert "Age: 30-49" in basics
+    assert "Household income: Less than $30,000" in basics
+    assert "Usual weekly work hours: 20" in basics
+
+
 def test_loader_keeps_qids_and_adds_canonical_keys():
     subject = bundle_from_records([SUBJECT_1732]).subjects[0]
     assert subject.demographics["QID12"] == "Female"
@@ -177,6 +198,21 @@ def test_life_history_follows_mapped_education_and_marital_status():
     assert "bachelor" in graduate or "Finished college" in graduate
 
 
+def test_associate_degree_and_partner_status_pick_real_templates():
+    associate = _persona(
+        {
+            "id": "assoc",
+            "demographics": {"QID14": "Associate’s degree", "QID17": "Living with a partner"},
+            "questions": [{"id": "Q", "prompt": "Buy?", "kind": "text"}],
+        }
+    )
+    assert "Education: Associate’s degree" in associate
+    assert "Marital status: Living with a partner" in associate
+    assert "Education path is uneven" not in associate
+    assert "Family life is private" not in associate
+    assert "community college" in associate or "never completed a bachelor" in associate
+
+
 def test_employment_hours_are_mapped_only_when_the_label_says():
     retired = _basics(
         _persona(
@@ -200,6 +236,17 @@ def test_employment_hours_are_mapped_only_when_the_label_says():
     assert "Usual weekly work hours: 0" in retired
     assert "Employment: Self-employed" in freelance
     assert "Usual weekly work hours: unknown" in freelance
+    student = _basics(
+        _persona(
+            {
+                "id": "stu",
+                "demographics": {"QID24": "Full-time student"},
+                "questions": [{"id": "Q", "prompt": "Buy?", "kind": "text"}],
+            }
+        )
+    )
+    assert "Employment: Full-time student" in student
+    assert "Usual weekly work hours: 0" in student
 
 
 def test_atus_row_without_qids_still_prints_state_unknown():
