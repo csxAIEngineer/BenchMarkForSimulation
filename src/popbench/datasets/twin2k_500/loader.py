@@ -18,7 +18,6 @@ from popbench.datasets.io import (
     write_jsonl,
     write_manifest,
 )
-from popbench.datasets.twin2k_500.demographics import with_canonical_demographics
 from popbench.datasets.twin2k_500.render import demographic_fields, held_out_questions
 
 REPO_ID = "LLM-Digital-Twin/Twin-2K-500"
@@ -140,7 +139,7 @@ def _subject_and_cases(record: dict[str, Any], *, source: str) -> tuple[Subject,
     subject_id = str(record.get("id") or "").strip()
     if not subject_id:
         raise DatasetError("Twin-2K-500 record is missing id")
-    demographics = with_canonical_demographics(_string_map(record.get("demographics")))
+    demographics = _string_map(record.get("demographics"))
     subject = Subject(
         id=subject_id,
         dataset="twin2k_500",
