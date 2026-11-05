@@ -10,10 +10,11 @@ from popbench.comms.errors import CommsError, CommsTransportError
 class CRProvider:
     name = "cr"
 
-    def __init__(self, *, api_key: str | None = None) -> None:
+    def __init__(self, *, api_key: str | None = None, timeout: float = 300) -> None:
         self.api_key = api_key if api_key is not None else os.environ.get("CR_API_KEY", "").strip()
         if not self.api_key:
             raise CommsError("missing CR_API_KEY")
+        self.timeout = timeout
 
     def complete(
         self,
@@ -29,6 +30,7 @@ class CRProvider:
                 messages,
                 model=model,
                 temperature=temperature,
+                timeout=self.timeout,
             )
         except CRError as exc:
             raise CommsTransportError(str(exc)) from exc
