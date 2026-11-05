@@ -13,6 +13,10 @@ import re
 from collections.abc import Mapping
 from typing import Any
 
+from popbench.datasets.twin2k_500.demographics import (
+    weekly_hours_from_employment,
+    with_canonical_demographics,
+)
 from popbench.models.card import render_card
 
 # Survey outcomes. They are never copied onto the card.
@@ -86,6 +90,10 @@ _FAMILY = {
     ),
     "Separated": ("Currently separated; day-to-day plans are in flux and often negotiated.",),
     "Widowed": ("Lost a spouse and adjusted to a house that feels too large on some days.",),
+    "Living with a partner": (
+        "Shares a home with a partner without a marriage, and splits day-to-day costs.",
+        "Living with a partner means two schedules and one grocery list.",
+    ),
     "Unknown": ("Family life is private; weekdays are mostly self-managed.",),
 }
 
@@ -112,29 +120,29 @@ def expand_persona(
     routine: Mapping[str, float] | None,
     seed: int = 0,
 ) -> str:
-    demographics = _adapt_demographics(demographics)
+    fields = _adapt_demographics(demographics)
     rng = _rng(seed, subject_id)
-    age = demographics.get("age", "unknown")
-    sex = demographics.get("sex") or "Unknown"
-    state = demographics.get("state") or demographics.get("state_name")
-    education = str(demographics.get("education") or "unknown")
-    education_bucket = str(demographics.get("education_bucket") or education)
-    marital = str(demographics.get("marital_status") or "Unknown")
-    race = demographics.get("race") or "Unknown"
-    income_over_50k = _truthy(demographics.get("income_over_50k"))
-    work_hours = _hours(demographics.get("work_hours"))
+    age = fields.get("age", "unknown")
+    sex = fields.get("sex") or "Unknown"
+    state = fields.get("state") or fields.get("state_name")
+    region = fields.get("region")
+    education = str(fields.get("education") or "unknown")
+    education_bucket = str(fields.get("education_bucket") or education)
+    marital = str(fields.get("marital_status") or "Unknown")
+    race = fields.get("race") or "Unknown"
+    income_over_50k = _truthy(fields.get("income_over_50k"))
+    work_hours = _hours(fields.get("work_hours"))
     childhood = _pick(rng, _CHILDHOOD)
     schooling = _pick(rng, _SCHOOLING.get(education_bucket, _SCHOOLING["unknown"]))
     work_path = _work_line(rng, income_over_50k=income_over_50k, work_hours=work_hours)
-    family = _pick(rng, _FAMILY.get(marital, _FAMILY["Unknown"]))
-    moves = _pick(rng, _MOVES)
-    if state:
-        moves = f"{moves} Current home state: {state}."
+    family = _pick(rng, _FAMILY.get(_family_key(marital), _FAMILY["Unknown"]))
+    moves = _place_sentence(_pick(rng, _MOVES), state=state, region=region)
     turning = _turning_line(rng, routine)
     return _compose(
         age=age,
         sex=str(sex),
         state=None if state is None else str(state),
+        region=None if region is None else str(region),
         education=education,
         marital=marital,
         race=str(race),
@@ -147,7 +155,10 @@ def expand_persona(
         moves=moves,
         turning=turning,
         routine=dict(routine or {}),
-        extras=_extra_basics(demographics),
+        extras=_extra_basics(
+            fields,
+            region_already_shown=state is None and bool(region),
+        ),
     )
 
 
@@ -156,6 +167,7 @@ def _compose(
     age: object,
     sex: str,
     state: str | None,
+    region: str | None,
     education: str,
     marital: str,
     race: str,
@@ -172,10 +184,11 @@ def _compose(
 ) -> str:
     income = "over $50,000" if income_over_50k else "$50,000 or less"
     hours = "unknown" if work_hours is None else f"{work_hours:.0f}"
+    place_label, place_value = _place_line(state, region)
     basics = (
         ("Age", str(age)),
         ("Sex", sex),
-        ("State", state or "Unknown"),
+        (place_label, place_value),
         ("Education", education),
         ("Marital status", marital),
         ("Race", race),
@@ -239,33 +252,54 @@ def _turning_line(rng: random.Random, routine: Mapping[str, float] | None) -> st
 def _adapt_demographics(raw: Mapping[str, Any]) -> dict[str, Any]:
     """Map survey fields onto the keys this card already prints.
 
-    BDM stores household income and education as phrases. Those phrases pick
-    the same schooling and income templates as the ATUS buckets. Outcome
-    columns are dropped.
+    BDM stores household income and education as phrases. Twin-2K stores the
+    same facts as QID11–QID24. Those phrases pick the same schooling and
+    income templates as the ATUS buckets. Outcome columns are dropped.
     """
-    adapted: dict[str, Any] = {}
-    for key, value in raw.items():
-        if key in _OUTCOME_KEYS or value is None:
-            continue
-        text = str(value).strip()
-        if text:
-            adapted[str(key)] = text
-    education = adapted.get("education")
-    if isinstance(education, str) and education:
-        adapted["education_bucket"] = _education_bucket(education)
-    if "income_over_50k" not in adapted and adapted.get("income"):
-        adapted["income_over_50k"] = "true" if _income_over_50k(str(adapted["income"])) else "false"
+    # The Twin-2K loader already canonicalizes QID rows. Pricing code can also
+    # pass the raw QID dict straight onto the subject, so the card maps again.
+    # Keys that are already set are left as they are.
+    adapted: dict[str, Any] = {
+        key: value
+        for key, value in with_canonical_demographics(raw).items()
+        if key not in _OUTCOME_KEYS
+    }
+    _fill_derived_fields(adapted)
     return adapted
 
 
-def _extra_basics(demographics: Mapping[str, Any]) -> tuple[tuple[str, str], ...]:
+def _fill_derived_fields(adapted: dict[str, Any]) -> None:
+    education = adapted.get("education")
+    if isinstance(education, str) and education:
+        adapted["education_bucket"] = _education_bucket(education)
+    if "work_hours" not in adapted:
+        hours = weekly_hours_from_employment(adapted.get("employment"))
+        if hours is not None:
+            adapted["work_hours"] = f"{hours:.0f}"
+    if "income_over_50k" not in adapted and adapted.get("income"):
+        flag = _income_over_50k(str(adapted["income"]))
+        adapted["income_over_50k"] = "true" if flag else "false"
+
+
+def _extra_basics(
+    demographics: Mapping[str, Any],
+    *,
+    region_already_shown: bool,
+) -> tuple[tuple[str, str], ...]:
     labels = (
         ("income", "Household income"),
         ("household_size", "Household size"),
         ("political", "Political leaning"),
+        ("political_party", "Political party"),
+        ("employment", "Employment"),
+        ("citizenship", "US citizen"),
+        ("religion", "Religion"),
+        ("worship_attendance", "Religious attendance"),
         ("primary_grocery_shopper", "Primary grocery shopper"),
         ("primary_cook", "Primary cook"),
     )
+    if not region_already_shown:
+        labels = (("region", "Region"),) + labels
     rows: list[tuple[str, str]] = []
     for key, label in labels:
         value = demographics.get(key)
@@ -280,16 +314,61 @@ def _extra_basics(demographics: Mapping[str, Any]) -> tuple[tuple[str, str], ...
 def _education_bucket(value: str) -> str:
     if value in _SCHOOLING:
         return value
-    text = value.casefold()
-    if "some university" in text or "college" in text:
-        return "some_college"
-    if any(token in text for token in ("graduate", "university", "professional", "bachelor")):
-        return "bachelor_or_higher"
-    if "high school" in text:
-        return "high_school"
+    text = value.casefold().replace("’", "'")
     if "less than" in text or "no formal" in text:
         return "less_than_high_school"
+    if "some college" in text or "some university" in text or "associate" in text:
+        return "some_college"
+    if "high school" in text:
+        return "high_school"
+    if any(
+        token in text
+        for token in (
+            "bachelor",
+            "college graduate",
+            "postgrad",
+            "graduate",
+            "university",
+            "professional",
+            "master",
+            "doctorate",
+            "doctoral",
+        )
+    ):
+        return "bachelor_or_higher"
+    if "college" in text:
+        return "some_college"
     return "unknown"
+
+
+def _family_key(value: str) -> str:
+    if value in _FAMILY:
+        return value
+    return {
+        "never been married": "Never married",
+        "never married": "Never married",
+        "living with a partner": "Living with a partner",
+        "married": "Married",
+        "divorced": "Divorced",
+        "separated": "Separated",
+        "widowed": "Widowed",
+    }.get(value.casefold(), "Unknown")
+
+
+def _place_line(state: str | None, region: str | None) -> tuple[str, str]:
+    if state:
+        return "State", state
+    if region:
+        return "Region", region
+    return "State", "Unknown"
+
+
+def _place_sentence(moves: str, *, state: object, region: object) -> str:
+    if state:
+        return f"{moves} Current home state: {state}."
+    if region:
+        return f"{moves} Current census region: {region}."
+    return moves
 
 
 def _income_over_50k(value: str) -> bool:
@@ -306,6 +385,13 @@ def _truthy(value: object) -> bool:
 
 
 def _hours(value: object) -> float | None:
-    if value in (None, ""):
+    if isinstance(value, bool) or value in (None, ""):
         return None
-    return float(value)  # type: ignore[arg-type]
+    if isinstance(value, (int, float)):
+        return float(value)
+    if not isinstance(value, str):
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        return None
