@@ -1,0 +1,88 @@
+{
+  "cache_outputs": {
+    "bdm_lettuce/outcomes.jsonl": {
+      "bytes": 543579,
+      "committed": false,
+      "sha256": "5f94f6cf131937ebd64b06000df672a56d9a831287aadbd54e73fd44cb1e6abc"
+    },
+    "twin2k_500/outcomes.jsonl": {
+      "bytes": 37365000,
+      "committed": false,
+      "sha256": "c25aadbcde7c5b462d4316ad463f1e3dd3aef75219faf9b58a18f5358be03109"
+    }
+  },
+  "card_version": "basic-info-v1",
+  "committed_outputs": {
+    "bdm_lettuce/cards.jsonl": {
+      "bytes": 3504708,
+      "sha256": "9be4d5eb9de65ce937ed6d6d90311d5701008a09751626531e0e235088c1b073"
+    },
+    "bdm_lettuce/distribution.json": {
+      "bytes": 76398,
+      "sha256": "d7696c9dcb0704b51651a4b8b8414bc717ffc3df3c40250ac824f1a628eff608"
+    },
+    "bdm_lettuce/exclusions.json": {
+      "bytes": 341,
+      "sha256": "842b9dc3ec59a9aac4d7db48afe541acd463f3d84896074af2350582297de32c"
+    },
+    "bdm_lettuce/sample.json": {
+      "bytes": 1974,
+      "sha256": "a0c561792bd345b19b7e64fe3ca20f9028b4e8b9823ef9ab43ceeedbf3ec94e7"
+    },
+    "field_map.json": {
+      "bytes": 18580,
+      "sha256": "11b1920ce0048fdf83f0273d2db9eb3c8e68d0ac64116f82855f6f3ad0440ab6"
+    },
+    "twin2k_500/cards.jsonl": {
+      "bytes": 8182616,
+      "sha256": "22cbe93d42d4104a5dd45d943da1185c5014f670725bc9100211d110566d4bce"
+    },
+    "twin2k_500/distribution.json": {
+      "bytes": 23150,
+      "sha256": "b4bf112135214e540390b2b8c160546aa681a263bebed1297b712e4d46832be7"
+    },
+    "twin2k_500/exclusions.json": {
+      "bytes": 366,
+      "sha256": "7f99621f132445b7ca5254eb0d2cfade47f6b365984fc4ea4a97929926e8bf54"
+    },
+    "twin2k_500/sample.json": {
+      "bytes": 1811,
+      "sha256": "da9d204c5ee3a48cdddcdba1b74ec2fb54a50185b390de0ca5391c90ed988875"
+    },
+    "twin2k_500/wave_audit.json": {
+      "bytes": 396,
+      "sha256": "1778b28f6ef71911f8834b3cb16e3daa80ed7f3799c29a79c150e84347e56bee"
+    }
+  },
+  "output_dir": "experiments/pricing-basic-info",
+  "seed": 42,
+  "source_lock": "source-lock.json",
+  "sources": {
+    "bdm_lettuce": {
+      "doi": "10.5683/SP3/CDLUEZ",
+      "files": [
+        "20240723_VFExperiment_01.csv",
+        "100A_README.txt"
+      ],
+      "license": "CC-BY-4.0",
+      "version": "V1"
+    },
+    "twin2k_500": {
+      "files": [
+        "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "question_catalog_and_human_response_csv/wave4_response_label.csv",
+        "question_catalog_and_human_response_csv/question_catalog.json",
+        "wave_split/chunks/wave_persona_chunk_001.parquet",
+        "wave_split/chunks/wave_persona_chunk_002.parquet",
+        "wave_split/chunks/wave_persona_chunk_003.parquet",
+        "wave_split/chunks/wave_persona_chunk_004.parquet",
+        "wave_split/chunks/wave_persona_chunk_005.parquet",
+        "wave_split/chunks/wave_persona_chunk_006.parquet",
+        "wave_split/chunks/wave_persona_chunk_007.parquet"
+      ],
+      "license": "cc-by-4.0",
+      "repo_id": "LLM-Digital-Twin/Twin-2K-500",
+      "revision": "f883165a3026fde855dfd448e0cd16443ab257b6"
+    }
+  }
+}

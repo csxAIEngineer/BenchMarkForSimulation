@@ -1,0 +1,11 @@
+{
+  "seed": 42,
+  "sample_size": null,
+  "sample_size_rule": {
+    "z": "1.96",
+    "proportion": "0.5",
+    "margin_of_error": "0.10"
+  },
+  "cache_dir": "data/pricing_basic_info",
+  "output_dir": "experiments/pricing-basic-info"
+}

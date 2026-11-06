@@ -1,0 +1,7 @@
+{
+  "dataset": "bdm_lettuce",
+  "eligibility": "Included when pid is present and all six willingness-to-pay bids plus conclusion_purchased_product are non-blank. A blank survey cell does not exclude the person. Treatment, order, practice items, and timestamps are not basic info.",
+  "excluded": [],
+  "included": 610,
+  "input_rows": 610
+}

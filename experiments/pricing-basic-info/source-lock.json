@@ -1,0 +1,55 @@
+{
+  "bdm_doi": "10.5683/SP3/CDLUEZ",
+  "bdm_version": "V1",
+  "files": {
+    "bdm/100A_README.txt": {
+      "bytes": 6340,
+      "sha256": "53c86f0009c94b4231c7cc3763ccf12f65d231e4e14f84ef912153471757729b"
+    },
+    "bdm/20240723_VFExperiment_01.csv": {
+      "bytes": 328796,
+      "sha256": "b05e5ece9b8dcda253a0f43548f04c7fb13bf153ba7ebf6f4480810a088dc657"
+    },
+    "question_catalog_and_human_response_csv/question_catalog.json": {
+      "bytes": 214137,
+      "sha256": "e72e305f0c7c83bb990e97de4c0cf2c718ead18cc197239b7feeb354c9ac1bef"
+    },
+    "question_catalog_and_human_response_csv/wave1_3_response_label.csv": {
+      "bytes": 21102001,
+      "sha256": "4d735be9e5f00d072d17be25029cef524de9ec383911a4acc44f0b64a9c5818c"
+    },
+    "question_catalog_and_human_response_csv/wave4_response_label.csv": {
+      "bytes": 4728435,
+      "sha256": "02eb7eeff000406ff70c954565dada7a4a8d997c2f8152aec8d32a1e719e3681"
+    },
+    "wave_split/chunks/wave_persona_chunk_001.parquet": {
+      "bytes": 26951397,
+      "sha256": "dd92be4ac50d3476dc0166f7b6b2fdb07ff6e167c379f62d1b7730905135753b"
+    },
+    "wave_split/chunks/wave_persona_chunk_002.parquet": {
+      "bytes": 26950808,
+      "sha256": "77ed5561e0f02e07237437b1ce88a409f02a02839e7400ad392bc24193469bf1"
+    },
+    "wave_split/chunks/wave_persona_chunk_003.parquet": {
+      "bytes": 26968232,
+      "sha256": "c856865424fea528c928c4dd5e29efb0c69a8fb7bf79d5d17443e321c1083bd9"
+    },
+    "wave_split/chunks/wave_persona_chunk_004.parquet": {
+      "bytes": 26951243,
+      "sha256": "3c88d726d7b5f8bda1e950c5ef00e757bef2abebfbdce144f9c81d7c4ff36f33"
+    },
+    "wave_split/chunks/wave_persona_chunk_005.parquet": {
+      "bytes": 26968084,
+      "sha256": "2b8d46f79c9e25e58aae266397e46d572bda27f42c4b18fadc8f110f3ad833d7"
+    },
+    "wave_split/chunks/wave_persona_chunk_006.parquet": {
+      "bytes": 26957823,
+      "sha256": "f7e7a94a900596d7682f389ccab5c3bee3a85737d9fb08828937ce4c45c90abe"
+    },
+    "wave_split/chunks/wave_persona_chunk_007.parquet": {
+      "bytes": 26956184,
+      "sha256": "919910a97d84fc8b437d380dba8aebea3430436e382419a9874a0485109bf296"
+    }
+  },
+  "twin2k_revision": "f883165a3026fde855dfd448e0cd16443ab257b6"
+}

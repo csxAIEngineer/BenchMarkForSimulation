@@ -1,0 +1,724 @@
+{
+  "dataset": "twin2k_500",
+  "fields": {
+    "QID11": {
+      "levels": [
+        {
+          "population_count": 372,
+          "population_proportion": "0.18075802",
+          "proportion_difference": "0.03429575",
+          "sample_count": 20,
+          "sample_proportion": "0.21505376",
+          "value": "Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)"
+        },
+        {
+          "population_count": 342,
+          "population_proportion": "0.16618076",
+          "proportion_difference": "0.00586225",
+          "sample_count": 16,
+          "sample_proportion": "0.17204301",
+          "value": "Northeast (PA, NY, NJ, RI, CT, MA, VT, NH, ME)"
+        },
+        {
+          "population_count": 16,
+          "population_proportion": "0.00777454",
+          "proportion_difference": "-0.00777454",
+          "sample_count": 0,
+          "sample_proportion": "0.00000000",
+          "value": "Pacific (HI, AK)"
+        },
+        {
+          "population_count": 834,
+          "population_proportion": "0.40524781",
+          "proportion_difference": "-0.06116179",
+          "sample_count": 32,
+          "sample_proportion": "0.34408602",
+          "value": "South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)"
+        },
+        {
+          "population_count": 494,
+          "population_proportion": "0.24003887",
+          "proportion_difference": "0.02877833",
+          "sample_count": 25,
+          "sample_proportion": "0.26881720",
+          "value": "West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM)"
+        }
+      ],
+      "max_abs_proportion_difference": "0.06116179",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.06893633"
+    },
+    "QID12": {
+      "levels": [
+        {
+          "population_count": 1044,
+          "population_proportion": "0.50728863",
+          "proportion_difference": "-0.01266497",
+          "sample_count": 46,
+          "sample_proportion": "0.49462366",
+          "value": "Female"
+        },
+        {
+          "population_count": 1014,
+          "population_proportion": "0.49271137",
+          "proportion_difference": "0.01266497",
+          "sample_count": 47,
+          "sample_proportion": "0.50537634",
+          "value": "Male"
+        }
+      ],
+      "max_abs_proportion_difference": "0.01266497",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.01266497"
+    },
+    "QID13": {
+      "levels": [
+        {
+          "population_count": 388,
+          "population_proportion": "0.18853256",
+          "proportion_difference": "0.06953196",
+          "sample_count": 24,
+          "sample_proportion": "0.25806452",
+          "value": "18-29"
+        },
+        {
+          "population_count": 735,
+          "population_proportion": "0.35714286",
+          "proportion_difference": "-0.03456221",
+          "sample_count": 30,
+          "sample_proportion": "0.32258065",
+          "value": "30-49"
+        },
+        {
+          "population_count": 658,
+          "population_proportion": "0.31972789",
+          "proportion_difference": "-0.06166338",
+          "sample_count": 24,
+          "sample_proportion": "0.25806452",
+          "value": "50-64"
+        },
+        {
+          "population_count": 277,
+          "population_proportion": "0.13459670",
+          "proportion_difference": "0.02669363",
+          "sample_count": 15,
+          "sample_proportion": "0.16129032",
+          "value": "65+"
+        }
+      ],
+      "max_abs_proportion_difference": "0.06953196",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.09622559"
+    },
+    "QID14": {
+      "levels": [
+        {
+          "population_count": 253,
+          "population_proportion": "0.12293489",
+          "proportion_difference": "0.01685006",
+          "sample_count": 13,
+          "sample_proportion": "0.13978495",
+          "value": "Associate's degree"
+        },
+        {
+          "population_count": 735,
+          "population_proportion": "0.35714286",
+          "proportion_difference": "-0.02380952",
+          "sample_count": 31,
+          "sample_proportion": "0.33333333",
+          "value": "College graduate/some postgrad"
+        },
+        {
+          "population_count": 272,
+          "population_proportion": "0.13216715",
+          "proportion_difference": "0.02912317",
+          "sample_count": 15,
+          "sample_proportion": "0.16129032",
+          "value": "High school graduate"
+        },
+        {
+          "population_count": 17,
+          "population_proportion": "0.00826045",
+          "proportion_difference": "-0.00826045",
+          "sample_count": 0,
+          "sample_proportion": "0.00000000",
+          "value": "Less than high school"
+        },
+        {
+          "population_count": 313,
+          "population_proportion": "0.15208941",
+          "proportion_difference": "-0.05531521",
+          "sample_count": 9,
+          "sample_proportion": "0.09677419",
+          "value": "Postgraduate"
+        },
+        {
+          "population_count": 468,
+          "population_proportion": "0.22740525",
+          "proportion_difference": "0.04141196",
+          "sample_count": 25,
+          "sample_proportion": "0.26881720",
+          "value": "Some college, no degree"
+        }
+      ],
+      "max_abs_proportion_difference": "0.05531521",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.08738518"
+    },
+    "QID15": {
+      "levels": [
+        {
+          "population_count": 140,
+          "population_proportion": "0.06802721",
+          "proportion_difference": "-0.02501646",
+          "sample_count": 4,
+          "sample_proportion": "0.04301075",
+          "value": "Asian"
+        },
+        {
+          "population_count": 251,
+          "population_proportion": "0.12196307",
+          "proportion_difference": "-0.01443619",
+          "sample_count": 10,
+          "sample_proportion": "0.10752688",
+          "value": "Black"
+        },
+        {
+          "population_count": 194,
+          "population_proportion": "0.09426628",
+          "proportion_difference": "0.02401329",
+          "sample_count": 11,
+          "sample_proportion": "0.11827957",
+          "value": "Hispanic"
+        },
+        {
+          "population_count": 112,
+          "population_proportion": "0.05442177",
+          "proportion_difference": "0.05310511",
+          "sample_count": 10,
+          "sample_proportion": "0.10752688",
+          "value": "Other"
+        },
+        {
+          "population_count": 1361,
+          "population_proportion": "0.66132167",
+          "proportion_difference": "-0.03766576",
+          "sample_count": 58,
+          "sample_proportion": "0.62365591",
+          "value": "White"
+        }
+      ],
+      "max_abs_proportion_difference": "0.05310511",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.07711840"
+    },
+    "QID16": {
+      "levels": [
+        {
+          "population_count": 4,
+          "population_proportion": "0.00194363",
+          "proportion_difference": "-0.00194363",
+          "sample_count": 0,
+          "sample_proportion": "0.00000000",
+          "value": "No"
+        },
+        {
+          "population_count": 2054,
+          "population_proportion": "0.99805637",
+          "proportion_difference": "0.00194363",
+          "sample_count": 93,
+          "sample_proportion": "1.00000000",
+          "value": "Yes"
+        }
+      ],
+      "max_abs_proportion_difference": "0.00194363",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.00194363"
+    },
+    "QID17": {
+      "levels": [
+        {
+          "population_count": 218,
+          "population_proportion": "0.10592809",
+          "proportion_difference": "0.02310417",
+          "sample_count": 12,
+          "sample_proportion": "0.12903226",
+          "value": "Divorced"
+        },
+        {
+          "population_count": 212,
+          "population_proportion": "0.10301263",
+          "proportion_difference": "0.00451425",
+          "sample_count": 10,
+          "sample_proportion": "0.10752688",
+          "value": "Living with a partner"
+        },
+        {
+          "population_count": 813,
+          "population_proportion": "0.39504373",
+          "proportion_difference": "-0.02945233",
+          "sample_count": 34,
+          "sample_proportion": "0.36559140",
+          "value": "Married"
+        },
+        {
+          "population_count": 714,
+          "population_proportion": "0.34693878",
+          "proportion_difference": "-0.00285275",
+          "sample_count": 32,
+          "sample_proportion": "0.34408602",
+          "value": "Never been married"
+        },
+        {
+          "population_count": 31,
+          "population_proportion": "0.01506317",
+          "proportion_difference": "-0.00431048",
+          "sample_count": 1,
+          "sample_proportion": "0.01075269",
+          "value": "Separated"
+        },
+        {
+          "population_count": 70,
+          "population_proportion": "0.03401361",
+          "proportion_difference": "0.00899715",
+          "sample_count": 4,
+          "sample_proportion": "0.04301075",
+          "value": "Widowed"
+        }
+      ],
+      "max_abs_proportion_difference": "0.02945233",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.03661557"
+    },
+    "QID18": {
+      "levels": [
+        {
+          "population_count": 311,
+          "population_proportion": "0.15111759",
+          "proportion_difference": "-0.00057996",
+          "sample_count": 14,
+          "sample_proportion": "0.15053763",
+          "value": "Agnostic"
+        },
+        {
+          "population_count": 216,
+          "population_proportion": "0.10495627",
+          "proportion_difference": "0.01332330",
+          "sample_count": 11,
+          "sample_proportion": "0.11827957",
+          "value": "Atheist"
+        },
+        {
+          "population_count": 25,
+          "population_proportion": "0.01214772",
+          "proportion_difference": "-0.01214772",
+          "sample_count": 0,
+          "sample_proportion": "0.00000000",
+          "value": "Buddhist"
+        },
+        {
+          "population_count": 7,
+          "population_proportion": "0.00340136",
+          "proportion_difference": "-0.00340136",
+          "sample_count": 0,
+          "sample_proportion": "0.00000000",
+          "value": "Hindu"
+        },
+        {
+          "population_count": 39,
+          "population_proportion": "0.01895044",
+          "proportion_difference": "-0.01895044",
+          "sample_count": 0,
+          "sample_proportion": "0.00000000",
+          "value": "Jewish"
+        },
+        {
+          "population_count": 15,
+          "population_proportion": "0.00728863",
+          "proportion_difference": "0.01421675",
+          "sample_count": 2,
+          "sample_proportion": "0.02150538",
+          "value": "Mormon"
+        },
+        {
+          "population_count": 18,
+          "population_proportion": "0.00874636",
+          "proportion_difference": "0.01275902",
+          "sample_count": 2,
+          "sample_proportion": "0.02150538",
+          "value": "Muslim"
+        },
+        {
+          "population_count": 327,
+          "population_proportion": "0.15889213",
+          "proportion_difference": "-0.01910718",
+          "sample_count": 13,
+          "sample_proportion": "0.13978495",
+          "value": "Nothing in particular"
+        },
+        {
+          "population_count": 17,
+          "population_proportion": "0.00826045",
+          "proportion_difference": "0.02399762",
+          "sample_count": 3,
+          "sample_proportion": "0.03225806",
+          "value": "Orthodox"
+        },
+        {
+          "population_count": 215,
+          "population_proportion": "0.10447036",
+          "proportion_difference": "0.03531459",
+          "sample_count": 13,
+          "sample_proportion": "0.13978495",
+          "value": "Other"
+        },
+        {
+          "population_count": 510,
+          "population_proportion": "0.24781341",
+          "proportion_difference": "-0.01125427",
+          "sample_count": 22,
+          "sample_proportion": "0.23655914",
+          "value": "Protestant"
+        },
+        {
+          "population_count": 358,
+          "population_proportion": "0.17395530",
+          "proportion_difference": "-0.03417035",
+          "sample_count": 13,
+          "sample_proportion": "0.13978495",
+          "value": "Roman Catholic"
+        }
+      ],
+      "max_abs_proportion_difference": "0.03531459",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.09961127"
+    },
+    "QID19": {
+      "levels": [
+        {
+          "population_count": 246,
+          "population_proportion": "0.11953353",
+          "proportion_difference": "0.00949873",
+          "sample_count": 12,
+          "sample_proportion": "0.12903226",
+          "value": "A few times a year"
+        },
+        {
+          "population_count": 87,
+          "population_proportion": "0.04227405",
+          "proportion_difference": "0.03299476",
+          "sample_count": 7,
+          "sample_proportion": "0.07526882",
+          "value": "More than once a week"
+        },
+        {
+          "population_count": 838,
+          "population_proportion": "0.40719145",
+          "proportion_difference": "-0.02009467",
+          "sample_count": 36,
+          "sample_proportion": "0.38709677",
+          "value": "Never"
+        },
+        {
+          "population_count": 295,
+          "population_proportion": "0.14334305",
+          "proportion_difference": "-0.04656886",
+          "sample_count": 9,
+          "sample_proportion": "0.09677419",
+          "value": "Once a week"
+        },
+        {
+          "population_count": 129,
+          "population_proportion": "0.06268222",
+          "proportion_difference": "0.05559735",
+          "sample_count": 11,
+          "sample_proportion": "0.11827957",
+          "value": "Once or twice a month"
+        },
+        {
+          "population_count": 463,
+          "population_proportion": "0.22497570",
+          "proportion_difference": "-0.03142732",
+          "sample_count": 18,
+          "sample_proportion": "0.19354839",
+          "value": "Seldom"
+        }
+      ],
+      "max_abs_proportion_difference": "0.05559735",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.09809085"
+    },
+    "QID20": {
+      "levels": [
+        {
+          "population_count": 847,
+          "population_proportion": "0.41156463",
+          "proportion_difference": "0.04004828",
+          "sample_count": 42,
+          "sample_proportion": "0.45161290",
+          "value": "Democrat"
+        },
+        {
+          "population_count": 609,
+          "population_proportion": "0.29591837",
+          "proportion_difference": "-0.04860654",
+          "sample_count": 23,
+          "sample_proportion": "0.24731183",
+          "value": "Independent"
+        },
+        {
+          "population_count": 540,
+          "population_proportion": "0.26239067",
+          "proportion_difference": "-0.04733691",
+          "sample_count": 20,
+          "sample_proportion": "0.21505376",
+          "value": "Republican"
+        },
+        {
+          "population_count": 62,
+          "population_proportion": "0.03012634",
+          "proportion_difference": "0.05589517",
+          "sample_count": 8,
+          "sample_proportion": "0.08602151",
+          "value": "Something else"
+        }
+      ],
+      "max_abs_proportion_difference": "0.05589517",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.09594345"
+    },
+    "QID21": {
+      "levels": [
+        {
+          "population_count": 552,
+          "population_proportion": "0.26822157",
+          "proportion_difference": "0.00059563",
+          "sample_count": 25,
+          "sample_proportion": "0.26881720",
+          "value": "$100,000 or more"
+        },
+        {
+          "population_count": 412,
+          "population_proportion": "0.20019436",
+          "proportion_difference": "0.00410671",
+          "sample_count": 19,
+          "sample_proportion": "0.20430108",
+          "value": "$30,000-$50,000"
+        },
+        {
+          "population_count": 411,
+          "population_proportion": "0.19970845",
+          "proportion_difference": "-0.00616007",
+          "sample_count": 18,
+          "sample_proportion": "0.19354839",
+          "value": "$50,000-$75,000"
+        },
+        {
+          "population_count": 316,
+          "population_proportion": "0.15354713",
+          "proportion_difference": "-0.00300950",
+          "sample_count": 14,
+          "sample_proportion": "0.15053763",
+          "value": "$75,000-$100,000"
+        },
+        {
+          "population_count": 367,
+          "population_proportion": "0.17832847",
+          "proportion_difference": "0.00446722",
+          "sample_count": 17,
+          "sample_proportion": "0.18279570",
+          "value": "Less than $30,000"
+        }
+      ],
+      "max_abs_proportion_difference": "0.00616007",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.00916957"
+    },
+    "QID22": {
+      "levels": [
+        {
+          "population_count": 430,
+          "population_proportion": "0.20894072",
+          "proportion_difference": "0.00611304",
+          "sample_count": 20,
+          "sample_proportion": "0.21505376",
+          "value": "Conservative"
+        },
+        {
+          "population_count": 564,
+          "population_proportion": "0.27405248",
+          "proportion_difference": "0.05928086",
+          "sample_count": 31,
+          "sample_proportion": "0.33333333",
+          "value": "Liberal"
+        },
+        {
+          "population_count": 582,
+          "population_proportion": "0.28279883",
+          "proportion_difference": "-0.02473432",
+          "sample_count": 24,
+          "sample_proportion": "0.25806452",
+          "value": "Moderate"
+        },
+        {
+          "population_count": 137,
+          "population_proportion": "0.06656948",
+          "proportion_difference": "-0.04506411",
+          "sample_count": 2,
+          "sample_proportion": "0.02150538",
+          "value": "Very conservative"
+        },
+        {
+          "population_count": 345,
+          "population_proportion": "0.16763848",
+          "proportion_difference": "0.00440453",
+          "sample_count": 16,
+          "sample_proportion": "0.17204301",
+          "value": "Very liberal"
+        }
+      ],
+      "max_abs_proportion_difference": "0.05928086",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.06979843"
+    },
+    "QID23": {
+      "levels": [
+        {
+          "population_count": 412,
+          "population_proportion": "0.20019436",
+          "proportion_difference": "0.01485940",
+          "sample_count": 20,
+          "sample_proportion": "0.21505376",
+          "value": "1"
+        },
+        {
+          "population_count": 650,
+          "population_proportion": "0.31584062",
+          "proportion_difference": "-0.05777611",
+          "sample_count": 24,
+          "sample_proportion": "0.25806452",
+          "value": "2"
+        },
+        {
+          "population_count": 423,
+          "population_proportion": "0.20553936",
+          "proportion_difference": "0.06327785",
+          "sample_count": 25,
+          "sample_proportion": "0.26881720",
+          "value": "3"
+        },
+        {
+          "population_count": 352,
+          "population_proportion": "0.17103984",
+          "proportion_difference": "-0.08501834",
+          "sample_count": 8,
+          "sample_proportion": "0.08602151",
+          "value": "4"
+        },
+        {
+          "population_count": 221,
+          "population_proportion": "0.10738581",
+          "proportion_difference": "0.06465720",
+          "sample_count": 16,
+          "sample_proportion": "0.17204301",
+          "value": "More than 4"
+        }
+      ],
+      "max_abs_proportion_difference": "0.08501834",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.14279444"
+    },
+    "QID24": {
+      "levels": [
+        {
+          "population_count": 871,
+          "population_proportion": "0.42322643",
+          "proportion_difference": "-0.03612966",
+          "sample_count": 36,
+          "sample_proportion": "0.38709677",
+          "value": "Full-time employment"
+        },
+        {
+          "population_count": 66,
+          "population_proportion": "0.03206997",
+          "proportion_difference": "-0.01056459",
+          "sample_count": 2,
+          "sample_proportion": "0.02150538",
+          "value": "Home-maker"
+        },
+        {
+          "population_count": 269,
+          "population_proportion": "0.13070943",
+          "proportion_difference": "-0.02318254",
+          "sample_count": 10,
+          "sample_proportion": "0.10752688",
+          "value": "Part-time employment"
+        },
+        {
+          "population_count": 245,
+          "population_proportion": "0.11904762",
+          "proportion_difference": "0.00998464",
+          "sample_count": 12,
+          "sample_proportion": "0.12903226",
+          "value": "Retired"
+        },
+        {
+          "population_count": 280,
+          "population_proportion": "0.13605442",
+          "proportion_difference": "0.07899934",
+          "sample_count": 20,
+          "sample_proportion": "0.21505376",
+          "value": "Self-employed"
+        },
+        {
+          "population_count": 78,
+          "population_proportion": "0.03790087",
+          "proportion_difference": "0.01586257",
+          "sample_count": 5,
+          "sample_proportion": "0.05376344",
+          "value": "Student"
+        },
+        {
+          "population_count": 249,
+          "population_proportion": "0.12099125",
+          "proportion_difference": "-0.03496975",
+          "sample_count": 8,
+          "sample_proportion": "0.08602151",
+          "value": "Unemployed"
+        }
+      ],
+      "max_abs_proportion_difference": "0.07899934",
+      "population_denominator": 2058,
+      "sample_denominator": 93,
+      "total_variation_distance": "0.10484655"
+    }
+  },
+  "note": "Counts, proportions, and absolute deviations describe this draw against the full eligible population. This report does not include a significance test.",
+  "population_size": 2058,
+  "sample_size": 93,
+  "sample_size_rule": {
+    "margin_of_error": "0.10",
+    "method": "cochran_proportion_with_finite_population_correction",
+    "n0": 97,
+    "override": null,
+    "population": 2058,
+    "proportion": "0.5",
+    "sample_size": 93,
+    "z": "1.96"
+  },
+  "seed": 42,
+  "stratify_column": "QID21"
+}
