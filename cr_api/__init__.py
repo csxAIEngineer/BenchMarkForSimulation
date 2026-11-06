@@ -4,10 +4,14 @@
 鉴权：Authorization: Bearer <CR_API_KEY>
 
 文本模型：
-- GPT：gpt-5.5、gpt-5.4、gpt-5.4-mini、gpt-5.4-nano
-- GLM：glm-5.3、glm-5.3-flash、glm-5.2
-- MiniMax：MiniMax-M3（流式必须用这个大小写，minimax-m3 不支持流式）
-- DeepSeek：deepseek-v4-pro、deepseek-v4-flash、deepseek-v4.1-flash
+- Claude：claude-opus-5-5、claude-opus-5、claude-opus-4-8、claude-sonnet-5-5、claude-sonnet-5、claude-sonnet-4-6、claude-haiku-5-5、claude-haiku-4-5
+- GPT：gpt-6.1-sol、gpt-6-sol、gpt-6-astra、gpt-6-luna、gpt-5.6-sol、gpt-5.6-terra、gpt-5.6-luna、gpt-5.5、gpt-5.4、gpt-5.4-mini、gpt-5.4-nano
+- Gemini：gemini-3.8-flash、gemini-3.5-flash、gemini-3.5-flash-lite、gemini-3-flash-preview
+- GLM：glm-5.3、glm-5.3-flash、glm-5.3-flashx、glm-5.2
+- Kimi：kimi-k3.1-pro、kimi-k3、kimi-k2.6
+- MiniMax：MiniMax-M3.1-Flash、MiniMax-M3（流式必须用正确大小写，minimax-m3 不支持流式）
+- DeepSeek：deepseek-v4-pro、deepseek-v4-flash、deepseek-flash、deepseek-v4.1-flash
+- Jev：jev-1.13.0
 
 GLM 和 DeepSeek 会先思考再回答。思考在 reasoning_content，并占用 max_tokens。
 不传 max_tokens，或至少设 2000，否则正文会被截断甚至为空。

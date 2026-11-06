@@ -12,10 +12,59 @@ from pathlib import Path
 BASE_URL = "https://api.creative-reasoning.com"
 
 TEXT_MODELS = {
-    "gpt": ("gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"),
-    "glm": ("glm-5.3", "glm-5.3-flash", "glm-5.2"),
-    "minimax": ("MiniMax-M3",),
-    "deepseek": ("deepseek-v4-pro", "deepseek-v4-flash", "deepseek-v4.1-flash"),
+    "claude": (
+        "claude-opus-5-5",
+        "claude-opus-5",
+        "claude-opus-4-8",
+        "claude-sonnet-5-5",
+        "claude-sonnet-5",
+        "claude-sonnet-4-6",
+        "claude-haiku-5-5",
+        "claude-haiku-4-5",
+    ),
+    "gpt": (
+        "gpt-6.1-sol",
+        "gpt-6-sol",
+        "gpt-6-astra",
+        "gpt-6-luna",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
+        "gpt-5.5",
+        "gpt-5.4",
+        "gpt-5.4-mini",
+        "gpt-5.4-nano",
+    ),
+    "gemini": (
+        "gemini-3.8-flash",
+        "gemini-3.5-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3-flash-preview",
+    ),
+    "glm": (
+        "glm-5.3",
+        "glm-5.3-flash",
+        "glm-5.3-flashx",
+        "glm-5.2",
+    ),
+    "kimi": (
+        "kimi-k3.1-pro",
+        "kimi-k3",
+        "kimi-k2.6",
+    ),
+    "minimax": (
+        "MiniMax-M3.1-Flash",
+        "MiniMax-M3",
+    ),
+    "deepseek": (
+        "deepseek-v4-pro",
+        "deepseek-v4-flash",
+        "deepseek-flash",
+        "deepseek-v4.1-flash",
+    ),
+    "jev": (
+        "jev-1.13.0",
+    ),
 }
 
 VIDEO_MODELS = (

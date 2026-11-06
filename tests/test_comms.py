@@ -157,9 +157,10 @@ def test_cr_provider_delegates_to_cr_client(monkeypatch):
         def __init__(self, api_key=None):
             assert api_key == "cr-test"
 
-        def chat(self, messages, model="deepseek-v4-pro", temperature=None):
+        def chat(self, messages, model="deepseek-v4-pro", temperature=None, timeout=300):
             assert model == "deepseek-v4-pro"
             assert temperature == 0
+            assert timeout == 300
             return Result()
 
     import cr_api.client as cr_client
@@ -169,6 +170,28 @@ def test_cr_provider_delegates_to_cr_client(monkeypatch):
     assert json.loads(provider.complete([{"role": "user", "content": "hi"}], model="deepseek-v4-pro", temperature=0))[
         "answer"
     ] == "blue"
+
+
+def test_cr_provider_forwards_custom_timeout(monkeypatch):
+    seen: dict[str, float] = {}
+
+    class Result:
+        content = "{}"
+
+    class FakeClient:
+        def __init__(self, api_key=None):
+            return None
+
+        def chat(self, messages, model="deepseek-v4-pro", temperature=None, timeout=300):
+            seen["timeout"] = timeout
+            return Result()
+
+    import cr_api.client as cr_client
+
+    monkeypatch.setattr(cr_client, "CRClient", FakeClient)
+    provider = CRProvider(api_key="cr-test", timeout=600)
+    provider.complete([{"role": "user", "content": "hi"}], model="deepseek-v4-pro", temperature=0)
+    assert seen["timeout"] == 600
 
 
 def test_cr_provider_wraps_cr_errors(monkeypatch):
