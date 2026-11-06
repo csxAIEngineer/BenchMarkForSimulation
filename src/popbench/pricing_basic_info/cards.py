@@ -6,7 +6,7 @@ source column. Empty cells stay empty in the form of the MISSING token.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from popbench.pricing_basic_info.spec import (
     CARD_KEYS,
@@ -30,12 +30,17 @@ def normalize_cell(value: object) -> tuple[str, str]:
 
     Only leading and trailing whitespace is removed. A blank cell is missing.
     Any other text, including "Prefer not to answer" or "Unknown", is kept.
+    The sentinel MISSING is reserved, so a source cell with that exact text fails.
     """
     if value is None:
         return MISSING_TOKEN, STATUS_MISSING
     text = str(value).strip()
     if text == "":
         return MISSING_TOKEN, STATUS_MISSING
+    if text == MISSING_TOKEN:
+        raise CardBuildError(
+            f"source cell is the reserved token {MISSING_TOKEN!r}; it is not rewritten and not accepted"
+        )
     if any(mark in text for mark in ("\n", "\r")):
         raise CardBuildError("source cell contains a newline; it was not rewritten")
     return text, STATUS_PRESENT
@@ -48,17 +53,21 @@ def build_card(
     source_file: str,
     columns: tuple[str, ...] | list[str],
     question_text: Mapping[str, str] | None,
+    question_options: Mapping[str, Sequence[str]] | None = None,
 ) -> dict[str, object]:
-    """Build one card. Columns not listed in ``columns`` are ignored."""
+    """Build one card. A column that is not in ``row`` is an absent column, not MISSING."""
     subject_id = str(row.get(ID_COLUMN) or "").strip()
     if not subject_id:
         raise CardBuildError("row is missing pid")
     fields: list[dict[str, object]] = []
     for column in columns:
+        if column not in row:
+            raise CardBuildError(f"required column {column} is absent")
         value, status = normalize_cell(row.get(column))
         if question_text is None:
             stem: str | None = None
             stem_status = QUESTION_TEXT_UNAVAILABLE
+            options: list[str] | None = None
         else:
             if column not in question_text:
                 raise CardBuildError(f"question catalog has no stem for {column}")
@@ -67,9 +76,14 @@ def build_card(
                 raise CardBuildError(f"question catalog stem for {column} is empty")
             stem = str(raw_stem)
             stem_status = QUESTION_TEXT_COPIED
+            raw_options = () if question_options is None else question_options.get(column, ())
+            options = [str(option) for option in raw_options]
+            if status == STATUS_PRESENT and options and value not in options:
+                raise CardBuildError(f"{column} value {value!r} is not in the catalog options")
         fields.append(
             {
                 "source_column": column,
+                "source_options": options,
                 "source_question_id": column,
                 "source_question_text": stem,
                 "source_question_text_status": stem_status,

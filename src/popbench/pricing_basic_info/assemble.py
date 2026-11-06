@@ -1,17 +1,19 @@
 """Assemble cards, the sample, and the distribution report from in-memory rows.
 
-No network and no model. Outcome cells are written to a separate document
-and are checked so they do not appear as basic-info values.
+No network and no model. Outcome cells are written to a separate document.
+Every outcome string is checked against the card on token boundaries.
 """
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 
 from popbench.pricing_basic_info.cards import build_card, normalize_cell
+from popbench.pricing_basic_info.columns import assert_row_columns
 from popbench.pricing_basic_info.report import distribution_report
 from popbench.pricing_basic_info.sample import planned_sample_size, stratified_sample
-from popbench.pricing_basic_info.serialize import dump_jsonl, dumps, sha256_text
+from popbench.pricing_basic_info.serialize import dump_jsonl, dumps
 from popbench.pricing_basic_info.spec import ID_COLUMN, MISSING_TOKEN
 
 _GENERATED_MARKERS = (
@@ -22,6 +24,10 @@ _GENERATED_MARKERS = (
     "Personal income:",
     "Usual weekly work hours:",
     "tendency",
+)
+_TOKEN = re.compile(r"[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*|\$\d+(?:\.\d+)?")
+_PRODUCT = re.compile(
+    r"following product in that category: (.+?)\. The product is priced at: (\$\d+(?:\.\d+)?)"
 )
 
 
@@ -35,6 +41,7 @@ def field_map(
     source_file: str,
     columns: Sequence[str],
     question_text: Mapping[str, str] | None,
+    question_options: Mapping[str, Sequence[str]] | None,
     blocked_columns: Sequence[str],
 ) -> dict[str, object]:
     fields = []
@@ -42,20 +49,24 @@ def field_map(
         if question_text is None:
             stem = None
             stem_status = "unavailable_machine_readable_wording"
+            options = None
         else:
             stem = question_text[column]
             stem_status = "copied_from_question_catalog"
+            options = list(question_options[column]) if question_options is not None else []
         fields.append(
             {
                 "card_section": "Basics",
                 "source_column": column,
                 "source_file": source_file,
+                "source_options": options,
                 "source_question_id": column,
                 "source_question_text": stem,
                 "source_question_text_status": stem_status,
                 "transform": (
                     "Copy the cell after removing only leading and trailing whitespace. "
-                    f"A blank cell is stored as {MISSING_TOKEN}. No other value is inferred."
+                    f"A blank cell is stored as {MISSING_TOKEN}. "
+                    "A cell whose text is that token fails. No other value is inferred."
                 ),
             }
         )
@@ -73,17 +84,22 @@ def assemble_dataset(
     dataset: str,
     source_file: str,
     columns: Sequence[str],
-    stratify_column: str,
+    stratify_columns: Sequence[str],
     question_text: Mapping[str, str] | None,
+    question_options: Mapping[str, Sequence[str]] | None = None,
     outcomes: Mapping[str, Sequence[Mapping[str, object]]],
     outcome_ids: Sequence[str],
     forbidden_columns: Sequence[str],
+    allowed_columns: Sequence[str],
     seed: int,
     sample_rule: Mapping[str, str],
     sample_size_override: int | None = None,
     eligibility_note: str,
+    reported_groupings: Sequence[str] = (),
 ) -> dict[str, str]:
     """Return filename -> UTF-8 text for one dataset. Byte-stable for the same rows."""
+    for row in rows:
+        assert_row_columns(row, allowed_columns)
     eligible, exclusions = _eligible(rows, outcomes, outcome_ids)
     plan = planned_sample_size(
         len(eligible),
@@ -94,7 +110,7 @@ def assemble_dataset(
     )
     draw = stratified_sample(
         eligible,
-        stratify_column=stratify_column,
+        stratify_columns=stratify_columns,
         sample_size=int(plan["sample_size"]),
         seed=seed,
         dataset=dataset,
@@ -106,29 +122,42 @@ def assemble_dataset(
             source_file=source_file,
             columns=columns,
             question_text=question_text,
+            question_options=question_options,
         )
         for row in _sorted_rows(eligible)
     ]
     _reject_generated_text(cards)
     _assert_values_match_source(cards, eligible, columns)
-    _reject_outcome_leak(cards, outcomes, forbidden_columns)
-    report = distribution_report(eligible, draw["subject_ids"], columns)
+    assert_no_outcome_leak(cards, outcomes, forbidden_columns)
+    report = distribution_report(
+        eligible,
+        draw["subject_ids"],
+        columns,
+        groupings={column: "age_decade" for column in reported_groupings},
+    )
     report = {
         "dataset": dataset,
+        "not_statistically_matched": (
+            "Margins of the stratifiers are the Hamilton targets. "
+            "Other fields are counts only. They are not a claim that the sample matches the population."
+        ),
         "sample_size_rule": plan,
         "seed": seed,
-        "stratify_column": stratify_column,
+        "stratify_columns": list(stratify_columns),
         **report,
     }
     sample = {
         "allocation": draw["allocation"],
         "dataset": dataset,
+        "margin_balance": draw["margin_balance"],
+        "marginal_allocation": draw["marginal_allocation"],
         "population_size": draw["population_size"],
         "population_stratum_counts": draw["population_stratum_counts"],
+        "rare_level_policy": draw["rare_level_policy"],
         "sample_size": draw["sample_size"],
         "sample_size_rule": plan,
         "seed": seed,
-        "stratify_column": stratify_column,
+        "stratify_columns": list(stratify_columns),
         "subject_ids": draw["subject_ids"],
     }
     exclusion_doc = {
@@ -146,10 +175,78 @@ def assemble_dataset(
         "outcomes.jsonl": dump_jsonl(outcome_rows),
         "sample.json": dumps(sample),
     }
-    for name, text in documents.items():
-        if name.endswith(".jsonl") and text and not text.endswith("\n"):
-            raise AssembleError(f"{name} is not newline-terminated")
     return documents
+
+
+def assert_no_outcome_leak(
+    cards: Sequence[Mapping[str, object]],
+    outcomes: Mapping[str, Sequence[Mapping[str, object]]],
+    forbidden_columns: Sequence[str],
+) -> None:
+    """Fail if any outcome string lands on a card outside that person's basic cells."""
+    blocked = set(forbidden_columns)
+    for card in cards:
+        fields = card["basic_info"]
+        if not isinstance(fields, list):
+            raise AssembleError("basic_info is not a list")
+        columns = [str(field["source_column"]) for field in fields]
+        if any(column in blocked for column in columns):
+            raise AssembleError(f"{card['subject_id']} stored a blocked column on the card")
+        source_values = {str(field["value"]) for field in fields}
+        text = str(card["text"])
+        basics = text.split("## Basics\n", 1)[-1]
+        card_tokens = set(_TOKEN.findall(basics))
+        line_values = {line.split(": ", 1)[1] for line in basics.splitlines() if ": " in line}
+        for item in outcomes[str(card["subject_id"])]:
+            for needle in _outcome_strings(item):
+                if needle in source_values:
+                    continue
+                if needle.isdigit():
+                    if needle in line_values:
+                        raise AssembleError(f"{card['subject_id']} copied outcome value {needle!r} onto the card")
+                    continue
+                if _distinctive(needle) and needle in basics:
+                    raise AssembleError(f"{card['subject_id']} copied outcome text {needle!r} onto the card")
+                for token in _leak_tokens(needle):
+                    if token in source_values:
+                        continue
+                    if token in card_tokens:
+                        raise AssembleError(f"{card['subject_id']} copied outcome token {token!r} onto the card")
+
+
+def _outcome_strings(item: Mapping[str, object]) -> list[str]:
+    found: list[str] = []
+    for key in ("answer", "question_id", "question_text", "source_column"):
+        value = item.get(key)
+        if isinstance(value, str) and value.strip():
+            found.append(value.strip())
+    stimulus = item.get("stimulus")
+    if isinstance(stimulus, dict):
+        for value in stimulus.values():
+            if isinstance(value, str) and value.strip():
+                found.append(value.strip())
+    question = item.get("question_text")
+    if isinstance(question, str):
+        match = _PRODUCT.search(question)
+        if match:
+            found.append(match.group(1).strip())
+            found.append(match.group(2).strip())
+    return found
+
+
+def _distinctive(needle: str) -> bool:
+    return len(needle) >= 4 or any(mark in needle for mark in ("_", "$", "."))
+
+
+def _leak_tokens(text: str) -> list[str]:
+    """Product codes and prices. Bare integers are checked as whole line values."""
+    tokens = []
+    for token in _TOKEN.findall(text):
+        if token.isdigit():
+            continue
+        if "_" in token or "." in token or token.startswith("$"):
+            tokens.append(token)
+    return tokens
 
 
 def _eligible(
@@ -185,8 +282,7 @@ def _outcome_reason(
     if not items:
         return "missing pricing outcomes"
     ids = [str(item.get("question_id") or "") for item in items]
-    expected = list(outcome_ids)
-    if ids != expected:
+    if ids != list(outcome_ids):
         return "pricing outcome ids are not the expected set in order"
     for item in items:
         answer, status = normalize_cell(item.get("answer"))
@@ -244,30 +340,9 @@ def _assert_values_match_source(
         if [str(field["source_column"]) for field in fields] != list(columns):
             raise AssembleError(f"{card['subject_id']} basic-info columns do not match the mapping")
         for field in fields:
-            expected, status = normalize_cell(row.get(str(field["source_column"])))
+            column = str(field["source_column"])
+            if column not in row:
+                raise AssembleError(f"{card['subject_id']} required column {column} is absent")
+            expected, status = normalize_cell(row.get(column))
             if field["value"] != expected or field["status"] != status:
-                raise AssembleError(f"{card['subject_id']} {field['source_column']} does not match the source cell")
-
-
-def _reject_outcome_leak(
-    cards: Sequence[Mapping[str, object]],
-    outcomes: Mapping[str, Sequence[Mapping[str, object]]],
-    forbidden_columns: Sequence[str],
-) -> None:
-    blocked = set(forbidden_columns)
-    for card in cards:
-        fields = card["basic_info"]
-        if not isinstance(fields, list):
-            raise AssembleError("basic_info is not a list")
-        columns = [str(field["source_column"]) for field in fields]
-        if any(column in blocked for column in columns):
-            raise AssembleError(f"{card['subject_id']} stored a blocked column on the card")
-        text = str(card["text"])
-        for item in outcomes[str(card["subject_id"])]:
-            question = str(item.get("question_text") or "")
-            if len(question) >= 40 and question in text:
-                raise AssembleError(f"{card['subject_id']} copied a pricing stimulus onto the card")
-
-
-def document_hashes(documents: Mapping[str, str]) -> dict[str, str]:
-    return {name: sha256_text(text) for name, text in sorted(documents.items())}
+                raise AssembleError(f"{card['subject_id']} {column} does not match the source cell")

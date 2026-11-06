@@ -1,89 +1,114 @@
 # 定价实验第一步：原文 basic info 人物卡与可复现抽样
 
-这一步只做两件事：把 Twin-2K-500 定价任务和加拿大 BDM 生菜实验的原文基本资料抄成人物卡，并给出一个固定种子的抽样。人物卡不调用语言模型，不补写生活史，也不把空单元格写成倾向。
+这一步把 Twin-2K-500 定价任务和加拿大 BDM 生菜实验的原文基本资料抄成人物卡，并固定一个种子为 42 的样本。人物卡不调用语言模型，不补写生活史，也不把空单元格写成倾向。
 
-`atus_expanded` 仍会根据学历、收入和婚姻状况生成生活史。那不是这一步的人物卡。本目录的卡片只有 `## Identity` 和 `## Basics`。
+`atus_expanded` 仍会生成生活史。那不是这一步的人物卡。本目录的卡片只有 `## Identity` 和 `## Basics`。
 
 ## 数据来源
 
 | 数据集 | 总体 | 许可 | 版本 |
 | --- | --- | --- | --- |
-| Twin-2K-500 | 已发布的 2,058 名美国受访者，全部纳入 | CC BY 4.0 | Hugging Face `LLM-Digital-Twin/Twin-2K-500`，revision `f883165a3026fde855dfd448e0cd16443ab257b6` |
-| BDM lettuce | 已发布的 610 名加拿大受访者，全部纳入 | CC BY 4.0 | Borealis [10.5683/SP3/CDLUEZ](https://doi.org/10.5683/SP3/CDLUEZ)，V1 |
+| Twin-2K-500 | 已发布的 2,058 人，全部纳入 | CC BY 4.0 | Hugging Face `LLM-Digital-Twin/Twin-2K-500`，revision `f883165a3026fde855dfd448e0cd16443ab257b6` |
+| BDM lettuce | 已发布的 610 人，全部纳入 | CC BY 4.0 | Borealis [10.5683/SP3/CDLUEZ](https://doi.org/10.5683/SP3/CDLUEZ)，V1 |
 
-Twin-2K 的 basic info 是人口学块 QID11–QID24，取自 `question_catalog_and_human_response_csv/wave1_3_response_label.csv`。题干从 `question_catalog.json` 原样抄入 JSON 字段 `source_question_text`。目录里的题干如果句子不完整（例如 QID20 停在 “consider yourself a”），卡片保持原样，不补全。
+Twin-2K 的 basic info 是 QID11–QID24，取自 `wave1_3_response_label.csv`。题干和选项从 `question_catalog.json` 原样写入 `source_question_text` 和 `source_options`。目录里句子不完整的题干保持原样。回答必须落在选项列表里。
 
-定价结果是 wave 4 的 `wave4_Q_wave4_A` 里 QID9_1–QID9_40。`QID9_n` 是该受访者看到的第 n 道定价题，不是固定商品。商品名和价格写在每个人的 `question_text` 里。标签 CSV 只有 “会买 / 不会买”，单独使用会丢掉价格，所以结果文件来自 wave JSON，并与 `wave4_response_label.csv` 逐格核对。Wave 1–3 的 QID9 是更早一次作答：82,320 个单元格里 69,059 个与 wave 4 相同、13,261 个不同。早一次的答案不进入人物卡，也不是这一步的留出结果。
+定价结果是 wave 4 的 QID9_1–QID9_40。`QID9_n` 是该人看到的第 n 题，不是固定商品。商品名和价格在 `question_text` 里。Wave 1–3 的同名列是更早一次作答，不进入人物卡。2,058 人全部纳入。
 
-BDM 的 basic info 是 CSV 里全部 `survey_*` 列。`100A_README.txt` 写明这些列的题干在 `DemographicQuestionnaire.docx`。该 docx 只有图片、没有可抽取的正文，因此卡片用列名和单元格原文，不使用 `fields.py` 里的英文转述。六项 WTP 和 `conclusion_purchased_product` 是结果。处理、呈现顺序、练习题和计时不是基本资料。
+BDM 的 basic info 是全部 `survey_*` 列。问卷 docx 只有图片，卡片用列名和单元格，不用 `fields.py` 的转述。`last_page`、计时、练习题、处理分配和呈现顺序被明确标成行政或设计字段，不进卡片。文件里多出来的未分类列会失败，不会被静默丢掉，也不会变成 `MISSING`。缺了已映射的列同样失败。空白单元格才写成 `MISSING`。源单元格如果本来就是 `MISSING` 这个词，构建失败，避免和空白哨兵混在一起。
 
-空白单元格写成 `MISSING`，状态为 `missing`。源数据里的 “Prefer not to answer” 原样保留，状态为 `present`。本次构建没有因缺人口学而删除任何人：Twin-2K 纳入 2,058，BDM 纳入 610，排除人数都是 0。BDM 全卡共有 383 个 `MISSING` 单元格，其中 `survey_q13_lack_of_resources` 空白 270 人。
+## 抽样算法
 
-## 抽样
+全量卡片都会写出。样本人数仍是 Cochran 规划值：z=1.96，p=0.5，e=0.10，n0=97，再做有限总体校正。Twin-2K **93**，BDM **84**。种子 **42**。这不是对价格效应的功效计算，也不是说样本在统计上匹配总体。
 
-全量人物卡都会写出。抽样是给后续模型实验用的子集，样本量可以改。
+精确步骤：
 
-未指定样本量时，默认用比例的 Cochran 规划公式，并做有限总体校正：
+1. 对每一个分层变量单独做 Hamilton 最大余数分配。名额是 `floor(n * N_level / N)`，余数 `n * N_level mod N` 大的先加 1。余数相同则按水平名字升序。因此每个水平满足 `|样本人数 - n * N_level / N| < 1`。名额为 0 的水平不会出现在样本里。
+2. Twin-2K 有两个分层变量：`QID21`（家庭收入）和 `QID23`（家庭规模）。用确定性增广路径填一张同时满足两条边际、且不超过每个交叉格人数的整数表，再用保持边际不变的单位换位把交叉格拉向 `n * N_cell / N`。BDM 只有 `survey_q15_income`，退化为第 1 步。
+3. 格子内部按 `SHA-256(seed, dataset, cell, pid)` 取人。样本顺序按 `SHA-256(seed, dataset, "selected", pid)`。
 
-- z = 1.96，p = 0.5，允许误差 e = 0.10
-- n0 = ceil(z² p (1-p) / e²) = 97
-- n = ceil(n0 N / (N + n0 - 1))
+种子 42 下，QID23 的 “4” 是 352/2058 对 16/93，配额 15.90670554，绝对差距 0.09329446。QID23 的总变差距离是 0.00525095。收入边际同样落在这个 1 人舍入界限内。
 
-p = 0.5 是方差最大的规划值，不是从数据里估出来的购买率。e = 0.10 而不是 0.05，是因为 0.05 在 Twin-2K 上大约是 324 人；按 `experiments/cr-pricing-models-n50/README.md` 里每批约 40.8 秒、每人 40 道定价题、每批 15 题来算，324 人大约是 n = 50 那次运行的 6 倍以上。0.10 对应 Twin-2K 93 人、BDM 84 人，单模型的 Twin-2K 定价题大约三个多小时量级。这不是对某个价格效应的功效计算。要换误差或直接指定人数，改 `config/pricing_basic_info.json` 的 `margin_of_error` 或把 `sample_size` 设成整数。
+比例分配不保证覆盖稀有类别。BDM 收入空白 2 人的 Hamilton 名额是 0，性别里的 Intersex 2 人也是 0。这是分配规则的结果，不是漏抽后的补救。
 
-种子是 42，与 `scripts/pricing_models_cr.py` 相同，但分配方法不同：按家庭收入比例分配，最大余数法，余数相同则按阶层名字升序。阶层内部用 `SHA-256(seed, dataset, stratum, pid)` 排序，不使用 `random.shuffle`。
+BDM 的单岁年龄不是分层变量，单岁总变差距离 0.32825917 不作为失败。按 `floor(年龄/10)*10` 到该十年的描述性分组（空白仍是 `MISSING`），总变差距离是 0.11518345。这个分组写在 `reported_groupings` 里，角色是描述性分箱，不是设计分层。
 
-分层变量：
+### 未分层字段
 
-- Twin-2K：`QID21`（家庭收入）
-- BDM：`survey_q15_income`（空白单独成为 `MISSING` 层）
+下面的总变差距离只是计数差，不是匹配结论。
 
-种子 42 的结果：
+Twin-2K（分层变量是 QID21、QID23）：
 
-| 数据集 | 总体 | 样本 | 收入层总变差距离 | 收入层最大绝对比例差 |
-| --- | --- | --- | --- | --- |
-| twin2k_500 | 2058 | 93 | 0.00916957 | 0.00616007 |
-| bdm_lettuce | 610 | 84 | 0.01740827 | 0.00585480 |
+| 字段 | 总变差距离 | 最大绝对比例差 |
+| --- | --- | --- |
+| QID11 | 0.06401455 | 0.03965642 |
+| QID12 | 0.03034578 | 0.03034578 |
+| QID13 | 0.07472021 | 0.06953196 |
+| QID14 | 0.10771498 | 0.10522273 |
+| QID15 | 0.07158532 | 0.07158532 |
+| QID16 | 0.00880905 | 0.00880905 |
+| QID17 | 0.07852911 | 0.06171040 |
+| QID18 | 0.11009750 | 0.05426502 |
+| QID19 | 0.06749428 | 0.04442146 |
+| QID20 | 0.02067463 | 0.01507884 |
+| QID22 | 0.09765196 | 0.05928086 |
+| QID24 | 0.07570770 | 0.04688235 |
 
-这只说明收入层的份额接近总体。其他字段没有被分层控制。Twin-2K 家庭规模 QID23 的总变差距离是 0.14279444，其中 “4” 的样本比例比总体低 0.08501834。BDM 年龄是原始岁数，水平很多，总变差距离是 0.32825917，但单个岁数的最大绝对比例差是 0.03329430。BDM 收入空白的 2 人、性别空白的 3 人、Intersex 的 2 人在这 84 人里名额为 0。分布文件只记录计数、比例和绝对偏差，没有显著性检验。
+BDM（分层变量只有 `survey_q15_income`）：
 
-## 文件
+| 字段 | 总变差距离 | 最大绝对比例差 |
+| --- | --- | --- |
+| survey_q01_age | 0.32825917 | 0.03329430 |
+| survey_q02_sex | 0.07170180 | 0.06428571 |
+| survey_q03_brand_name | 0.09047619 | 0.07267760 |
+| survey_q03_locally_grown | 0.11561280 | 0.10327869 |
+| survey_q03_pesticide_free | 0.08946136 | 0.08836846 |
+| survey_q03_price | 0.09129586 | 0.04937549 |
+| survey_q04_heard_of_vertical_farming | 0.01705699 | 0.01705699 |
+| survey_q05_heard_of_greenhouse_growing | 0.04340359 | 0.04340359 |
+| survey_q06_primary_grocery | 0.01100703 | 0.01100703 |
+| survey_q07_primary_cook | 0.02447307 | 0.02447307 |
+| survey_q08_leafy_green_meals | 0.08161593 | 0.07462920 |
+| survey_q09_not_prepared_meals | 0.03602654 | 0.02985948 |
+| survey_q10_try_novel_technology | 0.10499610 | 0.06440281 |
+| survey_q11_grow_own_food | 0.06549571 | 0.06549571 |
+| survey_q12_variety_concern | 0.05647931 | 0.04921936 |
+| survey_q13_lack_of_resources | 0.21615925 | 0.03579235 |
+| survey_q14_political | 0.06451991 | 0.03204528 |
+| survey_q16_education | 0.11108509 | 0.04824356 |
+| survey_q17_household_size | 0.11463700 | 0.04246682 |
 
-提交进仓库的是基本资料卡、字段映射、样本、分布和哈希。定价结果留在 gitignore 的 `data/`，因为其中有每人不同的商品、价格和出价；`manifest.json` 记录了它们的 SHA-256。
+## 文件、锁和校验范围
 
 ```text
 experiments/pricing-basic-info/
   field_map.json
   manifest.json
   source-lock.json
-  twin2k_500/cards.jsonl
-  twin2k_500/sample.json
-  twin2k_500/distribution.json
-  twin2k_500/exclusions.json
-  twin2k_500/wave_audit.json
-  bdm_lettuce/cards.jsonl
-  bdm_lettuce/sample.json
-  bdm_lettuce/distribution.json
-  bdm_lettuce/exclusions.json
+  twin2k_500/cards.jsonl sample.json distribution.json exclusions.json wave_audit.json
+  bdm_lettuce/cards.jsonl sample.json distribution.json exclusions.json
 data/pricing_basic_info/          # 不提交
   raw/
-  outcomes/twin2k_500/outcomes.jsonl
-  outcomes/bdm_lettuce/outcomes.jsonl
+  outcomes/
 ```
 
-## 复现
+`manifest.json` 记录逻辑文件名和 SHA-256。它不含 `output_dir`、机器路径或时间戳。`manifest_sha256` 是去掉该字段之后正文的 SHA-256。哈希一致只说明这些字节没变，不说明未分层字段与总体一致。
 
-在仓库根目录，先安装项目（`datasets` 会带上读取 parquet 的依赖）：
+`source-lock.json` 是提交进仓库的源文件钉。普通构建不会创建它，也不会在缓存哈希不符时改写它。非空缓存每次都重新计算哈希；对不上就失败，不换文件、不改锁。
+
+`--init-source-lock` 是唯一会写出这把锁的命令，用来钉住一份新的上游快照。复现不要加这个参数。
+
+首次克隆时锁已经在仓库里。普通命令会把缺的源文件下载到 `data/pricing_basic_info/raw/`，再按锁校验。
+
+## 命令
 
 ```bash
 pip install -e ".[dev]"
 python scripts/build_pricing_basic_info.py
+python scripts/build_pricing_basic_info.py --verify
+pytest
 ```
 
-配置是 `config/pricing_basic_info.json`。相同的源文件、种子和配置会把人物卡和 `sample.json` 写成同样的字节。脚本在写盘前会把装配函数跑两遍并比较。源文件哈希与 `source-lock.json` 不一致时会停下来，不会换一份样本继续。
+`--verify` 只重算已提交产物的哈希，不下载、不重写卡片。改动任一字节都会失败。
 
-检查：
-
-```bash
-pytest tests/test_pricing_basic_info.py
-```
+直接依赖包括 `pyarrow`。测试收集 `run_pricing_models_cr.py` 需要 `python-dotenv`，它在 `dev` 额外依赖里。

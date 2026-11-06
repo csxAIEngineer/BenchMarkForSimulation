@@ -24,6 +24,8 @@ def distribution_report(
     rows: Sequence[Mapping[str, object]],
     sample_ids: Sequence[str],
     columns: Sequence[str],
+    *,
+    groupings: Mapping[str, str] | None = None,
 ) -> dict[str, object]:
     by_id = {}
     for row in rows:
@@ -43,10 +45,16 @@ def distribution_report(
         column: _field_report(by_id, sample_set, column, population_n, sample_n)
         for column in columns
     }
+    reported = {
+        f"{column}_{kind}": _grouped_report(by_id, sample_set, column, kind, population_n, sample_n)
+        for column, kind in (groupings or {}).items()
+    }
     return {
         "fields": fields,
         "note": _NOTE,
         "population_size": population_n,
+        "reported_groupings": reported,
+        "reported_groupings_role": "descriptive bins, not design strata",
         "sample_size": sample_n,
     }
 
@@ -57,11 +65,18 @@ def _field_report(
     column: str,
     population_n: int,
     sample_n: int,
+    *,
+    values_are_final: bool = False,
 ) -> dict[str, object]:
     population_counts: Counter[str] = Counter()
     sample_counts: Counter[str] = Counter()
     for subject_id, row in by_id.items():
-        value, _status = normalize_cell(row.get(column))
+        if values_are_final:
+            value = str(row.get(column) or "")
+            if value == "":
+                value = "MISSING"
+        else:
+            value, _status = normalize_cell(row.get(column))
         population_counts[value] += 1
         if subject_id in sample_ids:
             sample_counts[value] += 1
@@ -91,6 +106,43 @@ def _field_report(
         "sample_denominator": sample_n,
         "total_variation_distance": _display(l1 / Decimal("2")),
     }
+
+
+def _grouped_report(
+    by_id: Mapping[str, Mapping[str, object]],
+    sample_ids: set[str],
+    column: str,
+    kind: str,
+    population_n: int,
+    sample_n: int,
+) -> dict[str, object]:
+    if kind != "age_decade":
+        raise ValueError(f"unknown grouping {kind}")
+    grouped_rows = []
+    for subject_id, row in by_id.items():
+        value, _status = normalize_cell(row.get(column))
+        grouped_rows.append({ID_COLUMN: subject_id, column: _age_decade(value)})
+    report = _field_report(
+        {row[ID_COLUMN]: row for row in grouped_rows},
+        sample_ids,
+        column,
+        population_n,
+        sample_n,
+        values_are_final=True,
+    )
+    report["bin"] = "floor(numeric age / 10) * 10 through that decade; blank stays MISSING"
+    report["role"] = "descriptive_bin_not_a_design_stratum"
+    report["source_column"] = column
+    return report
+
+
+def _age_decade(value: str) -> str:
+    if value == "MISSING":
+        return value
+    if not value.isdigit():
+        raise ValueError(f"age decade grouping does not rewrite non-numeric age {value!r}")
+    decade = int(value) // 10 * 10
+    return f"{decade}-{decade + 9}"
 
 
 def _proportion(count: int, total: int) -> Decimal:

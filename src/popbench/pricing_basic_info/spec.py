@@ -12,7 +12,7 @@ MISSING_TOKEN = "MISSING"
 # Qualtrics demographic block. Order is QID11–QID24.
 # Stems are read from question_catalog.json at build time.
 TWIN_BASIC_COLUMNS: tuple[str, ...] = tuple(f"QID{index}" for index in range(11, 25))
-TWIN_STRATIFY_COLUMN = "QID21"
+TWIN_STRATIFY_COLUMNS: tuple[str, ...] = ("QID21", "QID23")
 TWIN_PRICING_IDS: tuple[str, ...] = tuple(f"QID9_{index}" for index in range(1, 41))
 TWIN_PUBLISHED_N = 2058
 TWIN_DATASET = "twin2k_500"
@@ -50,7 +50,7 @@ BDM_BASIC_COLUMNS: tuple[str, ...] = (
     "survey_q16_education",
     "survey_q17_household_size",
 )
-BDM_STRATIFY_COLUMN = "survey_q15_income"
+BDM_STRATIFY_COLUMNS: tuple[str, ...] = ("survey_q15_income",)
 BDM_DATASET = "bdm_lettuce"
 BDM_PUBLISHED_N = 610
 BDM_SOURCE_FILE = "20240723_VFExperiment_01.csv"
@@ -67,6 +67,13 @@ BDM_OUTCOME_COLUMNS: tuple[str, ...] = (
     "nonlocal_greenhouse",
     "nonlocal_vertical",
     "conclusion_purchased_product",
+)
+BDM_ADMIN_COLUMNS: tuple[str, ...] = (
+    "last_page",
+    "overall_start_time",
+    "bidding_start_time",
+    "bidding_end_time",
+    "overall_end_time",
 )
 BDM_DESIGN_COLUMNS: tuple[str, ...] = (
     "treatment",
@@ -99,6 +106,7 @@ CARD_KEYS = frozenset(
 FIELD_KEYS = frozenset(
     {
         "source_column",
+        "source_options",
         "source_question_id",
         "source_question_text",
         "source_question_text_status",

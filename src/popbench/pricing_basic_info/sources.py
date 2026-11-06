@@ -13,7 +13,9 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 from popbench.pricing_basic_info.cards import normalize_cell
+from popbench.pricing_basic_info.columns import classify_header
 from popbench.pricing_basic_info.spec import (
+    BDM_ADMIN_COLUMNS,
     BDM_BASIC_COLUMNS,
     BDM_DESIGN_COLUMNS,
     BDM_OUTCOME_COLUMNS,
@@ -35,12 +37,29 @@ def load_twin_tables(
     wave4_csv: Path,
     catalog_path: Path,
     wave_chunks: Iterable[Path],
-) -> tuple[list[dict[str, str]], dict[str, list[dict[str, object]]], dict[str, str], dict[str, int]]:
-    demographics = _read_csv(demographic_csv)
-    wave4 = _read_csv(wave4_csv)
+) -> tuple[list[dict[str, str]], dict[str, list[dict[str, object]]], dict[str, str], dict[str, list[str]], dict[str, int]]:
+    demo_fields, demographics = _read_csv(demographic_csv)
+    wave_fields, wave4 = _read_csv(wave4_csv)
     _expect_rows(demographics, TWIN_PUBLISHED_N, demographic_csv.name)
     _expect_rows(wave4, TWIN_PUBLISHED_N, wave4_csv.name)
-    stems = demographic_stems(json.loads(catalog_path.read_text(encoding="utf-8")))
+    stems, options, catalog_columns, unmapped = read_catalog(json.loads(catalog_path.read_text(encoding="utf-8")))
+    known_other = [column for column in catalog_columns if column not in TWIN_BASIC_COLUMNS and column not in TWIN_PRICING_IDS]
+    classify_header(
+        demo_fields,
+        id_column=ID_COLUMN,
+        basic=TWIN_BASIC_COLUMNS,
+        outcome=(),
+        known_other=[*known_other, *TWIN_PRICING_IDS],
+        unmapped_basic=unmapped,
+    )
+    classify_header(
+        wave_fields,
+        id_column=ID_COLUMN,
+        basic=(),
+        outcome=TWIN_PRICING_IDS,
+        known_other=known_other,
+        unmapped_basic=unmapped,
+    )
     wave4_by_id = {_pid(row): row for row in wave4}
     demo_by_id = {_pid(row): row for row in demographics}
     if set(wave4_by_id) != set(demo_by_id):
@@ -71,38 +90,63 @@ def load_twin_tables(
         "wave4_vs_wave1_3_qid9_cells_equal": equal,
     }
     rows = [demo_by_id[subject_id] for subject_id in sorted(demo_by_id, key=_pid_sort)]
-    return rows, json_outcomes, stems, audit
+    return rows, json_outcomes, stems, options, audit
 
 
-def demographic_stems(catalog: object) -> dict[str, str]:
+def read_catalog(catalog: object) -> tuple[dict[str, str], dict[str, list[str]], list[str], list[str]]:
+    """Stems, options, every catalog CSV column, and unmapped demographic ids."""
     if not isinstance(catalog, list):
         raise SourceError("question catalog must be a list")
     stems: dict[str, str] = {}
+    options: dict[str, list[str]] = {}
+    columns: list[str] = []
+    seen_columns: set[str] = set()
+    unmapped: list[str] = []
     for entry in catalog:
         if not isinstance(entry, dict):
-            continue
+            raise SourceError("question catalog entry is not an object")
         question_id = str(entry.get("QuestionID") or "")
-        if entry.get("BlockName") != "Demographics" or question_id not in TWIN_BASIC_COLUMNS:
+        if not question_id:
+            raise SourceError("question catalog entry is missing QuestionID")
+        if entry.get("BlockName") == "Demographics" and question_id not in TWIN_BASIC_COLUMNS:
+            unmapped.append(question_id)
+        for column in entry.get("csv_columns") or []:
+            name = str(column)
+            if name in seen_columns:
+                raise SourceError(f"question catalog repeats csv column {name}")
+            seen_columns.add(name)
+            columns.append(name)
+        if question_id not in TWIN_BASIC_COLUMNS:
             continue
         if question_id in stems:
             raise SourceError(f"duplicate demographic stem for {question_id}")
-        stems[question_id] = str(entry.get("QuestionText") or "")
+        stem = entry.get("QuestionText")
+        if not isinstance(stem, str) or stem.strip() == "":
+            raise SourceError(f"question catalog stem for {question_id} is empty")
+        raw_options = entry.get("Options")
+        if not isinstance(raw_options, list) or not raw_options:
+            raise SourceError(f"question catalog has no options for {question_id}")
+        stems[question_id] = stem
+        options[question_id] = [str(option) for option in raw_options]
     missing = [column for column in TWIN_BASIC_COLUMNS if column not in stems]
     if missing:
         raise SourceError(f"question catalog is missing demographic stems: {missing}")
-    return stems
+    return stems, options, columns, unmapped
 
 
 def load_bdm_table(csv_path: Path) -> tuple[list[dict[str, str]], dict[str, list[dict[str, object]]]]:
     if PUBLISHED_N != BDM_PUBLISHED_N:
         raise SourceError("BDM published N drifted from the loader")
-    rows = _read_csv(csv_path)
+    fieldnames, rows = _read_csv(csv_path)
     _expect_rows(rows, BDM_PUBLISHED_N, csv_path.name)
-    fieldnames = set(rows[0])
-    required = (ID_COLUMN, *BDM_BASIC_COLUMNS, *BDM_OUTCOME_COLUMNS, *BDM_DESIGN_COLUMNS)
-    missing = [column for column in required if column not in fieldnames]
-    if missing:
-        raise SourceError(f"BDM CSV is missing columns: {missing}")
+    classify_header(
+        fieldnames,
+        id_column=ID_COLUMN,
+        basic=BDM_BASIC_COLUMNS,
+        outcome=BDM_OUTCOME_COLUMNS,
+        design=BDM_DESIGN_COLUMNS,
+        admin=BDM_ADMIN_COLUMNS,
+    )
     outcomes: dict[str, list[dict[str, object]]] = {}
     for row in rows:
         subject_id = _pid(row)
@@ -203,11 +247,12 @@ def _walk_questions(node: object) -> list[dict[str, object]]:
     return found
 
 
-def _read_csv(path: Path) -> list[dict[str, str]]:
+def _read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     text = path.read_text(encoding="utf-8-sig")
     reader = csv.DictReader(io.StringIO(text))
     if reader.fieldnames is None or ID_COLUMN not in reader.fieldnames:
         raise SourceError(f"{path.name} is missing pid")
+    fieldnames = list(reader.fieldnames)
     rows: list[dict[str, str]] = []
     seen: set[str] = set()
     for raw in reader:
@@ -219,8 +264,11 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
             raise SourceError(f"{path.name} repeats pid {subject_id}")
         seen.add(subject_id)
         row[ID_COLUMN] = subject_id
+        missing = [column for column in fieldnames if column not in row]
+        if missing:
+            raise SourceError(f"{path.name} pid {subject_id} is missing columns: {missing}")
         rows.append(row)
-    return rows
+    return fieldnames, rows
 
 
 def _expect_rows(rows: list[dict[str, str]], expected: int, name: str) -> None:

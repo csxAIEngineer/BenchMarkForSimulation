@@ -12,6 +12,94 @@
     "Prefer not to answer": 10
   },
   "dataset": "bdm_lettuce",
+  "margin_balance": {
+    "survey_q15_income": {
+      "$0-$14,999 CAD": {
+        "absolute_gap": "0.47213115",
+        "population": 47,
+        "quota": "6.47213115",
+        "sample": 6,
+        "within_hamilton_unit": true
+      },
+      "$100,000-$149,999 CAD": {
+        "absolute_gap": "0.24918033",
+        "population": 118,
+        "quota": "16.24918033",
+        "sample": 16,
+        "within_hamilton_unit": true
+      },
+      "$15,000-$24,999 CAD": {
+        "absolute_gap": "0.18032787",
+        "population": 35,
+        "quota": "4.81967213",
+        "sample": 5,
+        "within_hamilton_unit": true
+      },
+      "$150,000 CAD and above": {
+        "absolute_gap": "0.16393443",
+        "population": 115,
+        "quota": "15.83606557",
+        "sample": 16,
+        "within_hamilton_unit": true
+      },
+      "$25,000-$34,999 CAD": {
+        "absolute_gap": "0.49180328",
+        "population": 40,
+        "quota": "5.50819672",
+        "sample": 6,
+        "within_hamilton_unit": true
+      },
+      "$35,000-$49,999 CAD": {
+        "absolute_gap": "0.18032787",
+        "population": 35,
+        "quota": "4.81967213",
+        "sample": 5,
+        "within_hamilton_unit": true
+      },
+      "$50,000-$74,999 CAD": {
+        "absolute_gap": "0.36065574",
+        "population": 70,
+        "quota": "9.63934426",
+        "sample": 10,
+        "within_hamilton_unit": true
+      },
+      "$75,000-$99,999 CAD": {
+        "absolute_gap": "0.46557377",
+        "population": 76,
+        "quota": "10.46557377",
+        "sample": 10,
+        "within_hamilton_unit": true
+      },
+      "MISSING": {
+        "absolute_gap": "0.27540984",
+        "population": 2,
+        "quota": "0.27540984",
+        "sample": 0,
+        "within_hamilton_unit": true
+      },
+      "Prefer not to answer": {
+        "absolute_gap": "0.08524590",
+        "population": 72,
+        "quota": "9.91475410",
+        "sample": 10,
+        "within_hamilton_unit": true
+      }
+    }
+  },
+  "marginal_allocation": {
+    "survey_q15_income": {
+      "$0-$14,999 CAD": 6,
+      "$100,000-$149,999 CAD": 16,
+      "$15,000-$24,999 CAD": 5,
+      "$150,000 CAD and above": 16,
+      "$25,000-$34,999 CAD": 6,
+      "$35,000-$49,999 CAD": 5,
+      "$50,000-$74,999 CAD": 10,
+      "$75,000-$99,999 CAD": 10,
+      "MISSING": 0,
+      "Prefer not to answer": 10
+    }
+  },
   "population_size": 610,
   "population_stratum_counts": {
     "$0-$14,999 CAD": 47,
@@ -25,6 +113,7 @@
     "MISSING": 2,
     "Prefer not to answer": 72
   },
+  "rare_level_policy": "Hamilton largest-remainder gives a level zero seats when its quota is below 1 and it loses the remainder contest. Proportional allocation does not guarantee that every rare level appears in the sample.",
   "sample_size": 84,
   "sample_size_rule": {
     "margin_of_error": "0.10",
@@ -37,7 +126,9 @@
     "z": "1.96"
   },
   "seed": 42,
-  "stratify_column": "survey_q15_income",
+  "stratify_columns": [
+    "survey_q15_income"
+  ],
   "subject_ids": [
     "189",
     "56",

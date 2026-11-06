@@ -2106,8 +2106,95 @@
       "total_variation_distance": "0.11463700"
     }
   },
+  "not_statistically_matched": "Margins of the stratifiers are the Hamilton targets. Other fields are counts only. They are not a claim that the sample matches the population.",
   "note": "Counts, proportions, and absolute deviations describe this draw against the full eligible population. This report does not include a significance test.",
   "population_size": 610,
+  "reported_groupings": {
+    "survey_q01_age_age_decade": {
+      "bin": "floor(numeric age / 10) * 10 through that decade; blank stays MISSING",
+      "levels": [
+        {
+          "population_count": 44,
+          "population_proportion": "0.07213115",
+          "proportion_difference": "0.01120219",
+          "sample_count": 7,
+          "sample_proportion": "0.08333333",
+          "value": "10-19"
+        },
+        {
+          "population_count": 160,
+          "population_proportion": "0.26229508",
+          "proportion_difference": "0.05913349",
+          "sample_count": 27,
+          "sample_proportion": "0.32142857",
+          "value": "20-29"
+        },
+        {
+          "population_count": 101,
+          "population_proportion": "0.16557377",
+          "proportion_difference": "-0.02271663",
+          "sample_count": 12,
+          "sample_proportion": "0.14285714",
+          "value": "30-39"
+        },
+        {
+          "population_count": 89,
+          "population_proportion": "0.14590164",
+          "proportion_difference": "-0.05066354",
+          "sample_count": 8,
+          "sample_proportion": "0.09523810",
+          "value": "40-49"
+        },
+        {
+          "population_count": 88,
+          "population_proportion": "0.14426230",
+          "proportion_difference": "-0.01330991",
+          "sample_count": 11,
+          "sample_proportion": "0.13095238",
+          "value": "50-59"
+        },
+        {
+          "population_count": 73,
+          "population_proportion": "0.11967213",
+          "proportion_difference": "-0.00062451",
+          "sample_count": 10,
+          "sample_proportion": "0.11904762",
+          "value": "60-69"
+        },
+        {
+          "population_count": 38,
+          "population_proportion": "0.06229508",
+          "proportion_difference": "0.04484778",
+          "sample_count": 9,
+          "sample_proportion": "0.10714286",
+          "value": "70-79"
+        },
+        {
+          "population_count": 4,
+          "population_proportion": "0.00655738",
+          "proportion_difference": "-0.00655738",
+          "sample_count": 0,
+          "sample_proportion": "0.00000000",
+          "value": "80-89"
+        },
+        {
+          "population_count": 13,
+          "population_proportion": "0.02131148",
+          "proportion_difference": "-0.02131148",
+          "sample_count": 0,
+          "sample_proportion": "0.00000000",
+          "value": "MISSING"
+        }
+      ],
+      "max_abs_proportion_difference": "0.05913349",
+      "population_denominator": 610,
+      "role": "descriptive_bin_not_a_design_stratum",
+      "sample_denominator": 84,
+      "source_column": "survey_q01_age",
+      "total_variation_distance": "0.11518345"
+    }
+  },
+  "reported_groupings_role": "descriptive bins, not design strata",
   "sample_size": 84,
   "sample_size_rule": {
     "margin_of_error": "0.10",
@@ -2120,5 +2207,7 @@
     "z": "1.96"
   },
   "seed": 42,
-  "stratify_column": "survey_q15_income"
+  "stratify_columns": [
+    "survey_q15_income"
+  ]
 }

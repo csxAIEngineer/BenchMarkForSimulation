@@ -83,11 +83,12 @@ def _assemble(rows: list[dict[str, str]], *, seed: int = 42, n: int | None = 2):
         dataset="twin2k_500",
         source_file="wave1_3_response_label.csv",
         columns=COLUMNS,
-        stratify_column="QID21",
+        stratify_columns=("QID21",),
         question_text=STEMS,
         outcomes=_outcomes(pids),
         outcome_ids=("QID9_1",),
         forbidden_columns=("QID9_1", "persona_summary"),
+        allowed_columns=("pid", *COLUMNS),
         seed=seed,
         sample_rule=RULE,
         sample_size_override=n,
@@ -175,11 +176,12 @@ def test_assemble_is_byte_identical_and_excludes_only_missing_outcomes():
         dataset="twin2k_500",
         source_file="wave1_3_response_label.csv",
         columns=COLUMNS,
-        stratify_column="QID21",
+        stratify_columns=("QID21",),
         question_text=STEMS,
         outcomes=_outcomes(["2", "10", "3"]),
         outcome_ids=("QID9_1",),
         forbidden_columns=("QID9_1",),
+        allowed_columns=("pid", *COLUMNS),
         seed=42,
         sample_rule=RULE,
         sample_size_override=2,
@@ -196,9 +198,9 @@ def test_same_seed_selects_the_same_ids_and_reports_counts_without_a_test():
     for index in range(1, 21):
         income = "Less than $30,000" if index <= 15 else "$100,000 or more"
         rows.append(_row(str(index), QID12="Female" if index % 2 else "Male", QID20="Independent", QID21=income, QID24="Student"))
-    draw_a = stratified_sample(rows, stratify_column="QID21", sample_size=8, seed=42, dataset="twin2k_500")
-    draw_b = stratified_sample(rows, stratify_column="QID21", sample_size=8, seed=42, dataset="twin2k_500")
-    draw_c = stratified_sample(rows, stratify_column="QID21", sample_size=8, seed=7, dataset="twin2k_500")
+    draw_a = stratified_sample(rows, stratify_columns=("QID21",), sample_size=8, seed=42, dataset="twin2k_500")
+    draw_b = stratified_sample(rows, stratify_columns=("QID21",), sample_size=8, seed=42, dataset="twin2k_500")
+    draw_c = stratified_sample(rows, stratify_columns=("QID21",), sample_size=8, seed=7, dataset="twin2k_500")
     assert draw_a == draw_b
     assert draw_a["subject_ids"] != draw_c["subject_ids"]
     assert sum(draw_a["allocation"].values()) == 8
@@ -229,6 +231,8 @@ def test_default_sample_size_is_the_finite_population_cochran_rule():
     assert planned_sample_size(2058, override=40)["sample_size"] == 40
     with pytest.raises(ValueError):
         planned_sample_size(10, override=11)
+    with pytest.raises(ValueError):
+        planned_sample_size(10, override=True)
 
 
 def test_package_source_does_not_import_a_model_or_the_expanded_card():
@@ -292,3 +296,158 @@ def test_committed_pid_1732_card_matches_the_label_file_snapshot():
     assert resources["status"] == STATUS_MISSING
     assert "Very important" in first["text"]
     assert "treatment" not in first["text"]
+    assert "output_dir" not in manifest
+    assert manifest["manifest_sha256"]
+    qid23 = json.loads((path.parent / "distribution.json").read_text(encoding="utf-8"))["fields"]["QID23"]
+    for level in qid23["levels"]:
+        quota = level["population_count"] * 93 / 2058
+        assert abs(level["sample_count"] - quota) < 1
+    married = next(field for field in found["basic_info"] if field["source_column"] == "QID17")
+    assert married["value"] in married["source_options"]
+    assert "Married" in married["source_options"]
+    from popbench.pricing_basic_info.pipeline import verify_outputs
+
+    verify_outputs(ROOT / "experiments" / "pricing-basic-info")
+
+
+def test_reserved_missing_token_and_absent_column_fail():
+    with pytest.raises(CardBuildError, match="reserved"):
+        build_card(
+            _row("7", QID12="MISSING", QID20="Independent", QID21="Less than $30,000", QID24="Student"),
+            dataset="twin2k_500",
+            source_file="wave1_3_response_label.csv",
+            columns=COLUMNS,
+            question_text=STEMS,
+        )
+    with pytest.raises(CardBuildError, match="absent"):
+        build_card(
+            _row("7", QID12="Female", QID20="Independent", QID21="Less than $30,000"),
+            dataset="twin2k_500",
+            source_file="wave1_3_response_label.csv",
+            columns=COLUMNS,
+            question_text=STEMS,
+        )
+
+
+def test_catalog_options_are_stored_and_unknown_values_fail():
+    options = {"QID12": ["Female", "Male"], "QID20": ["Independent"], "QID21": ["Less than $30,000"], "QID24": ["Student"]}
+    card = build_card(
+        _row("7", QID12="Female", QID20="Independent", QID21="Less than $30,000", QID24="Student"),
+        dataset="twin2k_500",
+        source_file="wave1_3_response_label.csv",
+        columns=COLUMNS,
+        question_text=STEMS,
+        question_options=options,
+    )
+    sex = next(field for field in card["basic_info"] if field["source_column"] == "QID12")
+    assert sex["source_options"] == ["Female", "Male"]
+    with pytest.raises(CardBuildError, match="options"):
+        build_card(
+            _row("7", QID12="Other sex", QID20="Independent", QID21="Less than $30,000", QID24="Student"),
+            dataset="twin2k_500",
+            source_file="wave1_3_response_label.csv",
+            columns=COLUMNS,
+            question_text=STEMS,
+            question_options=options,
+        )
+
+
+def test_unknown_and_unmapped_columns_fail_instead_of_becoming_missing():
+    from popbench.pricing_basic_info.columns import ColumnClassError, classify_header
+
+    with pytest.raises(ColumnClassError, match="unknown column: QID25"):
+        classify_header(
+            ["pid", "QID12", "QID25"],
+            id_column="pid",
+            basic=("QID12",),
+            outcome=(),
+        )
+    with pytest.raises(ColumnClassError, match="unknown column: last_page"):
+        classify_header(["pid", "survey_q01_age", "last_page"], id_column="pid", basic=("survey_q01_age",), outcome=())
+    with pytest.raises(ColumnClassError, match="absent"):
+        classify_header(["pid"], id_column="pid", basic=("survey_q01_age",), outcome=())
+    with pytest.raises(ColumnClassError, match="unmapped basic-info"):
+        classify_header(
+            ["pid", "QID12"],
+            id_column="pid",
+            basic=("QID12",),
+            outcome=(),
+            unmapped_basic=("QID25",),
+        )
+    classified = classify_header(
+        ["pid", "survey_q01_age", "last_page", "local_vertical"],
+        id_column="pid",
+        basic=("survey_q01_age",),
+        outcome=("local_vertical",),
+        admin=("last_page",),
+    )
+    assert classified["last_page"] == "admin"
+    assert classified["local_vertical"] == "outcome"
+
+
+def test_outcome_tokens_fail_even_when_short_and_shared_numbers_do_not():
+    from popbench.pricing_basic_info.assemble import AssembleError, assert_no_outcome_leak
+
+    card = build_card(
+        _row("7", QID12="Female", QID20="Independent", QID21="Less than $30,000", QID24="Student"),
+        dataset="twin2k_500",
+        source_file="wave1_3_response_label.csv",
+        columns=COLUMNS,
+        question_text=STEMS,
+    )
+    leaked = dict(card)
+    leaked["text"] = str(card["text"]) + "local_vertical\nconclusion answer TRUE\nbid 9.99\n"
+    outcomes = {
+        "7": [
+            {
+                "answer": "TRUE",
+                "question_id": "local_vertical",
+                "question_text": "priced at $9.99",
+                "source_column": "local_vertical",
+                "stimulus": {"conclusion_selected_product": "local_vertical", "conclusion_generated_price": "9.99"},
+            }
+        ]
+    }
+    with pytest.raises(AssembleError, match="local_vertical|TRUE|9.99"):
+        assert_no_outcome_leak([leaked], outcomes, ("local_vertical",))
+    shared = build_card(
+        _row("8", QID12="Female", QID20="Independent", QID21="5", QID24="Student"),
+        dataset="twin2k_500",
+        source_file="wave1_3_response_label.csv",
+        columns=COLUMNS,
+        question_text=STEMS,
+    )
+    assert_no_outcome_leak(
+        [shared],
+        {"8": [{"answer": "5", "question_id": "local_field", "question_text": "", "source_column": "local_field"}]},
+        ("local_field",),
+    )
+
+
+def test_two_margins_stay_inside_the_hamilton_unit_at_fixed_seed():
+    rows = []
+    for index in range(30):
+        income = "Low" if index < 20 else "High"
+        household = "1" if index % 3 == 0 else "4"
+        rows.append(_row(str(index + 1), QID12="Female", QID20="Independent", QID21=income, QID23=household, QID24="Student"))
+    draw = stratified_sample(
+        rows,
+        stratify_columns=("QID21", "QID23"),
+        sample_size=10,
+        seed=42,
+        dataset="twin2k_500",
+    )
+    assert draw["sample_size"] == 10
+    assert draw["seed"] == 42
+    for levels in draw["margin_balance"].values():
+        for level in levels.values():
+            assert float(level["absolute_gap"]) < 1
+            assert level["within_hamilton_unit"] is True
+    again = stratified_sample(
+        rows,
+        stratify_columns=("QID21", "QID23"),
+        sample_size=10,
+        seed=42,
+        dataset="twin2k_500",
+    )
+    assert again["subject_ids"] == draw["subject_ids"]
