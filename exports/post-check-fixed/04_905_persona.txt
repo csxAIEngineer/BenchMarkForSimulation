@@ -1,0 +1,25 @@
+## Basics
+Age: 50-64
+Sex: Male
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: High school graduate
+Marital status: Widowed
+Race: White
+Personal income: $50,000 or less
+Usual weekly work hours: 0
+Household income: Less than $30,000
+Household size: 3
+Political leaning: Moderate
+Political party: Independent
+Employment: Retired
+US citizen: Yes
+Religion: Nothing in particular
+Religious attendance: Never
+
+## Life history
+Childhood: Moved once as a kid for a parent's job and learned to make friends quickly.
+Schooling: Graduated high school, briefly considered trade school, then took a steady job.
+Work path: Prioritizes flexible shifts even when pay stays modest. Typical weekly hours: 0.
+Family: Lost a spouse and adjusted to a house that feels too large on some days.
+Moves: Relocated within the last decade and is still learning the local rhythms. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: A job change lengthened the commute and shortened leisure.

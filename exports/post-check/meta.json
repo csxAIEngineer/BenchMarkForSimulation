@@ -1,0 +1,37 @@
+{
+  "n": 50,
+  "method": "atus_expanded",
+  "sample_path": "/Users/shaneson/AI Agent/runs/cr-pricing-models-n50/twin2k_sample.json",
+  "seed": 42,
+  "model_run_note": "Reconstructed Persona blocks as sent in runs/cr-pricing-models-n50/deepseek-v4-pro/twin2k_500/atus_expanded (pricing deepseek n=50). Same path: twin2k_500 loader → atus_expanded.render_atus_persona/expand_persona → pack_batch Persona field. Questions omitted.",
+  "subjects_path": "/Users/shaneson/AI Agent/data/pricing_only/twin2k_500_pricing_subjects.jsonl",
+  "generated_at": "2026-11-06T04:12:04+08:00",
+  "timezone": "Asia/Shanghai",
+  "sample_order": "twin2k_sample.json ids",
+  "note": "Twin2K survey persona_text / persona_summary / demographic_text were NOT used in the prompt. Pricing-pack demographics are QID-keyed (QID11–QID24), so atus_expanded Basics map age/sex/education/etc. to Unknown; only Personal income templates from income_over_50k (false when no 'income' key) and seeded life-history templates.",
+  "char_len": {
+    "min": 640,
+    "max": 696,
+    "mean": 667.28
+  },
+  "first_subject_id": "1732",
+  "last_subject_id": "503",
+  "anomalies": {
+    "all_50_basics_mostly_Unknown": true,
+    "all_50_personal_income": "$50,000 or less",
+    "identical_persona_pair": [
+      {
+        "index": 23,
+        "subject_id": "1675",
+        "char_len": 640
+      },
+      {
+        "index": 28,
+        "subject_id": "1150",
+        "char_len": 640
+      }
+    ],
+    "unique_persona_texts": 49,
+    "verified_against_prior_1732_export": true
+  }
+}

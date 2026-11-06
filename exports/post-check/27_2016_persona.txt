@@ -1,0 +1,17 @@
+## Basics
+Age: unknown
+Sex: Unknown
+State: Unknown
+Education: unknown
+Marital status: Unknown
+Race: Unknown
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: Grew up in a small town where weekends meant yard work and church potlucks.
+Schooling: Education path is uneven; learning mostly happened on the job.
+Work path: Has had uneven employment; some months are thin on hours. Weekly hours vary.
+Family: Family life is private; weekdays are mostly self-managed.
+Moves: Relocated within the last decade and is still learning the local rhythms.
+Turning point: A caregiving stretch reordered the week and still shows up in daily minutes.

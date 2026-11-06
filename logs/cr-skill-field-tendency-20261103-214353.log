@@ -1,0 +1,2 @@
+sample ready {"twin2k_500": {"subjects": 50, "cases": 4350}, "bdm_lettuce": {"subjects": 50, "cases": 350}, "twin2k_mega_study": {"subjects": 50, "cases": 208}}
+skip existing /Users/shaneson/AI Agent/runs/cr-skill-compare-income50-field-tendency/twin2k_500/atus_expanded

@@ -1,0 +1,25 @@
+## Basics
+Age: 30-49
+Sex: Female
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: Some college, no degree
+Marital status: Married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 40
+Household income: $100,000 or more
+Household size: 2
+Political leaning: Liberal
+Political party: Democrat
+Employment: Full-time employment
+US citizen: Yes
+Religion: Roman Catholic
+Religious attendance: Never
+
+## Life history
+Childhood: Grew up in a quiet household that valued keeping to a routine.
+Schooling: Started community college, paused after a few semesters, and may go back.
+Work path: Keeps a demanding schedule; work often crowds evenings. Typical weekly hours: 40.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Came for school or a first job, then the place became home. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: A health scare in the family pushed personal care and rest higher on the list.

@@ -1,0 +1,17 @@
+## Basics
+Age: unknown
+Sex: Unknown
+State: Unknown
+Education: unknown
+Marital status: Unknown
+Race: Unknown
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: Spent childhood near extended family; holidays were crowded and loud.
+Schooling: Education path is uneven; learning mostly happened on the job.
+Work path: Pieces together part-time or gig work around other obligations. Weekly hours vary.
+Family: Family life is private; weekdays are mostly self-managed.
+Moves: Settled in the current state for work and stayed longer than planned.
+Turning point: Remote or flexible work briefly expanded free time, then responsibilities crept back.

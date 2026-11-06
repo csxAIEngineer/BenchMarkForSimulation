@@ -1,0 +1,25 @@
+## Basics
+Age: 18-29
+Sex: Male
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: Some college, no degree
+Marital status: Never been married
+Race: Black
+Personal income: $50,000 or less
+Usual weekly work hours: 20
+Household income: Less than $30,000
+Household size: 3
+Political leaning: Conservative
+Political party: Republican
+Employment: Part-time employment
+US citizen: Yes
+Religion: Nothing in particular
+Religious attendance: Once a week
+
+## Life history
+Childhood: Grew up in a small town where weekends meant yard work and church potlucks.
+Schooling: Started community college, paused after a few semesters, and may go back.
+Work path: Has had uneven employment; some months are thin on hours. Typical weekly hours: 20.
+Family: Has stayed single and keeps a household routine built around personal habits.
+Moves: Relocated within the last decade and is still learning the local rhythms. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: A caregiving stretch reordered the week and still shows up in daily minutes.

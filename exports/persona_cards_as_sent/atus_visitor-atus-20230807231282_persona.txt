@@ -1,0 +1,30 @@
+## Basics
+Age: 28
+Sex: Female
+State: Unknown
+Education: high_school
+Marital status: Married
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Hispanic family in a metropolitan area, where she helped care for younger siblings and learned to manage a busy household from an early age.
+Schooling: She attended public schools and graduated from high school, but did not pursue a bachelor's degree or any further formal education.
+Work path: She has held a series of modest-paying jobs in retail and food service, with uneven hours and income, and is currently not employed.
+Family: She is married and lives with her spouse and at least one child between the ages of 6 and 17, sharing in the daily responsibilities of parenting and household care.
+Moves: She has moved several times within her metropolitan area, often to find more affordable housing or to be closer to family support.
+Turning point: After her child started school, she left the workforce to focus on family care and household management, which now fills most of her days with personal care and home responsibilities.
+
+## Typical day (ATUS minutes)
+- personal_care: 800 minutes
+- household: 415 minutes
+- leisure: 201 minutes
+- traveling: 14 minutes
+- eating: 10 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes

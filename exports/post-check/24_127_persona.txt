@@ -1,0 +1,17 @@
+## Basics
+Age: unknown
+Sex: Unknown
+State: Unknown
+Education: unknown
+Marital status: Unknown
+Race: Unknown
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: Raised in a dense suburb; after-school time was split between homework and siblings.
+Schooling: Education path is uneven; learning mostly happened on the job.
+Work path: Pieces together part-time or gig work around other obligations. Weekly hours vary.
+Family: Family life is private; weekdays are mostly self-managed.
+Moves: Came for school or a first job, then the place became home.
+Turning point: Remote or flexible work briefly expanded free time, then responsibilities crept back.

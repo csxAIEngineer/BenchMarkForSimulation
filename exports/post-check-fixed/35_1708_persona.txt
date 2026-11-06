@@ -1,0 +1,25 @@
+## Basics
+Age: 50-64
+Sex: Female
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: College graduate/some postgrad
+Marital status: Married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 40
+Household income: $50,000-$75,000
+Household size: 3
+Political leaning: Moderate
+Political party: Republican
+Employment: Full-time employment
+US citizen: Yes
+Religion: Jewish
+Religious attendance: Seldom
+
+## Life history
+Childhood: Spent childhood near extended family; holidays were crowded and loud.
+Schooling: Finished college later than peers and treats the degree as a hard-won reset.
+Work path: Moved into a higher-paying role after a stretch of overtime and skill-building. Typical weekly hours: 40.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Followed family to the current state and gradually put down roots. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: Remote or flexible work briefly expanded free time, then responsibilities crept back.

@@ -1,0 +1,86 @@
+sample ready {"twin2k_mega_study": {"subjects": 50, "cases": 208}, "twin2k_500_sample_only": {"subjects": 50, "cases": 4350}, "bdm_lettuce_sample_only": {"subjects": 50, "cases": 350}}
+skip existing /Users/shaneson/AI Agent/runs/cr-skill-compare-income50-fisher-first-mega-only/twin2k_mega_study/atus_expanded
+Traceback (most recent call last):
+  File "/Users/shaneson/AI Agent/.venv/lib/python3.12/site-packages/cr_api/client.py", line 244, in _open
+    return urllib.request.urlopen(request, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 1392, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 1348, in do_open
+    r = h.getresponse()
+        ^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/http/client.py", line 1478, in getresponse
+    response.begin()
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/http/client.py", line 343, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/http/client.py", line 304, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/socket.py", line 720, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/ssl.py", line 1263, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/ssl.py", line 1115, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/shaneson/AI Agent/src/popbench/comms/providers/cr.py", line 28, in complete
+    result = CRClient(api_key=self.api_key).chat(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/.venv/lib/python3.12/site-packages/cr_api/client.py", line 121, in chat
+    data = self._request("POST", "/v1/chat/completions", body, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/.venv/lib/python3.12/site-packages/cr_api/client.py", line 224, in _request
+    response = self._open(method, path, body, timeout, headers or {})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/.venv/lib/python3.12/site-packages/cr_api/client.py", line 251, in _open
+    raise CRError("CR API 网络错误：%s" % error) from error
+cr_api.client.CRError: CR API 网络错误：The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/shaneson/AI Agent/scripts/run_skill_compare_cr.py", line 293, in <module>
+    main()
+  File "/Users/shaneson/AI Agent/scripts/run_skill_compare_cr.py", line 255, in main
+    summary = run_one(bundle, method=method, out_dir=OUT_ROOT / dataset_name / method, job=job)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/scripts/run_skill_compare_cr.py", line 164, in run_one
+    results = simulate(bundle, method=method, client=client, limit=None, seed=SEED, batch_size=BATCH_SIZE)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/src/popbench/pipeline.py", line 52, in simulate
+    client.complete_batch(group[start : start + batch_size], sample_seed=seed)
+  File "/Users/shaneson/AI Agent/src/popbench/comms/client.py", line 79, in complete_batch
+    raw = call_with_retry(
+          ^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/src/popbench/comms/retry.py", line 33, in call_with_retry
+    raise last
+  File "/Users/shaneson/AI Agent/src/popbench/comms/retry.py", line 26, in call_with_retry
+    return action()
+           ^^^^^^^^
+  File "/Users/shaneson/AI Agent/src/popbench/comms/client.py", line 80, in <lambda>
+    lambda: self.provider.complete(
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/src/popbench/comms/providers/cr.py", line 34, in complete
+    raise CommsTransportError(str(exc)) from exc
+popbench.comms.errors.CommsTransportError: CR API 网络错误：The read operation timed out

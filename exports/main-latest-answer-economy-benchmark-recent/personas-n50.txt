@@ -1,0 +1,1657 @@
+人物卡 50 张
+来源运行: runs/compare/twin2K-economy-bechmark-n50-seed0-t0-emphasis
+命令: popbench answer-economy-benchmark-recent --no-recent --emphasis '你是一个人类，具有懒的性格，随机性，不会有同一锚点，还有库存、习惯、冲动、随便点一下的坏习惯。'
+完成时间: 2026-10-27 09:43 +0800
+模型: deepseek-v4-pro  温度: 0  seed: 0
+抽样: ATUS 2023 成人，年龄段 × 性别，权重 TUFINLWGT
+这批卡没有拼接 Recent event。
+
+===== 1 / 50  visitor-atus-20230807231282  TUCASEID 20230807231282 =====
+age_band=18-29 sex=Female education=high_school employment=not_employed
+## Basics
+Age: 28
+Sex: Female
+State: Unknown
+Education: high_school
+Marital status: Married
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Hispanic family in a metropolitan area, where she helped care for younger siblings and learned to manage a busy household from an early age.
+Schooling: She attended public schools and graduated from high school, but did not pursue a bachelor's degree or any further formal education.
+Work path: She has held a series of modest-paying jobs in retail and food service, with uneven hours and income, and is currently not employed.
+Family: She is married and lives with her spouse and at least one child between the ages of 6 and 17, sharing in the daily responsibilities of parenting and household care.
+Moves: She has moved several times within her metropolitan area, often to find more affordable housing or to be closer to family support.
+Turning point: After her child started school, she left the workforce to focus on family care and household management, which now fills most of her days with personal care and home responsibilities.
+
+## Typical day (ATUS minutes)
+- personal_care: 800 minutes
+- household: 415 minutes
+- leisure: 201 minutes
+- traveling: 14 minutes
+- eating: 10 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 2 / 50  visitor-atus-20230403230648  TUCASEID 20230403230648 =====
+age_band=18-29 sex=Female education=bachelor_or_higher employment=not_employed
+## Basics
+Age: 24
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a white, non-Hispanic family in a metropolitan area, with a relatively stable but modest upbringing. As a child, she enjoyed reading and playing outside, and she was always curious about how things worked.
+Schooling: She completed a bachelor's degree and is currently enrolled in further education, likely a graduate program or additional certification. Her days are heavily focused on education, with over five hours of classes and study on a typical diary day.
+Work path: She has held jobs with modest or uneven pay, earning $50,000 or less annually, but she is not currently employed. Her work history includes part-time or temporary positions that fit around her studies.
+Family: She lives with an unmarried partner in a metropolitan area, and there are no children under 18 in the household. Her family life is centered on her partner and her educational pursuits.
+Moves: She has moved within or between metropolitan areas, likely for school or to live with her partner, but her current state is not specified. These moves have been driven by educational and relationship opportunities.
+Turning point: A key turning point was deciding to pursue further education after her bachelor's degree, which led her to stop working and enroll in school full-time. This shift explains why education now takes up a large portion of her day, while work and other activities like sports and volunteering are absent.
+
+## Typical day (ATUS minutes)
+- personal_care: 600 minutes
+- leisure: 350 minutes
+- education: 340 minutes
+- household: 90 minutes
+- eating: 60 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes
+
+===== 3 / 50  visitor-atus-20230112220517  TUCASEID 20230112220517 =====
+age_band=18-29 sex=Female education=high_school employment=full_time
+## Basics
+Age: 29
+Sex: Female
+State: Unknown
+Education: high_school
+Marital status: Unknown
+Race: black_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit, nonmetropolitan community where family and church activities filled her weekends. As a child, she often helped care for younger cousins, which shaped her early sense of responsibility.
+Schooling: She attended local public schools and graduated from high school, but did not pursue a bachelor's degree. She has not been enrolled in any further education since then.
+Work path: After high school, she moved between several full-time jobs in retail, food service, and light manufacturing, earning modest and sometimes uneven pay. She now works full time, though her weekly hours vary, and her annual income remains at or below $50,000.
+Family: She lives with her unmarried partner and their young child, who is under age six. Her days include significant personal care and household tasks, reflecting the demands of caring for a small child.
+Moves: She has moved several times within her home region, following job opportunities and affordable housing. She eventually settled in a nonmetropolitan area with her partner and child, though she prefers not to name the state.
+Turning point: The birth of her child was a major turning point, leading her to prioritize stable full-time work and to spend more time on personal care and household duties. This shift explains why personal care and work dominate her diary day, with limited time for leisure or other activities.
+
+## Typical day (ATUS minutes)
+- personal_care: 500 minutes
+- work: 475 minutes
+- leisure: 263 minutes
+- traveling: 70 minutes
+- care_household: 45 minutes
+- household: 40 minutes
+- eating: 30 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 4 / 50  visitor-atus-20230111220657  TUCASEID 20230111220657 =====
+age_band=18-29 sex=Female education=some_college employment=full_time
+## Basics
+Age: 23
+Sex: Female
+State: Unknown
+Education: some_college
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a working-class household in a metropolitan area, the daughter of a white non-Hispanic family. Money was tight, so she learned early to be frugal and self-reliant.
+Schooling: After graduating high school, she started at a local community college but has not yet completed a bachelor's degree. She is currently enrolled in school, taking classes while working full time.
+Work path: She works full time in a modestly paid job, earning $50,000 or less per year. Her pay is steady but leaves little room for extras, and she often juggles shifts with her class schedule.
+Family: She has no spouse or partner and no children under 18 living in her household. Her family remains a supportive presence, though she manages her own daily life.
+Moves: She moved from her childhood home to a nearby metropolitan area for work and school opportunities. She has stayed in the region since, keeping her current state private.
+Turning point: Enrolling in college while working full time was a turning point, pushing her to balance long workdays with evening classes. That decision explains why work and education dominate her time, with little left for leisure or sports.
+
+## Typical day (ATUS minutes)
+- personal_care: 600 minutes
+- work: 425 minutes
+- eating: 125 minutes
+- leisure: 120 minutes
+- traveling: 105 minutes
+- education: 60 minutes
+- household: 5 minutes
+- care_household: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 5 / 50  visitor-atus-20231109230154  TUCASEID 20231109230154 =====
+age_band=18-29 sex=Female education=bachelor_or_higher employment=part_time
+## Basics
+Age: 22
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Hispanic family in a large metropolitan area, where weekends often meant helping her mother with household chores and cooking.
+Schooling: She earned a bachelor's degree, becoming the first in her family to graduate from college, and is not currently enrolled in any further education.
+Work path: She works part time in a modestly paid role, earning $50,000 or less per year, and her weekly hours vary without a fixed schedule.
+Family: She has no spouse or partner and no children under 18 living in her household, though she remains close to her extended family.
+Moves: She has moved between neighborhoods within the same metropolitan area, but her current state is not specified.
+Turning point: After graduating, she took a part-time job to support herself while living independently, which now shapes her days around personal care, work, and household tasks.
+
+## Typical day (ATUS minutes)
+- personal_care: 870 minutes
+- work: 300 minutes
+- household: 150 minutes
+- eating: 60 minutes
+- traveling: 60 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- leisure: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 6 / 50  visitor-atus-20231111230158  TUCASEID 20231111230158 =====
+age_band=18-29 sex=Male education=some_college employment=full_time
+## Basics
+Age: 23
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Unknown
+Race: asian_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a metropolitan area as the child of Asian immigrants, in a modest household where both parents worked long hours.
+Schooling: He attended local public schools and later started some college or a certificate program, but did not complete a bachelor's degree and is not currently enrolled.
+Work path: He works full time in a role that pays $50,000 or less, with modest and sometimes uneven earnings, and his diary day shows a long work shift.
+Family: He has no spouse or partner and no children under 18 in his household, so his home life is relatively independent.
+Moves: He has remained in the same metropolitan region where he grew up, without moving to a different state.
+Turning point: Leaving college without a degree led him to take on full-time work to support himself, which now fills most of his weekday hours and leaves limited time for leisure.
+
+## Typical day (ATUS minutes)
+- personal_care: 520 minutes
+- work: 466 minutes
+- leisure: 312 minutes
+- eating: 60 minutes
+- traveling: 22 minutes
+- household: 15 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 7 / 50  visitor-atus-20230707231894  TUCASEID 20230707231894 =====
+age_band=18-29 sex=Male education=high_school employment=full_time
+## Basics
+Age: 29
+Sex: Male
+State: Unknown
+Education: high_school
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class household as the oldest of three siblings, learning early to help with chores and look after his younger brothers. Money was tight, so he often wore hand-me-downs and took on odd jobs like mowing lawns by age twelve.
+Schooling: He attended public schools and graduated from high school, but never enrolled in college because he needed to start earning money right away. He picked up practical skills on his own, like basic carpentry and budgeting, rather than through formal classes.
+Work path: After high school, he bounced between warehouse and retail jobs, usually working full time but with modest and uneven pay that rarely exceeded $50,000 a year. He has stayed in the workforce steadily, though without a bachelor's degree his options for advancement have been limited.
+Family: He married his high school sweetheart in his mid-twenties, and they now have a young child under six who keeps them busy with caregiving and household routines. His spouse works part time, and they rely on tight budgeting to make ends meet.
+Moves: He moved a few times within the same metropolitan area, following cheaper rent and job opportunities, but has never lived outside the region. His current home is a small apartment he shares with his wife and child.
+Turning point: The birth of his child was the biggest turning point, shifting his daily focus toward personal care, household tasks, and childcare rather than paid work on some days. On the diary day, he spent no time at work but logged 600 minutes on personal care, 390 on leisure, 300 on household chores, and 120 on caring for his child, reflecting a full-time parenting role that day.
+
+## Typical day (ATUS minutes)
+- personal_care: 600 minutes
+- leisure: 390 minutes
+- household: 300 minutes
+- care_household: 120 minutes
+- eating: 30 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes
+
+===== 8 / 50  visitor-atus-20230908230275  TUCASEID 20230908230275 =====
+age_band=18-29 sex=Male education=high_school employment=part_time
+## Basics
+Age: 22
+Sex: Male
+State: Unknown
+Education: high_school
+Marital status: Unknown
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a Hispanic household in a metropolitan area, where family gatherings and neighborhood life shaped his early years. As a child, he spent much of his free time playing sports and being active outdoors.
+Schooling: He attended local public schools and graduated from high school, but he did not go on to earn a bachelor's degree. After finishing high school, he chose to enter the workforce rather than continue his education.
+Work path: He now works part time in a role that provides modest and sometimes uneven pay, earning $50,000 or less per year. His job does not require a college degree, and he has held it since leaving high school.
+Family: He has no spouse or partner and no children under 18 living in his household. He remains close to his extended family in the area but lives independently.
+Moves: He was born and raised in a metropolitan area and has continued to live there as a young adult. He has not made any long-distance moves and prefers to stay near his family and community.
+Turning point: After high school, he decided to work part time instead of pursuing further education, which gave him more leisure time. This choice helps explain why his days include long periods of personal care, travel, leisure, and sports, with no work or education on the diary day.
+
+## Typical day (ATUS minutes)
+- personal_care: 882 minutes
+- traveling: 175 minutes
+- leisure: 152 minutes
+- sports: 90 minutes
+- eating: 30 minutes
+- household: 0 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 9 / 50  visitor-atus-20230705231651  TUCASEID 20230705231651 =====
+age_band=18-29 sex=Male education=bachelor_or_higher employment=full_time
+## Basics
+Age: 25
+Sex: Male
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: asian_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a metropolitan area as the child of Asian immigrants, speaking English at school and another language at home. His parents worked long hours in modest jobs, and he learned early to be independent.
+Schooling: He attended public schools in his metro area and went on to complete a bachelor's degree, though he has not enrolled in further education since. He was the first in his family to graduate from college.
+Work path: After graduating, he found full-time work in an office or service role, earning a modest salary of $50,000 or less. His pay has been uneven at times, but he has kept steady full-time employment.
+Family: He lives with his unmarried partner in a metropolitan area, and no children under 18 are in the household. His extended family remains close by, though he does not have children of his own.
+Moves: He moved from his childhood home to attend college and later relocated within the same metropolitan region for work and to live with his partner. He has stayed in that metro area since.
+Turning point: A key turning point was finishing his bachelor's degree and moving in with his partner, which shifted his daily focus to full-time work and a shared household. On his diary day, he had no work or education obligations, so he spent most of his time on personal care, leisure, and travel.
+
+## Typical day (ATUS minutes)
+- personal_care: 720 minutes
+- leisure: 311 minutes
+- traveling: 139 minutes
+- eating: 120 minutes
+- household: 0 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 10 / 50  visitor-atus-20231211230107  TUCASEID 20231211230107 =====
+age_band=18-29 sex=Male education=high_school employment=full_time
+## Basics
+Age: 24
+Sex: Male
+State: Unknown
+Education: high_school
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class household in a metropolitan area, the son of a white non-Hispanic family. His parents worked long hours, so he learned to be independent early on.
+Schooling: He attended public schools and graduated from high school, but did not pursue a bachelor's degree. He has not been enrolled in any further education since.
+Work path: After high school, he moved directly into full-time work, taking jobs that paid modestly and sometimes had uneven hours. He now works full time but earns $50,000 or less per year.
+Family: He is not married and does not have a spouse or partner. No children under 18 live in his household.
+Moves: He has lived in a few different places within the same metropolitan region, moving for work or cheaper rent. He currently resides in an unknown state.
+Turning point: A key turning point was deciding to work full time right after high school instead of going to college, which set him on a path of steady but modest-paying jobs. This choice explains why his days are dominated by work and personal care, with little time for leisure or other activities.
+
+## Typical day (ATUS minutes)
+- personal_care: 660 minutes
+- work: 525 minutes
+- leisure: 225 minutes
+- traveling: 30 minutes
+- household: 0 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- eating: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 11 / 50  visitor-atus-20231009231818  TUCASEID 20231009231818 =====
+age_band=30-49 sex=Female education=high_school employment=full_time
+## Basics
+Age: 30
+Sex: Female
+State: Unknown
+Education: high_school
+Marital status: Married
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: I grew up in a close-knit Hispanic family in a big city, where weekends meant church, food, and helping my mother with my younger siblings. Money was always tight, so I learned early to pitch in and make do with what we had.
+Schooling: I finished high school but didn't go on to college, mostly because I needed to start earning right away. I've taken a few short work-related courses over the years, but I'm not enrolled in any school now.
+Work path: After high school I bounced between retail and office temp jobs before landing a full-time position as an administrative assistant. The pay is modest and sometimes uneven, but it's steady enough to help support my family.
+Family: I'm married, and we have a young child under six at home, so a lot of my time goes to caring for them and keeping the household running. My spouse and I split chores and childcare as best we can around our work schedules.
+Moves: I've moved a few times within the same metropolitan area, usually for cheaper rent or to be closer to work and family. I currently live in a city, though I'd rather not say which state.
+Turning point: Becoming a mother was the biggest turning point—it made me prioritize full-time work and cut back on everything else. That's why my days are mostly filled with work, personal care, and hands-on care for my child, with little time left for leisure or volunteering.
+
+## Typical day (ATUS minutes)
+- personal_care: 543 minutes
+- work: 482 minutes
+- sports: 100 minutes
+- eating: 95 minutes
+- leisure: 90 minutes
+- care_household: 65 minutes
+- traveling: 65 minutes
+- household: 0 minutes
+- education: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 12 / 50  visitor-atus-20230101230898  TUCASEID 20230101230898 =====
+age_band=30-49 sex=Female education=high_school employment=full_time
+## Basics
+Age: 38
+Sex: Female
+State: Unknown
+Education: high_school
+Marital status: Married
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Hispanic family in a metropolitan area, where she helped with household chores from a young age. Her parents worked hard in service jobs, and money was often tight.
+Schooling: She attended local public schools and graduated from high school, but did not pursue a bachelor's degree. She has not been enrolled in any further education since then.
+Work path: After high school, she moved between hourly jobs in retail and customer service, usually working full time but with modest and uneven pay. Her income has stayed at or below $50,000, and she has never held a high-paying position.
+Family: She is married and lives with her spouse and at least one child between the ages of 6 and 17. Much of her non-work time goes to caring for her household and family.
+Moves: She has lived in several apartments around the same metropolitan region, often moving for cheaper rent or to be closer to work. She currently resides in an unknown state.
+Turning point: Becoming a mother while working full time was the turning point that made her days revolve around work and family care. On a typical diary day, she spends about 395 minutes working and 115 minutes on household care, leaving little time for leisure or other activities.
+
+## Typical day (ATUS minutes)
+- personal_care: 397 minutes
+- work: 395 minutes
+- leisure: 215 minutes
+- care_household: 115 minutes
+- household: 30 minutes
+- eating: 30 minutes
+- traveling: 20 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 13 / 50  visitor-atus-20231108230874  TUCASEID 20231108230874 =====
+age_band=30-49 sex=Female education=high_school employment=full_time
+## Basics
+Age: 48
+Sex: Female
+State: Unknown
+Education: high_school
+Marital status: Married
+Race: black_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a working-class Black family in a metropolitan area, where she learned the value of hard work and helping out at home from a young age.
+Schooling: She completed high school but did not pursue a bachelor's degree, instead entering the workforce to support herself and her family.
+Work path: She has held full-time jobs with modest and sometimes uneven pay, earning $50,000 or less per year, and continues to work full time to support her household.
+Family: She is married and has a child between the ages of 6 and 17 living at home, so much of her time outside work is devoted to family care and household responsibilities.
+Moves: She has lived in several metropolitan areas over the years, often moving for work or to be closer to family, but she does not currently reside in a specific US state that can be named.
+Turning point: Becoming a parent and taking on full-time work reshaped her daily life, with long workdays and personal care needs dominating her schedule while she balances family responsibilities.
+
+## Typical day (ATUS minutes)
+- work: 605 minutes
+- personal_care: 480 minutes
+- traveling: 129 minutes
+- household: 50 minutes
+- leisure: 26 minutes
+- eating: 25 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 14 / 50  visitor-atus-20230111222460  TUCASEID 20230111222460 =====
+age_band=30-49 sex=Female education=bachelor_or_higher employment=full_time
+## Basics
+Age: 31
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a white, non-Hispanic family in a metropolitan area, where her parents worked modest jobs and emphasized the value of education.
+Schooling: She completed a bachelor's degree, though she has not been enrolled in school since graduating.
+Work path: She works full time in a role that pays $50,000 or less per year, with income that has been modest or uneven at times.
+Family: She has no spouse or partner and no children under 18 living in her household.
+Moves: She has moved between metropolitan areas over the years, though her current state is not specified.
+Turning point: A significant turning point was committing to full-time work after college, which now shapes her daily routine with long work hours and limited time for other activities.
+
+## Typical day (ATUS minutes)
+- work: 705 minutes
+- personal_care: 640 minutes
+- religious: 60 minutes
+- traveling: 20 minutes
+- eating: 15 minutes
+- household: 0 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- leisure: 0 minutes
+- sports: 0 minutes
+- volunteer: 0 minutes
+
+===== 15 / 50  visitor-atus-20230908232215  TUCASEID 20230908232215 =====
+age_band=30-49 sex=Female education=bachelor_or_higher employment=full_time
+## Basics
+Age: 41
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Hispanic family in a large city, where she helped care for younger siblings and learned the value of hard work.
+Schooling: She earned a bachelor's degree, becoming the first in her family to graduate from college, though she has not pursued further education since.
+Work path: She has worked full-time in administrative and support roles, earning modest wages that have remained under $50,000, with some years of uneven pay.
+Family: She is unmarried and lives with her child, aged between 6 and 17, balancing full-time work with parenting responsibilities.
+Moves: She has moved several times within her metropolitan area, seeking affordable housing and better schools for her child.
+Turning point: The birth of her child was a turning point, motivating her to maintain steady full-time employment and prioritize daily routines that include long hours of work and personal care.
+
+## Typical day (ATUS minutes)
+- personal_care: 550 minutes
+- work: 540 minutes
+- leisure: 170 minutes
+- traveling: 80 minutes
+- eating: 65 minutes
+- care_household: 25 minutes
+- household: 10 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 16 / 50  visitor-atus-20230212221816  TUCASEID 20230212221816 =====
+age_band=30-49 sex=Female education=bachelor_or_higher employment=full_time
+## Basics
+Age: 35
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a working-class household as the eldest of three children, where she often helped with chores and looked after her younger siblings. Money was tight, so she learned early to be resourceful and to value steady effort over flashy rewards.
+Schooling: She earned a bachelor's degree in a practical field and is currently enrolled in further coursework to update her skills. Balancing school with work and family has meant taking classes part-time and studying late at night.
+Work path: She has held full-time jobs that pay modestly, often around $50,000 or less, with some years of uneven income due to job changes or reduced hours. Her work has been steady but not highly paid, and she continues to seek better opportunities through additional education.
+Family: She is married and lives with her spouse and their young child, who is under six years old. Much of her non-work time goes to caring for the child and managing the household, which explains the large blocks of personal care and care-household time in her diary.
+Moves: She has moved several times for work and family reasons, usually within metropolitan areas, and currently lives in an unknown state. Each move has been a chance to start over, but also a source of financial and logistical strain.
+Turning point: The birth of her youngest child was a turning point that reshaped her daily priorities, increasing care-household and personal-care time while pushing her to return to school for better long-term prospects. That decision now drives her full-time work, current enrollment, and the careful balancing of work, education, and family that defines her days.
+
+## Typical day (ATUS minutes)
+- work: 605 minutes
+- personal_care: 405 minutes
+- care_household: 168 minutes
+- household: 80 minutes
+- education: 60 minutes
+- traveling: 57 minutes
+- eating: 40 minutes
+- sports: 25 minutes
+- leisure: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 17 / 50  visitor-atus-20231109231307  TUCASEID 20231109231307 =====
+age_band=30-49 sex=Female education=bachelor_or_higher employment=not_employed
+## Basics
+Age: 34
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: asian_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Asian American family in a large metropolitan area, where weekends often meant helping at her parents' small business.
+Schooling: She earned a bachelor's degree, the first in her family to do so, and has not been enrolled in school since.
+Work path: She held a series of modest-paying jobs in retail and office support, with uneven hours and income that never exceeded $50,000 a year.
+Family: She is married and cares for a child under age 6 at home, relying on her spouse's income and careful budgeting.
+Moves: She moved between a few apartments in the same metropolitan region before settling into her current home with her family.
+Turning point: After leaving her last job to care for her young child, she became a stay-at-home parent, which explains why personal care and work-like activities dominate her days even without formal employment.
+
+## Typical day (ATUS minutes)
+- personal_care: 700 minutes
+- work: 507 minutes
+- traveling: 80 minutes
+- eating: 70 minutes
+- care_household: 28 minutes
+- household: 0 minutes
+- education: 0 minutes
+- leisure: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 18 / 50  visitor-atus-20230706231298  TUCASEID 20230706231298 =====
+age_band=30-49 sex=Female education=bachelor_or_higher employment=part_time
+## Basics
+Age: 35
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a white, non-Hispanic family in a metropolitan area, the middle of three children. Her parents worked modest jobs, and she learned early to pitch in with household chores.
+Schooling: She earned a bachelor's degree in communications, graduating with student loans. She has not been enrolled in any further education since.
+Work path: She works part time in an office support role, earning under $50,000 a year. Her hours vary, and she has taken on temporary or seasonal work when available.
+Family: She is married and has a child under age six living at home. Her spouse works full time, and they share caregiving duties.
+Moves: She moved several times for school and jobs before settling in a metropolitan area. She and her spouse relocated for his job and have stayed to raise their child.
+Turning point: The birth of her child led her to cut back to part-time work and focus on caregiving. On the diary day, she spent most of her time traveling and on personal care, with no paid work or leisure.
+
+## Typical day (ATUS minutes)
+- traveling: 625 minutes
+- personal_care: 505 minutes
+- household: 120 minutes
+- eating: 90 minutes
+- care_household: 40 minutes
+- work: 0 minutes
+- education: 0 minutes
+- leisure: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 19 / 50  visitor-atus-20230403231805  TUCASEID 20230403231805 =====
+age_band=30-49 sex=Female education=bachelor_or_higher employment=full_time
+## Basics
+Age: 40
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Hispanic family in a large metropolitan area, where she helped care for younger siblings and learned the value of hard work.
+Schooling: She earned a bachelor's degree, becoming the first in her family to graduate from college, and has not been enrolled in school since.
+Work path: She works full time in an office or administrative role, earning a modest salary of $50,000 or less, with pay that has been steady but not high.
+Family: She is married and lives with her spouse and at least one child between the ages of 6 and 17, sharing household and caregiving responsibilities.
+Moves: She moved to her current metropolitan area years ago for better job opportunities and has stayed to raise her family.
+Turning point: Becoming a parent while building her career led her to prioritize full-time work and daily caregiving, which now fill most of her time.
+
+## Typical day (ATUS minutes)
+- work: 540 minutes
+- personal_care: 470 minutes
+- household: 159 minutes
+- leisure: 103 minutes
+- traveling: 85 minutes
+- care_household: 63 minutes
+- eating: 20 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 20 / 50  visitor-atus-20230505232269  TUCASEID 20230505232269 =====
+age_band=30-49 sex=Male education=some_college employment=full_time
+## Basics
+Age: 35
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a nonmetropolitan area as the child of a white, non-Hispanic family, where life moved at a slower pace and outdoor play filled much of his free time.
+Schooling: He attended local public schools and later earned some college credits or a certificate, but did not complete a bachelor's degree and is not currently enrolled in school.
+Work path: He works full time in a modestly paid job with uneven income that stays at or below $50,000 a year, and his weekly hours vary.
+Family: He lives with an unmarried partner and no children under 18 are in the household.
+Moves: He has moved between nonmetropolitan areas over the years, though his current state is not specified.
+Turning point: A recent turning point was adjusting to a full-time work schedule while sharing a home with his partner, which shifted his daily focus toward personal care and leisure at home rather than work or education on the diary day.
+
+## Typical day (ATUS minutes)
+- personal_care: 537 minutes
+- leisure: 513 minutes
+- household: 280 minutes
+- eating: 50 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes
+
+===== 21 / 50  visitor-atus-20230111221613  TUCASEID 20230111221613 =====
+age_band=30-49 sex=Male education=less_than_high_school employment=full_time
+## Basics
+Age: 42
+Sex: Male
+State: Unknown
+Education: less_than_high_school
+Marital status: Unknown
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class Hispanic household where money was tight and everyone pitched in from an early age. He spent much of his childhood helping around the home and looking after younger relatives.
+Schooling: He attended local public schools but left before earning a high school diploma, choosing to work instead. He has not returned to school and is not currently enrolled in any program.
+Work path: He has held a series of full-time jobs that pay modestly, often with uneven hours and income under $50,000 a year. His work history reflects steady effort rather than formal credentials or a high-paying career.
+Family: He lives with an unmarried partner and at least one child between the ages of 6 and 17. Family life includes sharing household responsibilities and caring for the child.
+Moves: He has moved several times over the years, usually for work or to be closer to family, and now lives in a metropolitan area. He does not currently reside in any specific state that can be named.
+Turning point: Becoming a parent and settling into a long-term partnership pushed him to prioritize full-time work and daily routines. That shift explains why his days are dominated by work and personal care, with limited time for leisure or other activities.
+
+## Typical day (ATUS minutes)
+- personal_care: 641 minutes
+- work: 576 minutes
+- leisure: 106 minutes
+- eating: 55 minutes
+- traveling: 53 minutes
+- household: 5 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 22 / 50  visitor-atus-20230201231458  TUCASEID 20230201231458 =====
+age_band=30-49 sex=Male education=some_college employment=full_time
+## Basics
+Age: 47
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Married
+Race: black_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class Black family in a metropolitan area, where money was often tight but the household was stable. As a child, he spent a lot of time playing outside and helping with small chores around the home.
+Schooling: He finished high school and went on to some college or a certificate program, but did not complete a bachelor's degree. He is currently enrolled in school again, likely to gain new skills or credentials while working full time.
+Work path: He has held full-time jobs that pay modestly, with income at or below $50,000 and some unevenness from year to year. His workdays are long, and on a recent diary day he spent nearly nine hours on work-related activities.
+Family: He is married and has at least one child between the ages of 6 and 17 living in the household. Family life includes sharing caregiving responsibilities and managing a busy household schedule.
+Moves: He has lived in a metropolitan area for much of his adult life, though the exact places he has moved between are not known. His current state is not specified, but he remains in a metro setting.
+Turning point: A key turning point was deciding to return to school while working full time, which helps explain the long work hours and the absence of education minutes on that particular diary day. This choice reflects a push to improve his family's stability and his own long-term prospects.
+
+## Typical day (ATUS minutes)
+- personal_care: 530 minutes
+- work: 528 minutes
+- leisure: 200 minutes
+- traveling: 90 minutes
+- eating: 60 minutes
+- sports: 30 minutes
+- care_household: 2 minutes
+- household: 0 minutes
+- education: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 23 / 50  visitor-atus-20230907232210  TUCASEID 20230907232210 =====
+age_band=30-49 sex=Male education=bachelor_or_higher employment=full_time
+## Basics
+Age: 30
+Sex: Male
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a white, non-Hispanic family in a metropolitan area, where his parents emphasized the value of education from an early age.
+Schooling: He earned a bachelor's degree and is currently enrolled in further schooling, balancing his studies with full-time work.
+Work path: He works full time in a role with modest or uneven pay, earning $50,000 or less per year, and his weekly hours vary.
+Family: He lives with an unmarried partner and has no children under 18 in the household.
+Moves: He has moved between metropolitan areas over the years, though his current state is not specified.
+Turning point: A key turning point was deciding to return to school while working full time, which now shapes his days around long work hours and personal care, with limited time for leisure.
+
+## Typical day (ATUS minutes)
+- work: 625 minutes
+- personal_care: 375 minutes
+- leisure: 295 minutes
+- eating: 55 minutes
+- household: 0 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes
+
+===== 24 / 50  visitor-atus-20230906230821  TUCASEID 20230906230821 =====
+age_band=30-49 sex=Male education=bachelor_or_higher employment=full_time
+## Basics
+Age: 33
+Sex: Male
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: asian_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a metropolitan area as the child of Asian immigrants, in a household that valued education and hard work.
+Schooling: He completed a bachelor's degree and has not been enrolled in school since.
+Work path: He works full time in a role with modest or uneven pay, earning $50,000 or less per year.
+Family: He has no spouse or partner and no children under 18 living in his household.
+Moves: He has lived in various metropolitan areas but his current state is not specified.
+Turning point: A key turning point was committing to full-time work after college, which now structures his days around a long work block and regular personal care.
+
+## Typical day (ATUS minutes)
+- personal_care: 565 minutes
+- work: 500 minutes
+- sports: 120 minutes
+- household: 85 minutes
+- eating: 70 minutes
+- leisure: 60 minutes
+- traveling: 20 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 25 / 50  visitor-atus-20230807231458  TUCASEID 20230807231458 =====
+age_band=30-49 sex=Male education=high_school employment=full_time
+## Basics
+Age: 39
+Sex: Male
+State: Unknown
+Education: high_school
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class household as the child of a high-school-educated father and a stay-at-home mother. Money was tight, and he learned early to pitch in with chores and odd jobs.
+Schooling: He attended public schools and graduated from high school, but did not go on to earn a bachelor's degree. He took a few vocational classes but never enrolled in a degree program.
+Work path: After high school, he moved between retail, warehouse, and delivery jobs, usually working full time but with modest and uneven pay. He has never held a high-paying career position and currently earns $50,000 or less.
+Family: He has no spouse or partner and no children under 18 living in his household. He remains close to his parents and siblings, who live nearby.
+Moves: He was born and raised in a metropolitan area and has stayed in the same region as an adult, moving between apartments and shared rentals. He has never settled in a rural area or a different part of the country.
+Turning point: A layoff in his early thirties forced him to take whatever full-time work he could find, which led to a steady but low-paying job with long hours. That experience shaped his daily routine, leaving little time for leisure or personal care beyond the basics.
+
+## Typical day (ATUS minutes)
+- personal_care: 500 minutes
+- work: 475 minutes
+- leisure: 260 minutes
+- traveling: 100 minutes
+- eating: 75 minutes
+- household: 30 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 26 / 50  visitor-atus-20230504231910  TUCASEID 20230504231910 =====
+age_band=30-49 sex=Male education=bachelor_or_higher employment=full_time
+## Basics
+Age: 49
+Sex: Male
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class, mostly white suburban neighborhood as the middle of three children. His parents emphasized steady effort over ambition, and he spent summers riding bikes and helping with small household repairs.
+Schooling: He earned a bachelor's degree from a regional public university, majoring in business administration while working part-time jobs to cover expenses. He has not returned to school since, relying on on-the-job experience to advance.
+Work path: After graduating, he moved through a series of administrative and operations roles that paid modestly and often required overtime. He now works full time in a stable but low-paying position, with income under $50,000 and little room for raises.
+Family: He is married and lives with his spouse and at least one child between the ages of 6 and 17. Family life centers on shared meals, school routines, and caring for their child after work.
+Moves: He left his hometown for college and later relocated a few times for work, eventually settling in a metropolitan area. He does not currently live in the state where he grew up.
+Turning point: The birth of his youngest child prompted him to prioritize steady full-time work over career risks, which explains his long workdays and the time he devotes to personal care and commuting. That choice also keeps leisure and household tasks compressed into evenings and weekends.
+
+## Typical day (ATUS minutes)
+- work: 570 minutes
+- personal_care: 469 minutes
+- traveling: 131 minutes
+- leisure: 130 minutes
+- eating: 60 minutes
+- care_household: 35 minutes
+- household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 27 / 50  visitor-atus-20231212231978  TUCASEID 20231212231978 =====
+age_band=30-49 sex=Male education=less_than_high_school employment=not_employed
+## Basics
+Age: 41
+Sex: Male
+State: Unknown
+Education: less_than_high_school
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class household where money was often tight and expectations were modest. He spent much of his free time outdoors and helping with chores around the home.
+Schooling: He attended local public schools but left before earning a high school diploma. He has not returned to any formal education since.
+Work path: He has held a series of jobs that paid modestly and offered little security, often with uneven hours. He is not currently employed and relies on his spouse's income and occasional odd jobs.
+Family: He is married and lives with his spouse and at least one child between the ages of 6 and 17. Much of his daily routine involves caring for the household and supporting his family.
+Moves: He has moved several times within the same metropolitan area, usually for cheaper rent or to be closer to family. He has never settled far from where he grew up.
+Turning point: A recent job loss left him without steady work, so he now spends most of his time on personal care and leisure at home. This shift explains why his diary day shows no work or education and large blocks of personal care and leisure.
+
+## Typical day (ATUS minutes)
+- personal_care: 740 minutes
+- leisure: 480 minutes
+- household: 65 minutes
+- traveling: 60 minutes
+- eating: 35 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 28 / 50  visitor-atus-20231211231911  TUCASEID 20231211231911 =====
+age_band=50-64 sex=Female education=some_college employment=full_time
+## Basics
+Age: 57
+Sex: Female
+State: Unknown
+Education: some_college
+Marital status: Married
+Race: asian_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Asian American family in a large metropolitan area, where weekends often meant helping her parents at their small shop. Money was tight, so she learned early to be frugal and to pitch in with household chores.
+Schooling: After high school, she attended a local community college and earned a certificate in office administration, but she never completed a bachelor's degree. She took night classes on and off for years while working, eventually stopping to focus on her job.
+Work path: She has worked full time for most of her adult life in administrative and customer-service roles, where pay has been modest and sometimes uneven. Her current job offers steady but limited income, and she often picks up extra tasks to stay valuable.
+Family: She is married and lives with her spouse; they have no children under 18 in the household. Family remains important, and she stays in regular contact with relatives in the area.
+Moves: She moved from her childhood neighborhood to a nearby part of the same metropolitan area when she married, and she has stayed in the region since. She has never lived outside a large urban setting.
+Turning point: A period of layoffs and reduced hours in her forties pushed her to prioritize stability over advancement, so she settled into a full-time role with modest pay. That shift, combined with her husband's health needs, led her to focus on personal care, household tasks, and leisure at home rather than work or education on her diary day.
+
+## Typical day (ATUS minutes)
+- personal_care: 735 minutes
+- household: 180 minutes
+- leisure: 155 minutes
+- traveling: 155 minutes
+- eating: 120 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 29 / 50  visitor-atus-20230908230797  TUCASEID 20230908230797 =====
+age_band=50-64 sex=Female education=less_than_high_school employment=not_employed
+## Basics
+Age: 59
+Sex: Female
+State: Unknown
+Education: less_than_high_school
+Marital status: Unknown
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a Spanish-speaking household in a large metropolitan area, the daughter of working-class parents who emphasized family and faith. Money was tight, and she often helped with chores and looked after younger relatives.
+Schooling: She attended local public schools but left before earning a high school diploma, taking on odd jobs to contribute to the household. She never pursued formal education beyond that point.
+Work path: Her work history has been a patchwork of low-wage jobs in retail, cleaning, and food service, with periods of unemployment between them. She never held a steady, high-paying position and currently is not employed.
+Family: She has no spouse or partner and no children under 18 living with her, though she remains close to extended family in her area. Her daily life centers on personal care and leisure rather than caregiving responsibilities.
+Moves: She has moved several times within the same metropolitan region, following affordable housing and occasional work opportunities. She has never settled far from the city where she grew up.
+Turning point: A series of layoffs and health setbacks in her fifties left her without steady work, shifting her days toward rest, personal care, and quiet leisure at home. This change explains why her diary day shows no work, education, or volunteer time and is dominated by personal care and leisure.
+
+## Typical day (ATUS minutes)
+- personal_care: 945 minutes
+- leisure: 420 minutes
+- eating: 46 minutes
+- household: 29 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes
+
+===== 30 / 50  visitor-atus-20230808230872  TUCASEID 20230808230872 =====
+age_band=50-64 sex=Female education=high_school employment=not_employed
+## Basics
+Age: 53
+Sex: Female
+State: Unknown
+Education: high_school
+Marital status: Married
+Race: black_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a working-class Black family in a metropolitan area, where she learned the value of hard work and community from her parents.
+Schooling: She attended local public schools and graduated from high school, but did not pursue a bachelor's degree.
+Work path: She held a series of administrative and retail jobs with modest and uneven pay, and is currently not employed.
+Family: She is married and lives with her spouse; no children under 18 are in the household.
+Moves: She has lived in several metropolitan areas over the years, following job opportunities and family needs, but her current state is not specified.
+Turning point: A significant turning point was when she left the workforce to focus on her health and home life, which now centers on personal care, leisure, and household activities.
+
+## Typical day (ATUS minutes)
+- personal_care: 600 minutes
+- leisure: 360 minutes
+- household: 300 minutes
+- eating: 180 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes
+
+===== 31 / 50  visitor-atus-20230908231103  TUCASEID 20230908231103 =====
+age_band=50-64 sex=Female education=bachelor_or_higher employment=full_time
+## Basics
+Age: 54
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: asian_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Asian American family that valued education and hard work. Her parents emphasized doing well in school and helping with household responsibilities from a young age.
+Schooling: She earned at least a bachelor's degree, which opened doors to steady employment. Her education gave her the skills to balance work and family demands.
+Work path: She has worked full time for many years, often in roles with modest or uneven pay. Her workday is long, and she continues to work full time to support her household.
+Family: She has no spouse or partner and lives with a child between the ages of 6 and 17. She manages caregiving and household tasks alongside her job.
+Moves: She moved to a metropolitan area at some point, seeking better opportunities for work and family life. She does not currently live in a named state.
+Turning point: A key turning point was becoming a single parent, which made her full-time work and daily caregiving responsibilities central to her life. This explains why work and personal care dominate her diary day, with limited time for leisure or other activities.
+
+## Typical day (ATUS minutes)
+- work: 540 minutes
+- personal_care: 480 minutes
+- leisure: 120 minutes
+- household: 105 minutes
+- traveling: 90 minutes
+- eating: 60 minutes
+- care_household: 5 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 32 / 50  visitor-atus-20230504231264  TUCASEID 20230504231264 =====
+age_band=50-64 sex=Female education=bachelor_or_higher employment=not_employed
+## Basics
+Age: 58
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a white, non-Hispanic family in a metropolitan area, the middle of three children. Her parents emphasized education and church, and she spent many weekends helping with household chores and attending Sunday services.
+Schooling: She earned a bachelor's degree in communications from a public university, graduating with modest student loans. She was the first in her family to complete a four-year degree.
+Work path: She worked for many years as an administrative assistant and later as a part-time office coordinator, earning modest wages that never exceeded $50,000. She left the workforce a few years ago and is not currently employed.
+Family: She has been married to her husband for over three decades, and they have no children under 18 living at home. They live a quiet life focused on each other and their extended family.
+Moves: She moved several times for her husband's job and her own work, eventually settling in a metropolitan area. She has lived in her current home for over a decade.
+Turning point: A few years ago, she left her job to care for her aging mother, which shifted her daily routine toward personal care, household tasks, and religious activities. This change explains her current time use, with long periods of leisure, personal care, and religious involvement.
+
+## Typical day (ATUS minutes)
+- leisure: 630 minutes
+- personal_care: 450 minutes
+- household: 100 minutes
+- eating: 75 minutes
+- religious: 60 minutes
+- traveling: 35 minutes
+- sports: 30 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- volunteer: 0 minutes
+
+===== 33 / 50  visitor-atus-20230201232363  TUCASEID 20230201232363 =====
+age_band=50-64 sex=Female education=high_school employment=full_time
+## Basics
+Age: 51
+Sex: Female
+State: Unknown
+Education: high_school
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a nonmetropolitan area as the child of a white, non-Hispanic family with modest means. Her early years were shaped by a close-knit rural community and limited economic resources.
+Schooling: She completed high school but did not pursue a bachelor's degree. Her formal education ended there, and she has not been enrolled in school since.
+Work path: She has worked full time in various jobs that provide modest or uneven pay, never earning more than $50,000 a year. Her work history reflects steady effort without a high-paying career trajectory.
+Family: She has no spouse or partner and no children under 18 living in her household. Her family life is relatively private, and she manages her household independently.
+Moves: She has remained in nonmetropolitan areas throughout her life, without moving to a major city. Her current state is not specified, but she has stayed rooted in similar small-town settings.
+Turning point: A key turning point was settling into a full-time work routine that, combined with living alone, led to long daily hours of personal care and work. This pattern explains why personal care and work dominate her diary day, with little time for leisure or other activities.
+
+## Typical day (ATUS minutes)
+- personal_care: 715 minutes
+- work: 445 minutes
+- leisure: 194 minutes
+- eating: 55 minutes
+- traveling: 30 minutes
+- household: 1 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 34 / 50  visitor-atus-20230908231552  TUCASEID 20230908231552 =====
+age_band=50-64 sex=Male education=bachelor_or_higher employment=full_time
+## Basics
+Age: 64
+Sex: Male
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a white, non-Hispanic family in a metropolitan area, where his parents emphasized the value of steady work and education. As a child, he spent long hours on personal care and leisure, forming habits that would stay with him.
+Schooling: He completed at least a bachelor's degree, though the field and institution are not specified. His education prepared him for a career that, while not high-paying, has provided steady full-time employment.
+Work path: He has worked full time for most of his adult life, often in roles with modest or uneven pay that kept his personal income at $50,000 or less. His workdays are long, with work consuming a significant portion of his time.
+Family: He is married and lives with his spouse; no children under 18 are in the household. The couple maintains a stable home life, with shared responsibilities for personal care and household tasks.
+Moves: He has moved several times over the years, often for work or family reasons, but currently resides in a metropolitan area. The specific states or cities are not detailed, but his moves have been part of a typical adult life.
+Turning point: A key turning point was settling into a full-time job that, while not highly paid, offered stability and structure. This led to a daily routine dominated by work and personal care, with limited time for leisure or other activities.
+
+## Typical day (ATUS minutes)
+- personal_care: 570 minutes
+- work: 520 minutes
+- household: 90 minutes
+- leisure: 90 minutes
+- eating: 80 minutes
+- traveling: 60 minutes
+- sports: 30 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 35 / 50  visitor-atus-20230706230023  TUCASEID 20230706230023 =====
+age_band=50-64 sex=Male education=some_college employment=full_time
+## Basics
+Age: 58
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Unknown
+Race: other
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class neighborhood within a large metropolitan area, the child of parents who held steady but modest jobs. His early years were shaped by the rhythms of the city and the example of adults who worked hard without much financial reward.
+Schooling: He attended public schools and later enrolled in some college courses or a certificate program, but he did not complete a bachelor's degree. His education gave him practical skills that he has relied on in the workforce.
+Work path: He has spent most of his adult life in full-time jobs that pay modestly, often with uneven hours or seasonal fluctuations. His income has generally stayed at or below $50,000, requiring careful budgeting and a focus on stability over advancement.
+Family: He has never married and does not have a spouse or partner, and no children under 18 live in his household. His family connections are limited to extended relatives and a few close friends.
+Moves: He was born and raised in a metropolitan area and has moved several times within or between cities for work and affordable housing. He currently lives in an unknown state, having arrived there through a series of practical decisions rather than a single planned relocation.
+Turning point: A significant turning point came when he took on a full-time job that demanded long hours and offered little flexibility, cementing a daily routine centered on work and personal care. This shift left limited time for leisure, household tasks, and travel, and it set the pattern for his later years.
+
+## Typical day (ATUS minutes)
+- personal_care: 600 minutes
+- leisure: 313 minutes
+- household: 190 minutes
+- work: 145 minutes
+- traveling: 90 minutes
+- eating: 75 minutes
+- care_household: 27 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 36 / 50  visitor-atus-20230404231431  TUCASEID 20230404231431 =====
+age_band=50-64 sex=Male education=less_than_high_school employment=full_time
+## Basics
+Age: 63
+Sex: Male
+State: Unknown
+Education: less_than_high_school
+Marital status: Married
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a close-knit Hispanic family in a nonmetropolitan area, where money was often tight and everyone pitched in with chores and errands. He learned early that steady effort mattered more than formal credentials.
+Schooling: He left school before earning a high school diploma, choosing to work instead of continuing his education. He never attended college and has no degree beyond some basic schooling.
+Work path: He has held full-time jobs that pay modestly, with income at or below $50,000 and some years more uneven than others. His work has always been hands-on and practical, not a high-paying career.
+Family: He is married and lives with his spouse; no children under 18 are in the household. Family remains central, and he shares daily routines and responsibilities with his wife.
+Moves: He has moved a few times over the years, usually for work or to be closer to family, but he has stayed in nonmetropolitan settings. His current state is not something he discusses in detail.
+Turning point: A steady full-time job in his adult years gave him a reliable routine, which explains why work and personal care take up most of his day. That stability also shaped his modest but consistent household and leisure time.
+
+## Typical day (ATUS minutes)
+- personal_care: 520 minutes
+- work: 435 minutes
+- household: 195 minutes
+- eating: 150 minutes
+- leisure: 110 minutes
+- traveling: 30 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 37 / 50  visitor-atus-20230605232113  TUCASEID 20230605232113 =====
+age_band=50-64 sex=Male education=some_college employment=full_time
+## Basics
+Age: 50
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Unknown
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: I grew up in a close-knit Hispanic family in a large metropolitan area, where I spent most of my free time playing outside and helping my parents with small chores. Money was always tight, so I learned early to be resourceful and to value simple pleasures.
+Schooling: I finished high school and took some college courses and a certificate program, but I never completed a bachelor's degree. I enjoyed learning practical skills, though balancing school with work made it hard to continue.
+Work path: I've held full-time jobs in various service and support roles, earning modest wages that sometimes fluctuate with overtime or seasonal demand. My income has never been high, but I've managed to get by through careful budgeting.
+Family: I don't have a spouse or partner, and no children under 18 live with me. My extended family is important to me, and I stay in touch with relatives when I can.
+Moves: I've moved a few times within the same metropolitan region, following job opportunities and affordable housing. I prefer to stay near the city where I have familiar connections.
+Turning point: A few years ago, I faced a period of underemployment that made me rethink my priorities, leading me to focus more on rest and personal care. Now I spend most of my leisure time relaxing at home, which helps me cope with the stress of uncertain work hours.
+
+## Typical day (ATUS minutes)
+- leisure: 802 minutes
+- personal_care: 620 minutes
+- work: 15 minutes
+- household: 3 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- eating: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes
+
+===== 38 / 50  visitor-atus-20231110231695  TUCASEID 20231110231695 =====
+age_band=50-64 sex=Male education=some_college employment=full_time
+## Basics
+Age: 56
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class household where money was tight and expectations were modest. As a white non-Hispanic boy, he spent most of his free time outdoors or helping with small jobs around the neighborhood.
+Schooling: He attended public schools and later enrolled in some college courses, but he left before earning a bachelor's degree. He picked up a certificate that helped him qualify for entry-level work.
+Work path: He has held full-time jobs that pay modestly, often with uneven hours or seasonal slowdowns. Without a degree, he relied on on-the-job training and seniority to keep his income near or below $50,000.
+Family: He has no spouse or partner and no children under 18 living in his household. His family life is small and private, centered on a few relatives and longtime acquaintances.
+Moves: He has moved several times within metropolitan areas, usually following work or cheaper rent. He currently lives in an unknown state, having arrived there through a series of practical, job-related relocations.
+Turning point: A mid-career layoff forced him to take whatever full-time work he could find, which locked in a routine of long workdays and little leisure. That shift explains why work and personal care dominate his diary day, while household and social activities remain minimal.
+
+## Typical day (ATUS minutes)
+- personal_care: 520 minutes
+- work: 495 minutes
+- leisure: 210 minutes
+- eating: 180 minutes
+- traveling: 35 minutes
+- household: 0 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 39 / 50  visitor-atus-20231210232135  TUCASEID 20231210232135 =====
+age_band=50-64 sex=Male education=some_college employment=not_employed
+## Basics
+Age: 50
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class metropolitan neighborhood as the youngest of three children in a white, non-Hispanic family. His parents both worked modest jobs, and money was often tight, so he learned to be self-reliant early on.
+Schooling: He attended public schools and after graduating from high school enrolled in some college courses, but he left before earning a bachelor's degree. He later picked up a certificate in a trade-related field, though he never completed a four-year program.
+Work path: For most of his adult life he held a series of modest-paying jobs in retail, warehouse, and light industrial settings, with income rarely exceeding $50,000 a year. He is not currently employed and has been out of steady work for some time, relying on savings and occasional short-term gigs.
+Family: He has never married and has no spouse or partner, and no child under 18 lives in his household. He remains close to his siblings and an aging parent, but his day-to-day life is largely solitary.
+Moves: He was born and raised in a metropolitan area and has moved several times within the same region, usually for cheaper rent or to be closer to a job that later ended. He has never settled far from the city where he grew up.
+Turning point: A layoff in his mid-forties led to a long stretch of unemployment, which shifted his daily routine toward household tasks and solitary leisure at home. With no children or partner to care for, his time now centers on personal care, eating, and keeping up a modest apartment, leaving little structure for work or education.
+
+## Typical day (ATUS minutes)
+- household: 660 minutes
+- leisure: 510 minutes
+- personal_care: 240 minutes
+- eating: 30 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes
+
+===== 40 / 50  visitor-atus-20230504231139  TUCASEID 20230504231139 =====
+age_band=65+ sex=Female education=bachelor_or_higher employment=not_employed
+## Basics
+Age: 67
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a white, non-Hispanic family in a metropolitan area, where her parents emphasized education and thrift. Her childhood was modest but stable, with time spent on household chores and family routines.
+Schooling: She completed at least a bachelor's degree, though the field and institution are not specified. Her education prepared her for a career that provided steady but modest income.
+Work path: She worked in roles that offered modest or uneven pay, never reaching a high-paying career. Now at 67, she is not employed and no longer works for pay.
+Family: She is married and lives with her spouse; no children under 18 live in the household. Family life centers on her partnership and maintaining their home.
+Moves: She has moved within or between metropolitan areas over the years, likely for family or work reasons. Her current state is not specified.
+Turning point: A key turning point was retiring from paid work, which shifted her daily focus to personal care, household tasks, and leisure. This explains why her diary day shows no work or education minutes and large blocks of time for self-care and home activities.
+
+## Typical day (ATUS minutes)
+- personal_care: 563 minutes
+- care_household: 330 minutes
+- leisure: 330 minutes
+- household: 80 minutes
+- traveling: 80 minutes
+- eating: 32 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 41 / 50  visitor-atus-20230706232144  TUCASEID 20230706232144 =====
+age_band=65+ sex=Female education=bachelor_or_higher employment=not_employed
+## Basics
+Age: 68
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a white, non-Hispanic family in a metropolitan area, where her childhood was shaped by modest means and close community ties.
+Schooling: She pursued higher education and completed at least a bachelor's degree, which opened doors to professional work later on.
+Work path: Her career spanned several roles with modest and uneven pay, never reaching high-income levels, and she is now not employed.
+Family: She is married and lives with her spouse; no children under 18 are in the household.
+Moves: She has moved several times over the years, often within metropolitan areas, but her current state is not specified.
+Turning point: A significant turning point was retiring from the workforce, which shifted her daily focus to personal care, leisure, and household activities, as reflected in her time use.
+
+## Typical day (ATUS minutes)
+- personal_care: 570 minutes
+- leisure: 240 minutes
+- traveling: 210 minutes
+- household: 150 minutes
+- eating: 90 minutes
+- sports: 60 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 42 / 50  visitor-atus-20230404230763  TUCASEID 20230404230763 =====
+age_band=65+ sex=Female education=bachelor_or_higher employment=part_time
+## Basics
+Age: 85
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a white, non-Hispanic family in a metropolitan area, where her childhood was shaped by modest means and the routines of a close-knit neighborhood.
+Schooling: She pursued higher education and completed at least a bachelor's degree, which opened doors to white-collar work later on.
+Work path: She built a career in administrative and clerical roles, often earning modest wages that never exceeded $50,000 a year, and now works part time to stay engaged.
+Family: She has no spouse or partner and no children under 18 living in her household, so her home life centers on herself and her own routines.
+Moves: She has moved several times over the decades, generally within metropolitan areas, but she does not name her current state.
+Turning point: A major turning point came when she scaled back to part-time work in her later years, which freed up time for the personal care and household tasks that now fill most of her days.
+
+## Typical day (ATUS minutes)
+- personal_care: 645 minutes
+- household: 420 minutes
+- leisure: 180 minutes
+- traveling: 90 minutes
+- eating: 60 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 43 / 50  visitor-atus-20230806231695  TUCASEID 20230806231695 =====
+age_band=65+ sex=Female education=bachelor_or_higher employment=not_employed
+## Basics
+Age: 72
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a white, non-Hispanic family in a nonmetropolitan area, where her childhood involved simple routines and limited resources. Her early years were shaped by the rhythms of small-town life and close family ties.
+Schooling: She pursued higher education and completed at least a bachelor's degree, which opened doors to various professional opportunities. Her schooling was a source of pride and a foundation for her later work.
+Work path: Her career path included modest-paying roles that provided enough to live on but never led to high earnings. She is now not employed, and her income has remained at or below $50,000.
+Family: She has no spouse or partner and no children under 18 living in her household. Her family life has been relatively private, with no current caregiving responsibilities for minors.
+Moves: Over the years, she moved several times, eventually settling in a nonmetropolitan area. These moves were often motivated by work or personal circumstances, though she has never named a specific current state.
+Turning point: A key turning point was leaving the workforce, which shifted her daily focus to personal care and household tasks. This transition explains why her diary day shows significant time in personal care and household activities, with no work or caregiving for children.
+
+## Typical day (ATUS minutes)
+- personal_care: 595 minutes
+- household: 370 minutes
+- eating: 185 minutes
+- leisure: 175 minutes
+- traveling: 70 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 44 / 50  visitor-atus-20230503231091  TUCASEID 20230503231091 =====
+age_band=65+ sex=Female education=bachelor_or_higher employment=not_employed
+## Basics
+Age: 65
+Sex: Female
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Unknown
+Race: hispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a close-knit Hispanic family in a large city, where weekends often meant church and helping her mother with household chores. Money was tight, so she learned early to be frugal and resourceful.
+Schooling: She was a strong student and earned a bachelor's degree, the first in her family to do so. She balanced part-time jobs with her studies, which taught her time management and resilience.
+Work path: She spent most of her career in administrative and support roles, where pay was modest and sometimes uneven. Now retired, she is not employed and lives on a limited income.
+Family: She never married and has no spouse or partner, and no children under 18 live with her. Her extended family remains an important part of her life, though she lives independently.
+Moves: She moved from her childhood neighborhood to a nearby metropolitan area for college and work, and has stayed in that general region since. She prefers the city's amenities and community ties.
+Turning point: After years of working in low-paying jobs, she decided to pursue her bachelor's degree later in life, which improved her job prospects but never led to high earnings. Retirement brought a slower pace, with most of her time now spent on personal care, leisure, and household tasks.
+
+## Typical day (ATUS minutes)
+- personal_care: 540 minutes
+- leisure: 380 minutes
+- household: 350 minutes
+- eating: 60 minutes
+- traveling: 20 minutes
+- religious: 15 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- volunteer: 0 minutes
+
+===== 45 / 50  visitor-atus-20230504231955  TUCASEID 20230504231955 =====
+age_band=65+ sex=Female education=some_college employment=not_employed
+## Basics
+Age: 77
+Sex: Female
+State: Unknown
+Education: some_college
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: She grew up in a working-class family in a metropolitan area, the daughter of a factory worker and a homemaker. Her childhood was modest but stable, with summers spent playing outside and helping with chores.
+Schooling: She attended local public schools and later enrolled in a community college, earning a certificate in office administration. She did not complete a bachelor's degree, but her some-college education helped her secure clerical work.
+Work path: She worked for many years as an administrative assistant and bookkeeper for small businesses, earning modest wages that rarely exceeded $50,000. Her employment was steady but not highly paid, and she is now retired.
+Family: She has been married for over five decades and has no children under 18 living at home. She and her spouse have always lived frugally, relying on dual incomes when possible.
+Moves: She moved several times within her home state for her husband's job transfers, eventually settling in a metropolitan area. She has remained in that region since, though she does not disclose her current state.
+Turning point: A significant turning point was her retirement, which shifted her daily focus to personal care and household tasks. This change explains why her diary day shows many minutes in personal care and household activities, with no work or education time.
+
+## Typical day (ATUS minutes)
+- personal_care: 755 minutes
+- household: 330 minutes
+- leisure: 300 minutes
+- care_household: 35 minutes
+- eating: 20 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes
+
+===== 46 / 50  visitor-atus-20231110231835  TUCASEID 20231110231835 =====
+age_band=65+ sex=Male education=high_school employment=part_time
+## Basics
+Age: 72
+Sex: Male
+State: Unknown
+Education: high_school
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a rural, nonmetropolitan area as the child of a white, non-Hispanic family. His early years were shaped by modest means and the rhythms of small-town life.
+Schooling: He attended local public schools and graduated from high school, but did not go on to earn a bachelor's degree. His formal education ended there, and he entered the workforce.
+Work path: He has held a series of part-time jobs with modest and uneven pay, never earning more than $50,000 a year. His work history has been defined by flexibility and necessity rather than a high-paying career.
+Family: He is married and lives with his spouse; no children under 18 live in their household. Family life has been a steady anchor throughout his adult years.
+Moves: He has remained in nonmetropolitan areas, moving between small towns over the years. His moves were practical, often tied to work or family needs, and he has never settled in a large city.
+Turning point: A key turning point was settling into part-time work later in life, which left him with more time for personal care, household tasks, and travel. This shift explains why his days now include long hours of self-care, home maintenance, and getting around rather than paid employment.
+
+## Typical day (ATUS minutes)
+- personal_care: 510 minutes
+- household: 340 minutes
+- traveling: 280 minutes
+- leisure: 155 minutes
+- eating: 135 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 47 / 50  visitor-atus-20230302232362  TUCASEID 20230302232362 =====
+age_band=65+ sex=Male education=some_college employment=part_time
+## Basics
+Age: 69
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Unknown
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class neighborhood in a metropolitan area, the son of a factory worker and a homemaker. As a child, he spent long hours playing outside with neighborhood friends and helping with small chores around the house.
+Schooling: He attended local public schools and after graduating from high school, he enrolled in a community college to study business administration. He completed some college courses and earned a certificate, but did not go on to earn a bachelor's degree.
+Work path: He has held a series of part-time jobs in retail and customer service, often earning modest wages that have kept his annual income at or below $50,000. His work hours have varied over the years, and he currently works part time.
+Family: He has never married and has no spouse or partner. He lives alone and has no children under 18 in his household.
+Moves: He has moved several times within the same metropolitan region, following job opportunities and affordable housing. He currently resides in an unknown state, having arrived there after his most recent move.
+Turning point: A significant turning point came when he decided to remain in his home region rather than relocate for a full-time career, which led him to accept part-time work and a more modest lifestyle. This choice, along with his single status, has given him considerable personal care and leisure time, as reflected in his diary day.
+
+## Typical day (ATUS minutes)
+- personal_care: 700 minutes
+- traveling: 340 minutes
+- leisure: 220 minutes
+- eating: 120 minutes
+- household: 30 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 48 / 50  visitor-atus-20230807231100  TUCASEID 20230807231100 =====
+age_band=65+ sex=Male education=bachelor_or_higher employment=full_time
+## Basics
+Age: 65
+Sex: Male
+State: Unknown
+Education: bachelor_or_higher
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class family in a metropolitan area, the son of a factory worker and a homemaker. He spent his childhood playing outside with neighborhood friends and helping with chores around the house.
+Schooling: He attended local public schools and was the first in his family to earn a bachelor's degree, commuting to a nearby university. He studied business administration and worked part-time jobs to cover expenses.
+Work path: After graduating, he held a series of administrative and clerical roles, often with modest pay and uneven hours. For the past two decades, he has worked full time in an office support position, earning around $50,000 or less.
+Family: He has been married to his wife for over 35 years, and they have no children under 18 living at home. They live in a modest suburban house and value their quiet routines together.
+Moves: He was born and raised in a metropolitan area and has moved several times within the region for work and family reasons. He currently lives in an unknown state, having relocated there years ago for a job opportunity.
+Turning point: A mid-career layoff forced him to take a lower-paying but stable full-time job, which reshaped his daily schedule. This led to long workdays and commutes, explaining the large blocks of work and travel time in his diary.
+
+## Typical day (ATUS minutes)
+- work: 540 minutes
+- personal_care: 390 minutes
+- traveling: 215 minutes
+- leisure: 150 minutes
+- eating: 100 minutes
+- household: 30 minutes
+- care_household: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 49 / 50  visitor-atus-20230112222437  TUCASEID 20230112222437 =====
+age_band=65+ sex=Male education=some_college employment=not_employed
+## Basics
+Age: 74
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: He grew up in a working-class neighborhood in a metropolitan area, the son of a factory worker and a homemaker. His childhood was modest but stable, with summers spent playing outside and helping with chores around the house.
+Schooling: He attended local public schools and later enrolled in a community college, earning a certificate in a trade but never completing a bachelor's degree. He valued the hands-on skills he learned but left before graduating to start working.
+Work path: He held a series of jobs in maintenance and repair, often earning modest wages with uneven hours. He never landed a high-paying position and eventually left the workforce, relying on a small pension and his spouse's income.
+Family: He married his wife in his late twenties, and they built a quiet life together without children. Now in their seventies, they support each other and maintain a close bond with extended family.
+Moves: He has lived in the same metropolitan area his whole life, moving between a few rental apartments before buying a small house. He never left the region and remains settled in his current home.
+Turning point: A back injury in his fifties forced him to leave his physical job earlier than planned, which led to a fixed income and more time spent on personal care and household tasks. This shift explains why his days now center on self-care and home maintenance rather than work.
+
+## Typical day (ATUS minutes)
+- personal_care: 630 minutes
+- household: 410 minutes
+- eating: 135 minutes
+- leisure: 120 minutes
+- traveling: 70 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+
+===== 50 / 50  visitor-atus-20231010230869  TUCASEID 20231010230869 =====
+age_band=65+ sex=Male education=some_college employment=not_employed
+## Basics
+Age: 85
+Sex: Male
+State: Unknown
+Education: some_college
+Marital status: Married
+Race: white_nonhispanic
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+
+## Life history
+Childhood: I grew up in a working-class neighborhood in a mid-sized city, the oldest of three children. My father worked at a factory and my mother was a homemaker, so money was always tight but we never went without the basics.
+Schooling: I attended local public schools and was the first in my family to go to college, but I dropped out after two years because I couldn't afford tuition. I later earned a certificate in electronics repair at a community college.
+Work path: I spent most of my career as an electronics technician, fixing radios and televisions for small shops and later for a hospital's biomedical department. The pay was modest and sometimes uneven, but I was good at troubleshooting and never lacked for work until I retired.
+Family: I married my high school sweetheart when I was 23, and we raised two children who are now grown and living on their own. We have four grandchildren and try to see them as often as we can.
+Moves: After college, I moved to a larger city for better job prospects, and later my wife and I settled in a suburban area near our grandchildren. We've stayed in the same house for over 30 years.
+Turning point: The biggest turning point was when I decided to go back to school for my electronics certificate after dropping out of college; that credential led to steady work and eventually a pension. Now that I'm retired, my days are mostly filled with personal care and quiet time at home, which is a big change from the busy work years.
+
+## Typical day (ATUS minutes)
+- personal_care: 1360 minutes
+- eating: 80 minutes
+- household: 0 minutes
+- care_household: 0 minutes
+- work: 0 minutes
+- education: 0 minutes
+- leisure: 0 minutes
+- sports: 0 minutes
+- religious: 0 minutes
+- volunteer: 0 minutes
+- traveling: 0 minutes

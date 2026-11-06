@@ -1,0 +1,25 @@
+## Basics
+Age: 50-64
+Sex: Male
+Region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM)
+Education: Postgraduate
+Marital status: Married
+Race: Asian
+Personal income: over $50,000
+Usual weekly work hours: 0
+Household income: $100,000 or more
+Household size: 3
+Political leaning: Moderate
+Political party: Democrat
+Employment: Unemployed
+US citizen: Yes
+Religion: Roman Catholic
+Religious attendance: Once a week
+
+## Life history
+Childhood: Grew up in a quiet household that valued keeping to a routine.
+Schooling: Completed a bachelor's degree and still leans on that training at work.
+Work path: Pieces together part-time or gig work around other obligations. Typical weekly hours: 0.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Settled in the current state for work and stayed longer than planned. Current census region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM).
+Turning point: Money stress led to an extra shift and less evening social time.

@@ -1,0 +1,25 @@
+## Basics
+Age: 50-64
+Sex: Female
+Region: Northeast (PA, NY, NJ, RI, CT, MA, VT, NH, ME)
+Education: High school graduate
+Marital status: Married
+Race: Black
+Personal income: $50,000 or less
+Usual weekly work hours: 20
+Household income: $30,000-$50,000
+Household size: 3
+Political leaning: Moderate
+Political party: Democrat
+Employment: Part-time employment
+US citizen: Yes
+Religion: Other
+Religious attendance: Seldom
+
+## Life history
+Childhood: Raised in a dense suburb; after-school time was split between homework and siblings.
+Schooling: Finished high school and went straight into local work instead of college.
+Work path: Pieces together part-time or gig work around other obligations. Typical weekly hours: 20.
+Family: Married life means joint budgets, shared errands, and evening check-ins.
+Moves: Relocated within the last decade and is still learning the local rhythms. Current census region: Northeast (PA, NY, NJ, RI, CT, MA, VT, NH, ME).
+Turning point: A health scare in the family pushed personal care and rest higher on the list.

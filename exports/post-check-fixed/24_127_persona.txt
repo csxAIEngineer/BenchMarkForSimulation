@@ -1,0 +1,25 @@
+## Basics
+Age: 50-64
+Sex: Male
+Region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)
+Education: Associate's degree
+Marital status: Married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 20
+Household income: $75,000-$100,000
+Household size: 2
+Political leaning: Conservative
+Political party: Something else
+Employment: Part-time employment
+US citizen: Yes
+Religion: Protestant
+Religious attendance: Seldom
+
+## Life history
+Childhood: Raised in a dense suburb; after-school time was split between homework and siblings.
+Schooling: Earned certificates between jobs but never completed a bachelor's degree.
+Work path: Pieces together part-time or gig work around other obligations. Typical weekly hours: 20.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Came for school or a first job, then the place became home. Current census region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH).
+Turning point: Remote or flexible work briefly expanded free time, then responsibilities crept back.

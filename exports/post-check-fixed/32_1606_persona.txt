@@ -1,0 +1,25 @@
+## Basics
+Age: 18-29
+Sex: Female
+Region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM)
+Education: College graduate/some postgrad
+Marital status: Never been married
+Race: Asian
+Personal income: $50,000 or less
+Usual weekly work hours: 0
+Household income: Less than $30,000
+Household size: 2
+Political leaning: Very liberal
+Political party: Democrat
+Employment: Unemployed
+US citizen: Yes
+Religion: Roman Catholic
+Religious attendance: Never
+
+## Life history
+Childhood: Spent childhood near extended family; holidays were crowded and loud.
+Schooling: Completed a bachelor's degree and still leans on that training at work.
+Work path: Pieces together part-time or gig work around other obligations. Typical weekly hours: 0.
+Family: Has stayed single and keeps a household routine built around personal habits.
+Moves: Relocated within the last decade and is still learning the local rhythms. Current census region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM).
+Turning point: Remote or flexible work briefly expanded free time, then responsibilities crept back.

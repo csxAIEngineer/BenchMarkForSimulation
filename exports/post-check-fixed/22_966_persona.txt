@@ -1,0 +1,25 @@
+## Basics
+Age: 18-29
+Sex: Male
+Region: Northeast (PA, NY, NJ, RI, CT, MA, VT, NH, ME)
+Education: Some college, no degree
+Marital status: Never been married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 0
+Household income: $50,000-$75,000
+Household size: 3
+Political leaning: Conservative
+Political party: Republican
+Employment: Unemployed
+US citizen: Yes
+Religion: Roman Catholic
+Religious attendance: Once a week
+
+## Life history
+Childhood: Moved once as a kid for a parent's job and learned to make friends quickly.
+Schooling: Earned certificates between jobs but never completed a bachelor's degree.
+Work path: Pieces together part-time or gig work around other obligations. Typical weekly hours: 0.
+Family: Has stayed single and keeps a household routine built around personal habits.
+Moves: Followed family to the current state and gradually put down roots. Current census region: Northeast (PA, NY, NJ, RI, CT, MA, VT, NH, ME).
+Turning point: Money stress led to an extra shift and less evening social time.

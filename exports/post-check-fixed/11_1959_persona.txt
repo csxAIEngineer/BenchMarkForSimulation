@@ -1,0 +1,25 @@
+## Basics
+Age: 30-49
+Sex: Male
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: Associate's degree
+Marital status: Living with a partner
+Race: Black
+Personal income: over $50,000
+Usual weekly work hours: 40
+Household income: $75,000-$100,000
+Household size: 3
+Political leaning: Liberal
+Political party: Republican
+Employment: Full-time employment
+US citizen: Yes
+Religion: Atheist
+Religious attendance: Never
+
+## Life history
+Childhood: Spent childhood near extended family; holidays were crowded and loud.
+Schooling: Earned certificates between jobs but never completed a bachelor's degree.
+Work path: Built a full-time career with raises tied to long hours and reliability. Typical weekly hours: 40.
+Family: Shares a home with a partner without a marriage, and splits day-to-day costs.
+Moves: Followed family to the current state and gradually put down roots. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: A job change lengthened the commute and shortened leisure.

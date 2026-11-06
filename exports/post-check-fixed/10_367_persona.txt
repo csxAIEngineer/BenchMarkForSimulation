@@ -1,0 +1,25 @@
+## Basics
+Age: 30-49
+Sex: Male
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: Some college, no degree
+Marital status: Never been married
+Race: White
+Personal income: $50,000 or less
+Usual weekly work hours: 0
+Household income: $30,000-$50,000
+Household size: 3
+Political leaning: Moderate
+Political party: Independent
+Employment: Unemployed
+US citizen: Yes
+Religion: Agnostic
+Religious attendance: Never
+
+## Life history
+Childhood: Spent childhood near extended family; holidays were crowded and loud.
+Schooling: Earned certificates between jobs but never completed a bachelor's degree.
+Work path: Pieces together part-time or gig work around other obligations. Typical weekly hours: 0.
+Family: Has stayed single and keeps a household routine built around personal habits.
+Moves: Followed family to the current state and gradually put down roots. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: Remote or flexible work briefly expanded free time, then responsibilities crept back.

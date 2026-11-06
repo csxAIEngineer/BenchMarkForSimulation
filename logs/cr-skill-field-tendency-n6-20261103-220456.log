@@ -1,0 +1,98 @@
+sample ready {"twin2k_500": {"subjects": 6, "cases": 526}, "bdm_lettuce": {"subjects": 6, "cases": 42}, "twin2k_mega_study": {"subjects": 6, "cases": 40}}
+{"job": "twin2k_500__atus_expanded", "method": "atus_expanded", "dataset": "twin2k_500", "n_scored": 525, "accuracy": 0.5657142857142857, "hits": 297, "missing_or_unscored": 1, "parse_errors": 1, "n_rows": 526, "seconds": 1176.9, "out": "/Users/shaneson/AI Agent/runs/cr-skill-compare-income6-field-tendency/twin2k_500/atus_expanded"}
+{"job": "twin2k_500__atus_expanded_skill", "method": "atus_expanded_skill", "dataset": "twin2k_500", "n_scored": 515, "accuracy": 0.44271844660194176, "hits": 228, "missing_or_unscored": 11, "parse_errors": 11, "n_rows": 526, "seconds": 1467.2, "out": "/Users/shaneson/AI Agent/runs/cr-skill-compare-income6-field-tendency/twin2k_500/atus_expanded_skill"}
+{"job": "bdm_lettuce__atus_expanded", "method": "atus_expanded", "dataset": "bdm_lettuce", "n_scored": 42, "accuracy": 0.19047619047619047, "hits": 8, "missing_or_unscored": 0, "parse_errors": 0, "n_rows": 42, "seconds": 64.9, "out": "/Users/shaneson/AI Agent/runs/cr-skill-compare-income6-field-tendency/bdm_lettuce/atus_expanded"}
+{"job": "bdm_lettuce__atus_expanded_skill", "method": "atus_expanded_skill", "dataset": "bdm_lettuce", "n_scored": 42, "accuracy": 0.14285714285714285, "hits": 6, "missing_or_unscored": 0, "parse_errors": 0, "n_rows": 42, "seconds": 101.2, "out": "/Users/shaneson/AI Agent/runs/cr-skill-compare-income6-field-tendency/bdm_lettuce/atus_expanded_skill"}
+Traceback (most recent call last):
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/http/client.py", line 1386, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/http/client.py", line 1432, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/http/client.py", line 1381, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/http/client.py", line 1141, in _send_output
+    self.send(msg)
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/http/client.py", line 1085, in send
+    self.connect()
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/http/client.py", line 1527, in connect
+    self.sock = self._context.wrap_socket(self.sock,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/ssl.py", line 457, in wrap_socket
+    return self.sslsocket_class._create(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/ssl.py", line 1053, in _create
+    self.do_handshake()
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/ssl.py", line 1331, in do_handshake
+    self._sslobj.do_handshake()
+ConnectionResetError: [Errno 54] Connection reset by peer
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/shaneson/AI Agent/.venv/lib/python3.12/site-packages/cr_api/client.py", line 244, in _open
+    return urllib.request.urlopen(request, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 1392, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/urllib/request.py", line 1347, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 54] Connection reset by peer>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/shaneson/AI Agent/src/popbench/comms/providers/cr.py", line 28, in complete
+    result = CRClient(api_key=self.api_key).chat(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/.venv/lib/python3.12/site-packages/cr_api/client.py", line 121, in chat
+    data = self._request("POST", "/v1/chat/completions", body, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/.venv/lib/python3.12/site-packages/cr_api/client.py", line 224, in _request
+    response = self._open(method, path, body, timeout, headers or {})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/.venv/lib/python3.12/site-packages/cr_api/client.py", line 249, in _open
+    raise CRError("CR API 网络错误：%s" % error.reason) from error
+cr_api.client.CRError: CR API 网络错误：[Errno 54] Connection reset by peer
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/shaneson/AI Agent/scripts/run_skill_compare_cr.py", line 293, in <module>
+    main()
+  File "/Users/shaneson/AI Agent/scripts/run_skill_compare_cr.py", line 255, in main
+    summary = run_one(bundle, method=method, out_dir=OUT_ROOT / dataset_name / method, job=job)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/scripts/run_skill_compare_cr.py", line 164, in run_one
+    results = simulate(bundle, method=method, client=client, limit=None, seed=SEED, batch_size=BATCH_SIZE)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/src/popbench/pipeline.py", line 52, in simulate
+    client.complete_batch(group[start : start + batch_size], sample_seed=seed)
+  File "/Users/shaneson/AI Agent/src/popbench/comms/client.py", line 79, in complete_batch
+    raw = call_with_retry(
+          ^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/src/popbench/comms/retry.py", line 33, in call_with_retry
+    raise last
+  File "/Users/shaneson/AI Agent/src/popbench/comms/retry.py", line 26, in call_with_retry
+    return action()
+           ^^^^^^^^
+  File "/Users/shaneson/AI Agent/src/popbench/comms/client.py", line 80, in <lambda>
+    lambda: self.provider.complete(
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shaneson/AI Agent/src/popbench/comms/providers/cr.py", line 34, in complete
+    raise CommsTransportError(str(exc)) from exc
+popbench.comms.errors.CommsTransportError: CR API 网络错误：[Errno 54] Connection reset by peer

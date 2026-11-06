@@ -1,0 +1,400 @@
+loading twin2k_500_pricing_subjects.jsonl
+sample match prior cr-pricing-models-n50: True
+exported 50 cards unique=50 len={'min': 988, 'max': 1127, 'mean': 1062.14}
+--- first card ---
+## Basics
+Age: 30-49
+Sex: Female
+Region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)
+Education: Some college, no degree
+Marital status: Married
+Race: Other
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+Household income: Less than $30,000
+Household size: 3
+Political leaning: Moderate
+Political party: Independent
+Employment: Self-employed
+US citizen: Yes
+Religion: Nothing in particular
+Religious attendance: Never
+
+## Life history
+Childhood: Spent childhood near extended family; holidays were crowded and loud.
+Schooling: Started community college, paused after a few semesters, and may go back.
+Work path: Has had uneven employment; some months are thin on hours. Weekly hours vary.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Relocated within the last decade and is still learning the local rhythms. Current census region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH).
+Turning point: Remote or flexible work briefly expanded free time, then responsibilities crept back.
+--- end ---
+sample ready {"twin2k_500": {"subjects": 50, "cases": 2000}}
+batch failed model=deepseek-v4-pro dataset=twin2k_500 subject=127 CR API 网络错误：[Errno 54] Connection reset by peer
+batch failed model=deepseek-v4-pro dataset=twin2k_500 subject=127 CR API 网络错误：[Errno 54] Connection reset by peer
+batch failed model=deepseek-v4-pro dataset=twin2k_500 subject=127 CR API 网络错误：[Errno 54] Connection reset by peer
+batch failed model=deepseek-v4-pro dataset=twin2k_500 subject=141 CR API 网络错误：[Errno 54] Connection reset by peer
+batch failed model=deepseek-v4-pro dataset=twin2k_500 subject=141 CR API 网络错误：[Errno 54] Connection reset by peer
+batch 1/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7645.7
+batch 2/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7273.6
+batch 3/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7909.5
+batch 4/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7525.0
+batch 5/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7046.5
+batch 6/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6476.8
+batch 7/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6761.3
+batch 8/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6715.7
+batch 9/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7360.0
+batch 10/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6917.9
+batch 11/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7650.3
+batch 12/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7563.9
+batch 13/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=8309.8
+batch 14/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=8211.3
+batch 15/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=8114.6
+batch 16/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=8104.9
+batch 17/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7901.2
+batch 18/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7768.4
+batch 19/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7736.3
+batch 20/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7793.8
+batch 21/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7774.4
+batch 22/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7520.2
+batch 23/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7411.5
+batch 24/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7340.7
+batch 25/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7315.6
+batch 26/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7137.9
+batch 27/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7117.7
+batch 28/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7179.0
+batch 29/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=7008.3
+batch 30/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6942.2
+batch 31/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6901.8
+batch 32/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6802.1
+batch 33/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6811.8
+batch 34/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6697.2
+batch 35/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6616.5
+batch 36/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6491.2
+batch 37/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6377.8
+batch 38/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6386.9
+batch 39/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6385.2
+batch 40/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6256.2
+batch 41/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6285.6
+batch 42/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6258.1
+batch 43/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6208.5
+batch 44/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6094.9
+batch 45/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=6063.9
+batch 46/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5965.2
+batch 47/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5948.1
+batch 48/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5865.4
+batch 49/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5832.0
+batch 50/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5781.8
+batch 51/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5683.6
+batch 52/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5561.7
+batch 53/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5609.1
+batch 54/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5587.8
+batch 55/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5498.2
+batch 56/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5490.0
+batch 57/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5395.5
+batch 58/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5323.2
+batch 59/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5258.9
+batch 60/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5215.3
+batch 61/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5162.8
+batch 62/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5162.0
+batch 63/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5169.5
+batch 64/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5076.1
+batch 65/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=5005.7
+batch 66/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4964.2
+batch 67/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4904.8
+batch 68/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4884.0
+batch 69/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4835.9
+batch 70/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4804.2
+batch 71/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4729.4
+batch 72/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4656.3
+batch 73/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4567.3
+batch 74/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4504.7
+batch 75/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4467.2
+batch 76/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4396.0
+batch 77/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4323.0
+batch 78/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4295.0
+batch 79/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4216.8
+batch 80/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4171.0
+batch 81/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4090.9
+batch 82/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4019.0
+batch 83/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3962.0
+batch 84/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3879.2
+batch 85/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3807.4
+batch 86/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3734.8
+batch 87/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3702.1
+batch 88/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3631.0
+batch 89/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3564.1
+batch 90/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3500.0
+batch 91/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3461.2
+batch 92/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3466.9
+batch 93/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3415.2
+batch 94/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3338.7
+batch 95/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3309.7
+batch 96/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3284.8
+batch 97/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3242.5
+batch 98/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3172.6
+batch 99/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3116.2
+batch 100/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=3040.4
+batch 101/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2967.1
+batch 102/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2919.3
+batch 103/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2846.8
+batch 104/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2780.6
+batch 105/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2744.7
+batch 106/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2695.6
+batch 107/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2647.1
+batch 108/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2601.0
+batch 109/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2540.0
+batch 110/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2468.6
+batch 111/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2402.2
+batch 112/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2341.5
+batch 113/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2314.7
+batch 114/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2261.7
+batch 115/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2190.6
+batch 116/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2139.9
+batch 117/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2081.1
+batch 118/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2012.7
+batch 119/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1949.9
+batch 120/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1883.4
+batch 121/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1815.2
+batch 122/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1748.5
+batch 123/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1688.2
+batch 124/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1622.3
+batch 125/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1555.5
+batch 126/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1498.8
+batch 127/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1429.8
+batch 128/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1367.5
+batch 129/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1302.0
+batch 130/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1235.2
+batch 131/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1180.4
+batch 132/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1121.3
+batch 133/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1064.6
+batch 134/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=1000.5
+batch 135/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=938.1
+batch 136/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=874.2
+batch 137/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=810.0
+batch 138/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=746.7
+batch 139/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=682.3
+batch 140/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=620.3
+batch 141/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=557.8
+batch 142/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=498.1
+batch 143/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=435.7
+batch 144/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=372.3
+batch 145/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=310.2
+{"ok": false, "model": "deepseek-v4-pro", "dataset": "twin2k_500", "method": "atus_expanded", "failed_batches": 5, "n_results": 1930, "n_cases": 2000, "out": "/Users/shaneson/AI Agent/runs/twin2k-pricing-fixedcards-deepseek-n50/deepseek-v4-pro/twin2k_500/atus_expanded", "seconds": 9001.5}
+INCOMPLETE {"ok": false, "model": "deepseek-v4-pro", "dataset": "twin2k_500", "method": "atus_expanded", "failed_batches": 5, "n_results": 1930, "n_cases": 2000, "out": "/Users/shaneson/AI Agent/runs/twin2k-pricing-fixedcards-deepseek-n50/deepseek-v4-pro/twin2k_500/atus_expanded", "seconds": 9001.5}
+loading twin2k_500_pricing_subjects.jsonl
+sample match prior cr-pricing-models-n50: True
+exported 50 cards unique=50 len={'min': 988, 'max': 1127, 'mean': 1062.14}
+--- first card ---
+## Basics
+Age: 30-49
+Sex: Female
+Region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)
+Education: Some college, no degree
+Marital status: Married
+Race: Other
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+Household income: Less than $30,000
+Household size: 3
+Political leaning: Moderate
+Political party: Independent
+Employment: Self-employed
+US citizen: Yes
+Religion: Nothing in particular
+Religious attendance: Never
+
+## Life history
+Childhood: Spent childhood near extended family; holidays were crowded and loud.
+Schooling: Started community college, paused after a few semesters, and may go back.
+Work path: Has had uneven employment; some months are thin on hours. Weekly hours vary.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Relocated within the last decade and is still learning the local rhythms. Current census region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH).
+Turning point: Remote or flexible work briefly expanded free time, then responsibilities crept back.
+--- end ---
+sample ready {"twin2k_500": {"subjects": 50, "cases": 2000}}
+batch 1/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=4651.8
+batch 2/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=9268.8
+batch 3/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=8848.8
+loading twin2k_500_pricing_subjects.jsonl
+sample match prior cr-pricing-models-n50: True
+exported 50 cards unique=50 len={'min': 988, 'max': 1127, 'mean': 1062.14}
+--- first card ---
+## Basics
+Age: 30-49
+Sex: Female
+Region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)
+Education: Some college, no degree
+Marital status: Married
+Race: Other
+Personal income: $50,000 or less
+Usual weekly work hours: unknown
+Household income: Less than $30,000
+Household size: 3
+Political leaning: Moderate
+Political party: Independent
+Employment: Self-employed
+US citizen: Yes
+Religion: Nothing in particular
+Religious attendance: Never
+
+## Life history
+Childhood: Spent childhood near extended family; holidays were crowded and loud.
+Schooling: Started community college, paused after a few semesters, and may go back.
+Work path: Has had uneven employment; some months are thin on hours. Weekly hours vary.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Relocated within the last decade and is still learning the local rhythms. Current census region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH).
+Turning point: Remote or flexible work briefly expanded free time, then responsibilities crept back.
+--- end ---
+sample ready {"twin2k_500": {"subjects": 50, "cases": 2000}}
+batch 1/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=None
+batch 2/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=None
+batch 3/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=None
+batch 4/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=8736.6
+batch 5/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=11391.7
+batch 6/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=11313.1
+batch 7/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=11234.6
+batch 8/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=11156.0
+batch 9/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=11077.5
+batch 10/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10998.9
+batch 11/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10920.3
+batch 12/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10841.8
+batch 13/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10763.2
+batch 14/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10684.6
+batch 15/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10606.1
+batch 16/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10527.5
+batch 17/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10448.9
+batch 18/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10370.4
+batch 19/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10291.8
+batch 20/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10213.3
+batch 21/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10134.7
+batch 22/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=10056.1
+batch 23/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9977.6
+batch 24/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9899.0
+batch 25/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9820.4
+batch 26/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9741.9
+batch 27/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9663.3
+batch 28/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9584.8
+batch 29/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9506.2
+batch 30/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9427.6
+batch 31/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9349.1
+batch 32/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9270.5
+batch 33/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9191.9
+batch 34/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9113.4
+batch 35/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=9034.8
+batch 36/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8956.2
+batch 37/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8877.7
+batch 38/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8799.1
+batch 39/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8720.6
+batch 40/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8642.0
+batch 41/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8563.4
+batch 42/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8484.9
+batch 43/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8406.3
+batch 44/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8327.7
+batch 45/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8249.2
+batch 46/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8170.6
+batch 47/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8092.0
+batch 48/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=8013.5
+batch 49/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7934.9
+batch 50/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7856.4
+batch 51/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7777.8
+batch 52/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7699.2
+batch 53/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7620.7
+batch 54/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7542.1
+batch 55/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7463.5
+batch 56/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7385.0
+batch 57/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7306.4
+batch 58/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7227.8
+batch 59/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7149.3
+batch 60/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=7070.7
+batch 61/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6992.2
+batch 62/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6913.6
+batch 63/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6835.0
+batch 64/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6756.5
+batch 65/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6677.9
+batch 66/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6599.3
+batch 67/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6520.8
+batch 68/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6442.2
+batch 69/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6363.6
+batch 70/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6285.1
+batch 71/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6206.5
+batch 72/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6128.0
+batch 73/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=6049.4
+batch 74/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5970.8
+batch 75/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5892.3
+batch 76/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5813.7
+batch 77/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5735.1
+batch 78/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5656.6
+batch 79/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5578.0
+batch 80/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5499.4
+batch 81/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5420.9
+batch 82/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5342.3
+batch 83/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5263.8
+batch 84/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5185.2
+batch 85/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5106.6
+batch 86/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=5028.1
+batch 87/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4949.5
+batch 88/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4870.9
+batch 89/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4792.4
+batch 90/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4713.8
+batch 91/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4635.2
+batch 92/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4556.7
+batch 93/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4478.1
+batch 94/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4399.6
+batch 95/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4321.0
+batch 96/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4242.4
+batch 97/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4163.9
+batch 98/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4085.3
+batch 99/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=4006.7
+batch 100/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3928.2
+batch 101/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3849.6
+batch 102/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3771.0
+batch 103/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3692.5
+batch 104/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3613.9
+batch 105/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3535.4
+batch 106/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3456.8
+batch 107/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3378.2
+batch 108/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3299.7
+batch 109/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3221.1
+batch 110/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3142.5
+batch 111/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=3064.0
+batch 112/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2985.4
+batch 113/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2906.9
+batch 114/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2828.3
+batch 115/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2749.7
+batch 116/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2671.2
+batch 117/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2592.6
+batch 118/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2514.0
+batch 119/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2435.5
+batch 120/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2356.9
+batch 121/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2278.3
+batch 122/150 model=deepseek-v4-pro dataset=twin2k_500 cached=False eta_s=2442.4
+batch 123/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2355.2
+batch 124/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2267.9
+batch 125/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2180.7
+batch 126/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2093.5
+batch 127/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=2006.2
+batch 128/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1919.0
+batch 129/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1831.8
+batch 130/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1744.6
+batch 131/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1657.3
+batch 132/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1570.1
+batch 133/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1482.9
+batch 134/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1395.6
+batch 135/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1308.4
+batch 136/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1221.2
+batch 137/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1134.0
+batch 138/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=1046.7
+batch 139/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=959.5
+batch 140/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=872.3
+batch 141/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=785.1
+batch 142/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=697.8
+batch 143/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=610.6
+batch 144/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=523.4
+batch 145/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=436.1
+batch 146/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=348.9
+batch 147/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=261.7
+batch 148/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=174.5
+batch 149/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=87.2
+batch 150/150 model=deepseek-v4-pro dataset=twin2k_500 cached=True eta_s=None
+{"ok": true, "job": "twin2k_500__deepseek-v4-pro", "model": "deepseek-v4-pro", "dataset": "twin2k_500", "method": "atus_expanded", "n_rows": 2000, "seconds": 261.9, "out": "/Users/shaneson/AI Agent/runs/twin2k-pricing-fixedcards-deepseek-n50/deepseek-v4-pro/twin2k_500/atus_expanded"}
+ALL_DONE [{"ok": true, "job": "twin2k_500__deepseek-v4-pro", "model": "deepseek-v4-pro", "dataset": "twin2k_500", "method": "atus_expanded", "n_rows": 2000, "seconds": 261.9, "out": "/Users/shaneson/AI Agent/runs/twin2k-pricing-fixedcards-deepseek-n50/deepseek-v4-pro/twin2k_500/atus_expanded"}]

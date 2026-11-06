@@ -1,0 +1,25 @@
+## Basics
+Age: 50-64
+Sex: Male
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: Associate's degree
+Marital status: Married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 0
+Household income: $75,000-$100,000
+Household size: 3
+Political leaning: Very liberal
+Political party: Democrat
+Employment: Unemployed
+US citizen: Yes
+Religion: Other
+Religious attendance: Seldom
+
+## Life history
+Childhood: Moved once as a kid for a parent's job and learned to make friends quickly.
+Schooling: Earned certificates between jobs but never completed a bachelor's degree.
+Work path: Has had uneven employment; some months are thin on hours. Typical weekly hours: 0.
+Family: Married life means joint budgets, shared errands, and evening check-ins.
+Moves: Relocated within the last decade and is still learning the local rhythms. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: A job change lengthened the commute and shortened leisure.

@@ -1,0 +1,25 @@
+## Basics
+Age: 18-29
+Sex: Male
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: Some college, no degree
+Marital status: Never been married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 0
+Household income: $100,000 or more
+Household size: 3
+Political leaning: Very liberal
+Political party: Democrat
+Employment: Student
+US citizen: Yes
+Religion: Roman Catholic
+Religious attendance: A few times a year
+
+## Life history
+Childhood: Grew up in a quiet household that valued keeping to a routine.
+Schooling: Earned certificates between jobs but never completed a bachelor's degree.
+Work path: Has had uneven employment; some months are thin on hours. Typical weekly hours: 0.
+Family: Has stayed single and keeps a household routine built around personal habits.
+Moves: Settled in the current state for work and stayed longer than planned. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: A job change lengthened the commute and shortened leisure.

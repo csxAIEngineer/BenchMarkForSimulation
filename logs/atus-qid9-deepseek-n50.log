@@ -1,0 +1,8 @@
+streaming /Users/shaneson/AI Agent/data/atus_qid9/atus_qid9_subjects.jsonl
+sampled 50 subjects (weight_without_replacement)
+batch 1/50 subject=atus_20230101231223 nq=40 cached=False elapsed=83.8s eta_s=4107.9
+batch 2/50 subject=atus_20230111221229 nq=40 cached=False elapsed=125.2s eta_s=5016.4
+batch 3/50 subject=atus_20230111221439 nq=40 cached=False elapsed=140.5s eta_s=5475.4
+batch 4/50 subject=atus_20230111221793 nq=40 cached=False elapsed=79.6s eta_s=4934.3
+batch 5/50 subject=atus_20230112220667 nq=40 cached=False elapsed=157.0s eta_s=5275.1
+batch 6/50 subject=atus_20230112221802 nq=40 cached=False elapsed=117.8s eta_s=5161.7

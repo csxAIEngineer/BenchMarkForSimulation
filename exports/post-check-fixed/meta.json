@@ -1,0 +1,21 @@
+{
+  "n": 50,
+  "method": "atus_expanded",
+  "seed": 42,
+  "model": "deepseek-v4-pro",
+  "git_rev": "a8732b0d4cf4265ce35d122a2637ba4e79d55425",
+  "subjects_path": "/Users/shaneson/AI Agent/data/pricing_only/twin2k_500_pricing_subjects.jsonl",
+  "sample_path": "/Users/shaneson/AI Agent/runs/twin2k-pricing-fixedcards-deepseek-n50/twin2k_sample.json",
+  "generated_at": "2026-11-06T07:54:51+0800",
+  "timezone": "Asia/Shanghai",
+  "note": "Persona blocks as sent with fixed Twin2K QID→demographics mapping (atus_expanded). Questions omitted.",
+  "char_len": {
+    "min": 988,
+    "max": 1127,
+    "mean": 1062.14
+  },
+  "unique_persona_texts": 50,
+  "first_subject_id": "1732",
+  "last_subject_id": "503",
+  "first_card_preview": "## Basics\nAge: 30-49\nSex: Female\nRegion: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)\nEducation: Some college, no degree\nMarital status: Married\nRace: Other\nPersonal income: $50,000 or less\nUsual weekly work hours: unknown\nHousehold income: Less than $30,000\nHousehold size: 3\nPolitical leaning: Moderate\nPolitical party: Independent\nEmployment: Self-employed\nUS citizen: Yes\nReligion: Nothing in particular\nReligious attendance: Never\n\n## Life history\nChildhood: Spent childhood near extended family; holidays were crowded and loud.\nSchooling: Started community college, paused after a few semesters, and may go back.\nWork path: Has had uneven employment; some months are thin on hours. Weekly hours vary.\nFamily: Shares a household with a spouse and coordinates chores around both schedules.\nMoves: Relocated within the last decade and is still learning the local rhythms. Current census region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH).\nTurning point: Remote or flexible work briefly expanded free time, then responsibilities crept back."
+}

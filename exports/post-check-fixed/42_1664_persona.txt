@@ -1,0 +1,25 @@
+## Basics
+Age: 65+
+Sex: Female
+Region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM)
+Education: Some college, no degree
+Marital status: Divorced
+Race: White
+Personal income: $50,000 or less
+Usual weekly work hours: 0
+Household income: Less than $30,000
+Household size: 1
+Political leaning: Liberal
+Political party: Something else
+Employment: Unemployed
+US citizen: Yes
+Religion: Other
+Religious attendance: Seldom
+
+## Life history
+Childhood: Raised in a dense suburb; after-school time was split between homework and siblings.
+Schooling: Earned certificates between jobs but never completed a bachelor's degree.
+Work path: Pieces together part-time or gig work around other obligations. Typical weekly hours: 0.
+Family: After a divorce, rebuilt a quieter home routine and clearer boundaries.
+Moves: Settled in the current state for work and stayed longer than planned. Current census region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM).
+Turning point: A caregiving stretch reordered the week and still shows up in daily minutes.

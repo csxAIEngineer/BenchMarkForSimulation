@@ -1,0 +1,25 @@
+## Basics
+Age: 30-49
+Sex: Female
+Region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)
+Education: Postgraduate
+Marital status: Married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 40
+Household income: $100,000 or more
+Household size: 2
+Political leaning: Liberal
+Political party: Democrat
+Employment: Full-time employment
+US citizen: Yes
+Religion: Agnostic
+Religious attendance: Seldom
+
+## Life history
+Childhood: Grew up in a quiet household that valued keeping to a routine.
+Schooling: Completed a bachelor's degree and still leans on that training at work.
+Work path: Built a full-time career with raises tied to long hours and reliability. Typical weekly hours: 40.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Followed family to the current state and gradually put down roots. Current census region: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH).
+Turning point: A job change lengthened the commute and shortened leisure.

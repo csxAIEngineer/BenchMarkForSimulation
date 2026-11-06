@@ -1,0 +1,25 @@
+## Basics
+Age: 30-49
+Sex: Female
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: Some college, no degree
+Marital status: Married
+Race: Black
+Personal income: $50,000 or less
+Usual weekly work hours: 0
+Household income: $30,000-$50,000
+Household size: 2
+Political leaning: Moderate
+Political party: Democrat
+Employment: Unemployed
+US citizen: Yes
+Religion: Nothing in particular
+Religious attendance: Never
+
+## Life history
+Childhood: Grew up in a quiet household that valued keeping to a routine.
+Schooling: Earned certificates between jobs but never completed a bachelor's degree.
+Work path: Has had uneven employment; some months are thin on hours. Typical weekly hours: 0.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Followed family to the current state and gradually put down roots. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: A job change lengthened the commute and shortened leisure.

@@ -1,0 +1,25 @@
+## Basics
+Age: 30-49
+Sex: Male
+Region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM)
+Education: Some college, no degree
+Marital status: Married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 40
+Household income: $100,000 or more
+Household size: 3
+Political leaning: Liberal
+Political party: Democrat
+Employment: Full-time employment
+US citizen: Yes
+Religion: Nothing in particular
+Religious attendance: Never
+
+## Life history
+Childhood: Moved once as a kid for a parent's job and learned to make friends quickly.
+Schooling: Earned certificates between jobs but never completed a bachelor's degree.
+Work path: Built a full-time career with raises tied to long hours and reliability. Typical weekly hours: 40.
+Family: Married life means joint budgets, shared errands, and evening check-ins.
+Moves: Came for school or a first job, then the place became home. Current census region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM).
+Turning point: A job change lengthened the commute and shortened leisure.

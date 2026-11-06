@@ -1,0 +1,25 @@
+## Basics
+Age: 50-64
+Sex: Female
+Region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM)
+Education: Postgraduate
+Marital status: Divorced
+Race: White
+Personal income: $50,000 or less
+Usual weekly work hours: 0
+Household income: Less than $30,000
+Household size: 1
+Political leaning: Moderate
+Political party: Independent
+Employment: Retired
+US citizen: Yes
+Religion: Nothing in particular
+Religious attendance: Never
+
+## Life history
+Childhood: Spent childhood near extended family; holidays were crowded and loud.
+Schooling: Finished college later than peers and treats the degree as a hard-won reset.
+Work path: Prioritizes flexible shifts even when pay stays modest. Typical weekly hours: 0.
+Family: After a divorce, rebuilt a quieter home routine and clearer boundaries.
+Moves: Followed family to the current state and gradually put down roots. Current census region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM).
+Turning point: A job change lengthened the commute and shortened leisure.

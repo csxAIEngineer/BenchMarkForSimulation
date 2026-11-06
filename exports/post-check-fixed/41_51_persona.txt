@@ -1,0 +1,25 @@
+## Basics
+Age: 50-64
+Sex: Male
+Region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)
+Education: High school graduate
+Marital status: Married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 40
+Household income: $50,000-$75,000
+Household size: 2
+Political leaning: Moderate
+Political party: Independent
+Employment: Full-time employment
+US citizen: Yes
+Religion: Atheist
+Religious attendance: Never
+
+## Life history
+Childhood: Moved once as a kid for a parent's job and learned to make friends quickly.
+Schooling: Finished high school and went straight into local work instead of college.
+Work path: Moved into a higher-paying role after a stretch of overtime and skill-building. Typical weekly hours: 40.
+Family: Married life means joint budgets, shared errands, and evening check-ins.
+Moves: Settled in the current state for work and stayed longer than planned. Current census region: South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL).
+Turning point: A health scare in the family pushed personal care and rest higher on the list.

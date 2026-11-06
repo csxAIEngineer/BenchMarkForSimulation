@@ -1,0 +1,25 @@
+## Basics
+Age: 65+
+Sex: Female
+Region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM)
+Education: Postgraduate
+Marital status: Married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: unknown
+Household income: $50,000-$75,000
+Household size: 2
+Political leaning: Liberal
+Political party: Democrat
+Employment: Self-employed
+US citizen: Yes
+Religion: Roman Catholic
+Religious attendance: Once or twice a month
+
+## Life history
+Childhood: Grew up in a small town where weekends meant yard work and church potlucks.
+Schooling: Finished college later than peers and treats the degree as a hard-won reset.
+Work path: Keeps a demanding schedule; work often crowds evenings. Weekly hours vary.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Came for school or a first job, then the place became home. Current census region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM).
+Turning point: Money stress led to an extra shift and less evening social time.

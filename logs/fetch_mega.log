@@ -1,0 +1,20 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Generating accuracy_nudges split:   0%|          | 0/1003 [00:00<?, ? examples/s]Generating accuracy_nudges split: 100%|█████████▉| 1000/1003 [00:00<00:00, 8996.60 examples/s]Generating accuracy_nudges split: 100%|██████████| 1003/1003 [00:00<00:00, 8446.89 examples/s]
+Generating affective_priming split:   0%|          | 0/1000 [00:00<?, ? examples/s]Generating affective_priming split: 100%|██████████| 1000/1000 [00:00<00:00, 71677.90 examples/s]
+Generating consumer_minimalism split:   0%|          | 0/200 [00:00<?, ? examples/s]Generating consumer_minimalism split: 100%|██████████| 200/200 [00:00<00:00, 46159.73 examples/s]
+Generating context_effects split:   0%|          | 0/501 [00:00<?, ? examples/s]Generating context_effects split: 100%|██████████| 501/501 [00:00<00:00, 66349.22 examples/s]
+Generating default_eric split:   0%|          | 0/600 [00:00<?, ? examples/s]Generating default_eric split: 100%|██████████| 600/600 [00:00<00:00, 111565.47 examples/s]
+Generating digital_certification split:   0%|          | 0/600 [00:00<?, ? examples/s]Generating digital_certification split: 100%|██████████| 600/600 [00:00<00:00, 76598.97 examples/s]
+Generating hiring_algorithms split:   0%|          | 0/999 [00:00<?, ? examples/s]Generating hiring_algorithms split: 100%|██████████| 999/999 [00:00<00:00, 51341.20 examples/s]
+Generating idea_evaluation split:   0%|          | 0/1174 [00:00<?, ? examples/s]Generating idea_evaluation split: 100%|██████████| 1174/1174 [00:00<00:00, 29312.64 examples/s]
+Generating idea_generation split:   0%|          | 0/200 [00:00<?, ? examples/s]Generating idea_generation split: 100%|██████████| 200/200 [00:00<00:00, 35815.08 examples/s]
+Generating infotainment split:   0%|          | 0/300 [00:00<?, ? examples/s]Generating infotainment split: 100%|██████████| 300/300 [00:00<00:00, 39677.46 examples/s]
+Generating junk_fees split:   0%|          | 0/400 [00:00<?, ? examples/s]Generating junk_fees split: 100%|██████████| 400/400 [00:00<00:00, 21548.48 examples/s]
+Generating obedient_twins split:   0%|          | 0/1001 [00:00<?, ? examples/s]Generating obedient_twins split: 100%|██████████| 1001/1001 [00:00<00:00, 70656.81 examples/s]
+Generating preference_redistribution split:   0%|          | 0/1198 [00:00<?, ? examples/s]Generating preference_redistribution split: 100%|██████████| 1198/1198 [00:00<00:00, 65961.85 examples/s]
+Generating privacy split:   0%|          | 0/1200 [00:00<?, ? examples/s]Generating privacy split: 100%|██████████| 1200/1200 [00:00<00:00, 185986.43 examples/s]
+Generating promiscuous_donors split:   0%|          | 0/799 [00:00<?, ? examples/s]Generating promiscuous_donors split: 100%|██████████| 799/799 [00:00<00:00, 57465.09 examples/s]
+Generating quantitative_intuition split:   0%|          | 0/1435 [00:00<?, ? examples/s]Generating quantitative_intuition split: 100%|██████████| 1435/1435 [00:00<00:00, 108637.19 examples/s]
+Generating recommendation_algorithms split:   0%|          | 0/598 [00:00<?, ? examples/s]Generating recommendation_algorithms split: 100%|██████████| 598/598 [00:00<00:00, 71300.07 examples/s]
+Generating story_beliefs split:   0%|          | 0/251 [00:00<?, ? examples/s]Generating story_beliefs split: 100%|██████████| 251/251 [00:00<00:00, 17878.72 examples/s]
+Generating targeting_fairness split:   0%|          | 0/357 [00:00<?, ? examples/s]Generating targeting_fairness split: 100%|██████████| 357/357 [00:00<00:00, 113807.60 examples/s]

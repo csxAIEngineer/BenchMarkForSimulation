@@ -1,0 +1,25 @@
+## Basics
+Age: 65+
+Sex: Female
+Region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM)
+Education: Associate's degree
+Marital status: Married
+Race: White
+Personal income: over $50,000
+Usual weekly work hours: 0
+Household income: $100,000 or more
+Household size: 2
+Political leaning: Moderate
+Political party: Independent
+Employment: Retired
+US citizen: Yes
+Religion: Roman Catholic
+Religious attendance: Seldom
+
+## Life history
+Childhood: Moved once as a kid for a parent's job and learned to make friends quickly.
+Schooling: Started community college, paused after a few semesters, and may go back.
+Work path: Has had uneven employment; some months are thin on hours. Typical weekly hours: 0.
+Family: Shares a household with a spouse and coordinates chores around both schedules.
+Moves: Settled in the current state for work and stayed longer than planned. Current census region: West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM).
+Turning point: A job change lengthened the commute and shortened leisure.
