@@ -114,7 +114,7 @@ def stratified_sample(
     marginal_targets = {
         column: _largest_remainder(marginal_counts[column], sample_size) for column in stratify_columns
     }
-    allocation = _allocate_joint(groups, marginal_targets, sample_size, stratify_columns)
+    allocation, joint_stats = _allocate_joint(groups, marginal_targets, sample_size, stratify_columns)
     _assert_hamilton_margins(allocation, groups, marginal_targets, sample_size, stratify_columns)
     picked: list[str] = []
     for cell in sorted(groups):
@@ -129,6 +129,7 @@ def stratified_sample(
     return {
         "allocation": {cell: allocation[cell] for cell in sorted(allocation)},
         "dataset": dataset,
+        "joint_quota_adjustment": joint_stats,
         "marginal_allocation": {column: marginal_targets[column] for column in stratify_columns},
         "marginal_population_counts": {column: marginal_counts[column] for column in stratify_columns},
         "margin_balance": _margin_balance(marginal_targets, marginal_counts, sample_size, population),
@@ -172,13 +173,17 @@ def _allocate_joint(
     marginal_targets: Mapping[str, Mapping[str, int]],
     sample_size: int,
     columns: Sequence[str],
-) -> dict[str, int]:
+) -> tuple[dict[str, int], dict[str, object]]:
     if len(columns) == 1:
         targets = marginal_targets[columns[0]]
         allocation = {cell: targets.get(cell, 0) for cell in groups}
         if sum(allocation.values()) != sample_size:
             raise SampleError("single-margin allocation does not sum to the sample size")
-        return allocation
+        return allocation, {
+            "applied": False,
+            "exact_cell_quota": False,
+            "note": "One stratifier has no joint table. Hamilton margins are the whole allocation.",
+        }
     if len(columns) != 2:
         raise SampleError("this builder balances one or two stratifiers")
     row_name, col_name = columns
@@ -187,11 +192,13 @@ def _allocate_joint(
         row_value, col_value = cell.split(_JOIN, 1)
         caps[(row_value, col_value)] = len(ids)
     table = _feasible_table(dict(marginal_targets[row_name]), dict(marginal_targets[col_name]), caps, sample_size)
-    table = _repair_toward_quota(table, caps, sample_size, sum(len(ids) for ids in groups.values()))
+    table, joint_stats = _repair_toward_quota(
+        table, caps, sample_size, sum(len(ids) for ids in groups.values())
+    )
     allocation = {_cell_key([row_value, col_value]): count for (row_value, col_value), count in table.items()}
     for cell in groups:
         allocation.setdefault(cell, 0)
-    return allocation
+    return allocation, joint_stats
 
 
 def _feasible_table(
@@ -271,55 +278,145 @@ def _repair_toward_quota(
     caps: Mapping[tuple[str, str], int],
     sample_size: int,
     population: int,
-) -> dict[tuple[str, str], int]:
-    """Unit cycle swaps that reduce distance to n * N_ij / N. Margins stay fixed."""
+) -> tuple[dict[tuple[str, str], int], dict[str, object]]:
+    """One 2x2 swap per step, in either direction, until L1 cannot fall.
+
+    Each step changes four distinct cells by exactly one person. The next
+    step is chosen only after that swap, so two cycles are not applied on
+    the same counts. Row and column sums stay where they started.
+    """
     quota = {cell: Decimal(sample_size) * Decimal(caps.get(cell, 0)) / Decimal(population) for cell in table}
-    current = _quota_distance(table, quota)
+    before = _quota_distance(table, quota)
+    before_gaps = _cell_gap_summary(table, quota)
+    current = before
     rows = sorted({row_value for row_value, _col in table})
     cols = sorted({col_value for _row, col_value in table})
-    improved = True
-    while improved:
-        improved = False
-        best: tuple[Decimal, str, str, str, str] | None = None
+    row_totals = _axis_totals(table, axis=0)
+    col_totals = _axis_totals(table, axis=1)
+    swaps: list[dict[str, object]] = []
+    while len(swaps) <= len(table) * max(sample_size, 1):
+        best: tuple[Decimal, int, str, str, str, str] | None = None
         for index, row_value in enumerate(rows):
             for other_row in rows[index + 1 :]:
                 for col_index, col_value in enumerate(cols):
                     for other_col in cols[col_index + 1 :]:
-                        cycle = ((row_value, col_value), (row_value, other_col), (other_row, col_value), (other_row, other_col))
-                        if not _cycle_fits(table, caps, cycle):
-                            continue
-                        moved = dict(table)
-                        moved[cycle[0]] += 1
-                        moved[cycle[1]] -= 1
-                        moved[cycle[2]] -= 1
-                        moved[cycle[3]] += 1
-                        distance = _quota_distance(moved, quota)
-                        if distance < current:
-                            candidate = (distance, row_value, other_row, col_value, other_col)
-                            if best is None or candidate < best:
-                                best = candidate
-        if best is not None:
-            _row, row_value, other_row, col_value, other_col = best
-            table[(row_value, col_value)] += 1
-            table[(row_value, other_col)] -= 1
-            table[(other_row, col_value)] -= 1
-            table[(other_row, other_col)] += 1
-            current = best[0]
-            improved = True
-    return table
+                        for direction in (1, -1):
+                            if not _cycle_fits(table, caps, row_value, other_row, col_value, other_col, direction):
+                                continue
+                            distance = _quota_distance(
+                                _moved(table, row_value, other_row, col_value, other_col, direction),
+                                quota,
+                            )
+                            if distance < current:
+                                candidate = (distance, direction, row_value, other_row, col_value, other_col)
+                                if best is None or candidate < best:
+                                    best = candidate
+        if best is None:
+            break
+        distance, direction, row_value, other_row, col_value, other_col = best
+        cells = (
+            (row_value, col_value),
+            (row_value, other_col),
+            (other_row, col_value),
+            (other_row, other_col),
+        )
+        if len(set(cells)) != 4:
+            raise SampleError("a 2x2 swap repeated a cell")
+        _apply_cycle(table, row_value, other_row, col_value, other_col, direction)
+        if _axis_totals(table, axis=0) != row_totals or _axis_totals(table, axis=1) != col_totals:
+            raise SampleError("a 2x2 swap changed a Hamilton margin")
+        current = distance
+        swaps.append(
+            {
+                "cells": [f"{left}{_JOIN}{right}" for left, right in cells],
+                "direction": "forward" if direction == 1 else "reverse",
+                "l1_after": f"{current:.8f}",
+            }
+        )
+    else:
+        raise SampleError("2x2 repair did not stop")
+    after_gaps = _cell_gap_summary(table, quota)
+    return table, {
+        "applied": True,
+        "cells_abs_gap_at_least_one_after": after_gaps["count_at_least_one"],
+        "cells_abs_gap_at_least_one_before": before_gaps["count_at_least_one"],
+        "exact_cell_quota": False,
+        "l1_after": f"{current:.8f}",
+        "l1_before": f"{before:.8f}",
+        "max_abs_cell_gap_after": after_gaps["max_abs"],
+        "max_abs_cell_gap_before": before_gaps["max_abs"],
+        "note": (
+            "Each step applies one feasible 2x2 swap, forward or reverse, and "
+            "only when it lowers L1 distance to n * N_cell / N. Hamilton margins "
+            "stay fixed. This is not an exact cell-quota match and does not "
+            "adjust unstratified fields."
+        ),
+        "swaps": swaps,
+        "swap_count": len(swaps),
+    }
+
+
+def _moved(
+    table: Mapping[tuple[str, str], int],
+    row_value: str,
+    other_row: str,
+    col_value: str,
+    other_col: str,
+    direction: int,
+) -> dict[tuple[str, str], int]:
+    moved = dict(table)
+    _apply_cycle(moved, row_value, other_row, col_value, other_col, direction)
+    return moved
+
+
+def _apply_cycle(
+    table: dict[tuple[str, str], int],
+    row_value: str,
+    other_row: str,
+    col_value: str,
+    other_col: str,
+    direction: int,
+) -> None:
+    table[(row_value, col_value)] += direction
+    table[(other_row, other_col)] += direction
+    table[(row_value, other_col)] -= direction
+    table[(other_row, col_value)] -= direction
 
 
 def _cycle_fits(
     table: Mapping[tuple[str, str], int],
     caps: Mapping[tuple[str, str], int],
-    cycle: tuple[tuple[str, str], tuple[str, str], tuple[str, str], tuple[str, str]],
+    row_value: str,
+    other_row: str,
+    col_value: str,
+    other_col: str,
+    direction: int,
 ) -> bool:
-    gain, lose_a, lose_b, gain_b = cycle
-    if table[lose_a] <= 0 or table[lose_b] <= 0:
-        return False
-    if table[gain] + 1 > caps.get(gain, 0) or table[gain_b] + 1 > caps.get(gain_b, 0):
-        return False
+    signs = {
+        (row_value, col_value): direction,
+        (other_row, other_col): direction,
+        (row_value, other_col): -direction,
+        (other_row, col_value): -direction,
+    }
+    for cell, sign in signs.items():
+        updated = table[cell] + sign
+        if updated < 0 or updated > caps.get(cell, 0):
+            return False
     return True
+
+
+def _axis_totals(table: Mapping[tuple[str, str], int], *, axis: int) -> dict[str, int]:
+    totals: dict[str, int] = defaultdict(int)
+    for cell, count in table.items():
+        totals[cell[axis]] += count
+    return dict(totals)
+
+
+def _cell_gap_summary(table: Mapping[tuple[str, str], int], quota: Mapping[tuple[str, str], Decimal]) -> dict[str, object]:
+    gaps = [abs(Decimal(table[cell]) - quota[cell]) for cell in table]
+    at_least_one = sum(1 for gap in gaps if gap >= 1)
+    maximum = max(gaps) if gaps else Decimal("0")
+    return {"count_at_least_one": at_least_one, "max_abs": f"{maximum:.8f}"}
 
 
 def _quota_distance(table: Mapping[tuple[str, str], int], quota: Mapping[tuple[str, str], Decimal]) -> Decimal:

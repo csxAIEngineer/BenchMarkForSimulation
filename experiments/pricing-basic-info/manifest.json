@@ -26,8 +26,8 @@
       "sha256": "872579573648236db395a2f2c1178fee991c22f21e004259ee0e355c17b486dc"
     },
     "bdm_lettuce/sample.json": {
-      "bytes": 4578,
-      "sha256": "867cb7bcea85c61b9b23ae9dc2852b0c7794efd68dac12be207c1a96a3a96572"
+      "bytes": 4758,
+      "sha256": "49c4c2ae5de5b2ce6dca72ccddba4d2c584f7c53fd8ce2caddddb5002bbc2ee8"
     },
     "field_map.json": {
       "bytes": 23203,
@@ -38,23 +38,23 @@
       "sha256": "2a38319c75f5e765d4f84a213913c86dbe86095cffb7f67a41a1c406da62e140"
     },
     "twin2k_500/distribution.json": {
-      "bytes": 23448,
-      "sha256": "57d4ba2e201d534d3ee3a00317d6b41a0bb15e554fb9dc28bbdeaff7f1408658"
+      "bytes": 23439,
+      "sha256": "8bbef2a990582d55ebcd3b38e98a303d3933487ad436bebc988f5c6de0f35358"
     },
     "twin2k_500/exclusions.json": {
       "bytes": 389,
       "sha256": "cc6c757d9d4fd992b86d65e7976c75b4770fbca69f573ad69a647b3b2a2fc467"
     },
     "twin2k_500/sample.json": {
-      "bytes": 5846,
-      "sha256": "f4707cab8b032e1f6931ae6d11d527e49a2bb6aba6a0d655177f25f431c12f4e"
+      "bytes": 15773,
+      "sha256": "abc05542a2672196a1f1a3e1d563404d08a92c96e87a7ca568a8bbb12689dbfd"
     },
     "twin2k_500/wave_audit.json": {
       "bytes": 396,
       "sha256": "1778b28f6ef71911f8834b3cb16e3daa80ed7f3799c29a79c150e84347e56bee"
     }
   },
-  "manifest_sha256": "2293a4001b58db1d257b3609bba1c594f72d491b37395349ec94cfa38ff829e3",
+  "manifest_sha256": "ebf8fc7745c0aa645be8b31d7c3e932714616ae04dbbde7ba7ae6faadd7354a1",
   "scope": "Hashes name logical artifacts. They do not include output_dir, the machine path, or a timestamp. A match does not say the sample statistically matches the population on unstratified fields.",
   "seed": 42,
   "source_lock_sha256": "ff1d79515c4394920e943843d176cd79d6ac64738b795f0fb55b45306194c053",

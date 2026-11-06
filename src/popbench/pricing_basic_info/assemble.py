@@ -149,6 +149,7 @@ def assemble_dataset(
     sample = {
         "allocation": draw["allocation"],
         "dataset": dataset,
+        "joint_quota_adjustment": draw["joint_quota_adjustment"],
         "margin_balance": draw["margin_balance"],
         "marginal_allocation": draw["marginal_allocation"],
         "population_size": draw["population_size"],

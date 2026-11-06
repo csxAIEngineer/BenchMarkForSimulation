@@ -12,6 +12,11 @@
     "Prefer not to answer": 10
   },
   "dataset": "bdm_lettuce",
+  "joint_quota_adjustment": {
+    "applied": false,
+    "exact_cell_quota": false,
+    "note": "One stratifier has no joint table. Hamilton margins are the whole allocation."
+  },
   "margin_balance": {
     "survey_q15_income": {
       "$0-$14,999 CAD": {

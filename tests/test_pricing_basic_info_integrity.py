@@ -150,3 +150,53 @@ def test_two_independent_builds_match(tmp_path: Path):
     from popbench.pricing_basic_info.pipeline import verify_outputs
 
     verify_outputs(left[0])
+
+
+def test_verify_skips_absent_outcomes_and_rejects_tamper_or_extra_files(tmp_path: Path):
+    config = _config(tmp_path, output=OUTPUT, cache=tmp_path / "no-outcomes")
+    skipped = _run(["--verify", str(config)])
+    assert skipped.returncode == 0, skipped.stderr
+    report = json.loads(skipped.stdout)
+    assert report["cache_outputs"] == "skipped_absent"
+    assert report["cache_outputs_checked"] == []
+
+    copied = tmp_path / "deliverables"
+    copied.mkdir()
+    for path in OUTPUT.rglob("*"):
+        if path.is_file():
+            target = copied / path.relative_to(OUTPUT)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(path.read_bytes())
+    (copied / "notes.txt").write_text("not a deliverable\n", encoding="utf-8")
+    extra_config = _config(tmp_path, output=copied, cache=tmp_path / "still-empty")
+    extra = _run(["--verify", str(extra_config)])
+    assert extra.returncode != 0
+    assert "unregistered file" in extra.stderr
+    (copied / "notes.txt").unlink()
+
+    manifest = json.loads((copied / "manifest.json").read_text(encoding="utf-8"))
+    cache = tmp_path / "cache" / "outcomes"
+    for name in manifest["cache_outputs"]:
+        path = cache / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("tampered outcomes\n", encoding="utf-8")
+    tamper_config = _config(tmp_path, output=copied, cache=tmp_path / "cache")
+    tampered = _run(["--verify", str(tamper_config)])
+    assert tampered.returncode != 0
+    assert "cache hash mismatch" in tampered.stderr
+
+    raw_note = tmp_path / "cache" / "raw" / "notes.txt"
+    raw_note.parent.mkdir(parents=True, exist_ok=True)
+    raw_note.write_text("raw cache is outside the deliverable directory\n", encoding="utf-8")
+    for name, meta in manifest["cache_outputs"].items():
+        path = cache / name
+        path.write_bytes(b"x" * int(meta["bytes"]))
+    # The bytes above are the wrong content on purpose only if the hash still mismatches.
+    # Replace them with a second tamper check already done. A file under raw/ must not
+    # be treated as an extra deliverable: remove outcome files so verify skips them.
+    for name in manifest["cache_outputs"]:
+        (cache / name).unlink()
+    raw_config = _config(tmp_path, output=copied, cache=tmp_path / "cache")
+    raw_ok = _run(["--verify", str(raw_config)])
+    assert raw_ok.returncode == 0, raw_ok.stderr
+    assert json.loads(raw_ok.stdout)["cache_outputs"] == "skipped_absent"

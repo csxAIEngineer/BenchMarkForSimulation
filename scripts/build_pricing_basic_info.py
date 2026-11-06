@@ -4,12 +4,14 @@
 From the repository root, with the committed source lock already present:
 
     pip install -e ".[dev]"
-    python scripts/build_pricing_basic_info.py
+    python3 scripts/build_pricing_basic_info.py
 
 That command downloads missing sources, checks every cached file against
 source-lock.json, and writes cards. It does not create or replace the lock.
+Use ``python3``, not ``python``: this repository's scripts and tests are
+run with Python 3, and a bare ``python`` command is not assumed to exist.
 
-    python scripts/build_pricing_basic_info.py --verify
+    python3 scripts/build_pricing_basic_info.py --verify
 
 recomputes hashes of the committed artifacts and does not refresh them.
 
@@ -53,8 +55,8 @@ def main(argv: list[str] | None = None) -> int:
     output = ROOT / str(config["output_dir"])
     try:
         if args.verify:
-            verify_outputs(output)
-            print(json.dumps({"verified": True, "output_dir": str(config["output_dir"])}, indent=2))
+            report = verify_outputs(output, cache=ROOT / str(config["cache_dir"]))
+            print(json.dumps({"verified": True, **report}, indent=2))
             return 0
         manifest = run_build(ROOT, config, init_source_lock=args.init_source_lock)
     except (SourceIntegrityError, ValueError, OSError) as exc:

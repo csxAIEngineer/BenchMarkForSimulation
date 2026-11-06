@@ -451,3 +451,58 @@ def test_two_margins_stay_inside_the_hamilton_unit_at_fixed_seed():
         dataset="twin2k_500",
     )
     assert again["subject_ids"] == draw["subject_ids"]
+
+
+def test_reverse_2x2_swaps_run_and_do_not_stack_on_the_same_step():
+    from popbench.pricing_basic_info.sample import _repair_toward_quota
+
+    table = {("A", "X"): 5, ("A", "Y"): 0, ("B", "X"): 0, ("B", "Y"): 5}
+    caps = {cell: 10 for cell in table}
+    _repaired, stats = _repair_toward_quota(table, caps, sample_size=10, population=40)
+    assert stats["swap_count"] > 0
+    assert stats["exact_cell_quota"] is False
+    assert float(stats["l1_after"]) < float(stats["l1_before"])
+    assert any(swap["direction"] == "reverse" for swap in stats["swaps"])
+    for swap in stats["swaps"]:
+        assert len(swap["cells"]) == len(set(swap["cells"])) == 4
+    assert _repaired[("A", "X")] < 5
+    assert _repaired[("A", "Y")] > 0
+
+
+def test_twin_joint_repair_moves_the_stuck_cells_and_keeps_seed_42():
+    import csv
+    from decimal import Decimal
+
+    path = ROOT / "data/pricing_basic_info/raw/twin2k/question_catalog_and_human_response_csv/wave1_3_response_label.csv"
+    if not path.is_file():
+        pytest.skip("pinned Twin-2K label file is not in the raw cache")
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    draw = stratified_sample(
+        rows,
+        stratify_columns=("QID21", "QID23"),
+        sample_size=93,
+        seed=42,
+        dataset="twin2k_500",
+    )
+    again = stratified_sample(
+        rows,
+        stratify_columns=("QID21", "QID23"),
+        sample_size=93,
+        seed=42,
+        dataset="twin2k_500",
+    )
+    stats = draw["joint_quota_adjustment"]
+    assert stats["swap_count"] > 0
+    assert Decimal(stats["l1_after"]) < Decimal(stats["l1_before"])
+    assert stats["exact_cell_quota"] is False
+    assert draw["subject_ids"] == again["subject_ids"]
+    assert len(draw["subject_ids"]) == len(set(draw["subject_ids"])) == 93
+    high_one = draw["allocation"]["$100,000 or more\x1f1"]
+    low_one = draw["allocation"]["Less than $30,000\x1f1"]
+    assert high_one <= 3
+    assert low_one >= 5
+    for column in ("QID21", "QID23"):
+        for level in draw["margin_balance"][column].values():
+            assert float(level["absolute_gap"]) < 1
+    assert draw["marginal_allocation"] == again["marginal_allocation"]

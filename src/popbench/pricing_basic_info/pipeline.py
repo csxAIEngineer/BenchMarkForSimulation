@@ -152,8 +152,20 @@ def run_build(root: Path, config: Mapping[str, object], *, init_source_lock: boo
     return manifest
 
 
-def verify_outputs(output: Path) -> dict[str, object]:
-    """Recompute every recorded hash. Do not download or rewrite."""
+ALLOWED_UNHASHED_FILES = frozenset({"README.md"})
+
+
+def verify_outputs(output: Path, *, cache: Path | None = None) -> dict[str, object]:
+    """Recompute recorded hashes. Do not download or rewrite.
+
+    The deliverable directory rejects files that are not hashed outputs,
+    ``manifest.json``, ``source-lock.json``, or ``README.md``. Raw caches
+    live outside that directory and are not part of this scan.
+
+    Recorded outcome files are hashed when they are present. A fresh clone
+    with none of them returns ``cache_outputs: skipped_absent`` and does
+    not claim those files were checked.
+    """
     manifest_path = output / "manifest.json"
     if not manifest_path.is_file():
         raise SourceIntegrityError(f"manifest is missing: {manifest_path}")
@@ -170,8 +182,17 @@ def verify_outputs(output: Path) -> dict[str, object]:
         raise SourceIntegrityError("source-lock.json is missing")
     if sha256_file(lock_path) != manifest.get("source_lock_sha256"):
         raise SourceIntegrityError("source-lock.json does not match manifest source_lock_sha256")
-    _verify_group(output, manifest.get("committed_outputs"), label="committed")
-    return manifest
+    committed = manifest.get("committed_outputs")
+    _verify_group(output, committed, label="committed")
+    _reject_unregistered_files(output, committed)
+    cache_report = _verify_cache_outputs(cache, manifest.get("cache_outputs"))
+    return {
+        "cache_outputs": cache_report["status"],
+        "cache_outputs_checked": cache_report["checked"],
+        "cache_outputs_skipped": cache_report["skipped"],
+        "committed_outputs": "verified",
+        "extra_files": "none",
+    }
 
 
 def _verify_group(root: Path, group: object, *, label: str) -> None:
@@ -187,6 +208,48 @@ def _verify_group(root: Path, group: object, *, label: str) -> None:
         size = path.stat().st_size
         if digest != meta.get("sha256") or size != meta.get("bytes"):
             raise SourceIntegrityError(f"{label} hash mismatch: {name}")
+
+
+def _reject_unregistered_files(output: Path, committed: object) -> None:
+    if not isinstance(committed, dict):
+        raise SourceIntegrityError("committed outputs are missing from the manifest")
+    allowed = set(committed) | {"manifest.json", "source-lock.json"} | set(ALLOWED_UNHASHED_FILES)
+    extras = []
+    for path in output.rglob("*"):
+        if not path.is_file():
+            continue
+        name = path.relative_to(output).as_posix()
+        if name not in allowed:
+            extras.append(name)
+    if extras:
+        raise SourceIntegrityError("unregistered file in the deliverable directory: " + ", ".join(sorted(extras)))
+
+
+def _verify_cache_outputs(cache: Path | None, group: object) -> dict[str, object]:
+    if not isinstance(group, dict) or not group:
+        return {"checked": [], "skipped": [], "status": "skipped_absent"}
+    if cache is None:
+        return {"checked": [], "skipped": sorted(str(name) for name in group), "status": "skipped_absent"}
+    checked: list[str] = []
+    skipped: list[str] = []
+    for name, meta in sorted(group.items()):
+        path = cache / "outcomes" / str(name)
+        if not path.is_file():
+            skipped.append(str(name))
+            continue
+        if not isinstance(meta, dict):
+            raise SourceIntegrityError(f"cache entry {name} is not an object")
+        digest = sha256_file(path)
+        if digest != meta.get("sha256") or path.stat().st_size != meta.get("bytes"):
+            raise SourceIntegrityError(f"cache hash mismatch: {name}")
+        checked.append(str(name))
+    if checked and skipped:
+        status = "partial"
+    elif checked:
+        status = "verified"
+    else:
+        status = "skipped_absent"
+    return {"checked": checked, "skipped": skipped, "status": status}
 
 
 def _manifest_sha256(manifest: Mapping[str, object]) -> str:
