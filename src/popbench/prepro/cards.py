@@ -6,11 +6,13 @@ source column. Empty cells stay empty in the form of the MISSING token.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 
 from popbench.prepro.spec import (
     CARD_KEYS,
     CARD_VERSION,
+    EVIDENCE_KEYS,
     FIELD_KEYS,
     ID_COLUMN,
     MISSING_TOKEN,
@@ -18,7 +20,10 @@ from popbench.prepro.spec import (
     QUESTION_TEXT_UNAVAILABLE,
     STATUS_MISSING,
     STATUS_PRESENT,
+    demographic_meta,
 )
+
+_QUESTION_ID = re.compile(r"QID\d+")
 
 
 class CardBuildError(ValueError):
@@ -80,14 +85,27 @@ def build_card(
             options = [str(option) for option in raw_options]
             if status == STATUS_PRESENT and options and value not in options:
                 raise CardBuildError(f"{column} value {value!r} is not in the catalog options")
+        meta = demographic_meta(column)
+        evidence = {
+            "qid": meta["qid"],
+            "source_column": column,
+            "source_file": source_file,
+        }
+        if set(evidence) != EVIDENCE_KEYS:
+            raise CardBuildError("evidence keys drifted")
         fields.append(
             {
+                "demographic_match": meta["demographic_match"],
+                "evidence": evidence,
+                "label": meta["label"],
+                "qid": meta["qid"],
                 "source_column": column,
                 "source_options": options,
                 "source_question_id": column,
                 "source_question_text": stem,
                 "source_question_text_status": stem_status,
                 "status": status,
+                "unmapped_reason": meta["unmapped_reason"],
                 "value": value,
             }
         )
@@ -113,18 +131,31 @@ def build_card(
     return card
 
 
-def basics_label(field: Mapping[str, object]) -> str:
-    """Model-facing label for one Basics line.
+def basics_line(field: Mapping[str, object]) -> str:
+    """One Basics line for the model.
 
-    A catalog stem is copied unchanged, including a truncated sentence.
-    When the source has no stem, the line keeps the source column id.
+    Uses the Chinese field name and, when the catalog has one, the stem.
+    Question ids and the audit key ``evidence`` stay off this line.
     """
+    value = str(field["value"])
+    label = field.get("label")
+    stem = None
     if field.get("source_question_text_status") == QUESTION_TEXT_COPIED:
-        stem = field.get("source_question_text")
-        if not isinstance(stem, str) or stem == "":
+        copied = field.get("source_question_text")
+        if not isinstance(copied, str) or copied == "":
             raise CardBuildError("copied question text is missing")
-        return stem
-    return str(field["source_column"])
+        stem = copied
+    if isinstance(label, str) and label and stem is not None:
+        line = f"{label}: {stem}: {value}"
+    elif stem is not None:
+        line = f"{stem}: {value}"
+    elif isinstance(label, str) and label:
+        line = f"{label}: {value}"
+    else:
+        line = f"{field['source_column']}: {value}"
+    if _QUESTION_ID.search(line) or "evidence" in line:
+        raise CardBuildError("model-facing basics line contains a question id or the word evidence")
+    return line
 
 
 def render_text(
@@ -144,5 +175,8 @@ def render_text(
         "## Basics",
     ]
     for field in fields:
-        lines.append(f"{basics_label(field)}: {field['value']}")
-    return "\n".join(lines) + "\n"
+        lines.append(basics_line(field))
+    text = "\n".join(lines) + "\n"
+    if _QUESTION_ID.search(text) or "evidence" in text:
+        raise CardBuildError("model-facing card text contains a question id or the word evidence")
+    return text

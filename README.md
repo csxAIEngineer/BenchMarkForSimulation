@@ -16,7 +16,7 @@ pip install -e ".[dev]"
 
 ## 1. 人物卡预处理
 
-把 Twin-2K-500 与加拿大 BDM 生菜实验的原文基本资料抄成人物卡，并按种子 42 抽样。不调用语言模型，不补写生活史，不把空单元格写成倾向。Twin-2K 给模型看的 Basics 行是目录原文题干加答案；BDM 没有可抄题干，仍用列名。算法、列约束和源文件锁见 `experiments/prepro/README.md`。锁文件是 `experiments/prepro/source-lock.json`。
+把 Twin-2K-500 与加拿大 BDM 生菜实验的原文基本资料抄成人物卡，并按种子 42 抽样。不调用语言模型，不补写生活史，不把空单元格写成倾向。Twin-2K 给模型看的 Basics 行是中文标签、目录原文题干和答案，不含题号。题号只留在 `basic_info`。BDM 与这 14 项不是同一问卷，差异见 `experiments/prepro/README.md`。算法、列约束和源文件锁也在那里。锁文件是 `experiments/prepro/source-lock.json`。
 
 ```bash
 python3 scripts/build_prepro.py

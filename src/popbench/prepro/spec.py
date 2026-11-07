@@ -6,12 +6,40 @@ them off the card. Question wording is not invented here.
 
 from __future__ import annotations
 
-CARD_VERSION = "basic-info-v1"
+CARD_VERSION = "basic-info-v2"
 MISSING_TOKEN = "MISSING"
 
-# Qualtrics demographic block. Order is QID11–QID24.
-# Stems are read from question_catalog.json at build time.
-TWIN_BASIC_COLUMNS: tuple[str, ...] = tuple(f"QID{index}" for index in range(11, 25))
+# The fourteen Twin-2K demographic items, in QID order. Labels are field names.
+# They are not rewrites of the catalog stem. Stems are copied separately.
+TWIN_DEMOGRAPHICS: tuple[tuple[str, str], ...] = (
+    ("QID11", "地区"),
+    ("QID12", "性别"),
+    ("QID13", "年龄段"),
+    ("QID14", "学历"),
+    ("QID15", "种族"),
+    ("QID16", "公民"),
+    ("QID17", "婚姻"),
+    ("QID18", "宗教"),
+    ("QID19", "礼拜频率"),
+    ("QID20", "党派"),
+    ("QID21", "家庭收入"),
+    ("QID22", "政治倾向"),
+    ("QID23", "家庭人数"),
+    ("QID24", "就业"),
+)
+TWIN_LABEL_BY_QID: dict[str, str] = dict(TWIN_DEMOGRAPHICS)
+TWIN_BASIC_COLUMNS: tuple[str, ...] = tuple(qid for qid, _label in TWIN_DEMOGRAPHICS)
+
+# BDM columns that name the same concept as one Twin item, on a different instrument.
+# The cell is not a Twin answer, so these rows do not receive a Twin qid.
+BDM_SAME_CONCEPT: dict[str, str] = {
+    "survey_q02_sex": "性别",
+    "survey_q14_political": "政治倾向",
+    "survey_q15_income": "家庭收入",
+    "survey_q16_education": "学历",
+    "survey_q17_household_size": "家庭人数",
+}
+# survey_q01_age is age in years, not the Twin age band, so it is not 年龄段.
 TWIN_STRATIFY_COLUMNS: tuple[str, ...] = ("QID21", "QID23")
 TWIN_PRICING_IDS: tuple[str, ...] = tuple(f"QID9_{index}" for index in range(1, 41))
 TWIN_PUBLISHED_N = 2058
@@ -105,15 +133,55 @@ CARD_KEYS = frozenset(
 )
 FIELD_KEYS = frozenset(
     {
+        "demographic_match",
+        "evidence",
+        "label",
+        "qid",
         "source_column",
         "source_options",
         "source_question_id",
         "source_question_text",
         "source_question_text_status",
         "status",
+        "unmapped_reason",
         "value",
     }
 )
+EVIDENCE_KEYS = frozenset({"qid", "source_column", "source_file"})
+
+MATCH_TWIN_ITEM = "twin_item"
+MATCH_SAME_CONCEPT = "same_concept_different_instrument"
+MATCH_NONE = "no_counterpart"
+
+
+def demographic_meta(column: str) -> dict[str, object]:
+    """Audit metadata for one basic-info column. This is not model-facing text."""
+    if column in TWIN_LABEL_BY_QID:
+        return {
+            "demographic_match": MATCH_TWIN_ITEM,
+            "label": TWIN_LABEL_BY_QID[column],
+            "qid": column,
+            "unmapped_reason": None,
+        }
+    concept = BDM_SAME_CONCEPT.get(column)
+    if concept is not None:
+        return {
+            "demographic_match": MATCH_SAME_CONCEPT,
+            "label": concept,
+            "qid": None,
+            "unmapped_reason": None,
+        }
+    if column == "survey_q01_age":
+        reason = "exact age in years, not an age band"
+    else:
+        reason = "not one of the 14 demographic items"
+    return {
+        "demographic_match": MATCH_NONE,
+        "label": None,
+        "qid": None,
+        "unmapped_reason": reason,
+    }
+
 
 QUESTION_TEXT_COPIED = "copied_from_question_catalog"
 QUESTION_TEXT_UNAVAILABLE = "unavailable_machine_readable_wording"

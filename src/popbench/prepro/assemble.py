@@ -9,12 +9,12 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 
-from popbench.prepro.cards import basics_label, build_card, normalize_cell
+from popbench.prepro.cards import basics_line, build_card, normalize_cell
 from popbench.prepro.columns import assert_row_columns
 from popbench.prepro.report import distribution_report
 from popbench.prepro.sample import planned_sample_size, stratified_sample
 from popbench.prepro.serialize import dump_jsonl, dumps
-from popbench.prepro.spec import ID_COLUMN, MISSING_TOKEN
+from popbench.prepro.spec import ID_COLUMN, MISSING_TOKEN, demographic_meta
 
 _GENERATED_MARKERS = (
     "## Life history",
@@ -54,15 +54,20 @@ def field_map(
             stem = question_text[column]
             stem_status = "copied_from_question_catalog"
             options = list(question_options[column]) if question_options is not None else []
+        meta = demographic_meta(column)
         fields.append(
             {
                 "card_section": "Basics",
+                "demographic_match": meta["demographic_match"],
+                "label": meta["label"],
+                "qid": meta["qid"],
                 "source_column": column,
                 "source_file": source_file,
                 "source_options": options,
                 "source_question_id": column,
                 "source_question_text": stem,
                 "source_question_text_status": stem_status,
+                "unmapped_reason": meta["unmapped_reason"],
                 "transform": (
                     "Copy the cell after removing only leading and trailing whitespace. "
                     f"A blank cell is stored as {MISSING_TOKEN}. "
@@ -221,7 +226,7 @@ def _line_values(fields: object, basics: str) -> set[str]:
     if isinstance(fields, list):
         for field in fields:
             if isinstance(field, dict) and "value" in field:
-                expected[f"{basics_label(field)}: {field['value']}"] = str(field["value"])
+                expected[basics_line(field)] = str(field["value"])
     values: set[str] = set()
     for line in basics.splitlines():
         if line in expected:

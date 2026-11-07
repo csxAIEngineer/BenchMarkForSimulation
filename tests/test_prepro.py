@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 from pathlib import Path
 
 import pytest
 
 from popbench.prepro.assemble import assemble_dataset
-from popbench.prepro.cards import CardBuildError, basics_label, build_card
+from popbench.prepro.cards import CardBuildError, basics_line, build_card
 from popbench.prepro.report import distribution_report
 from popbench.prepro.sample import cochran_n0, finite_population_n, planned_sample_size, stratified_sample
 from popbench.prepro.spec import (
@@ -21,6 +22,8 @@ from popbench.prepro.spec import (
     STATUS_MISSING,
     STATUS_PRESENT,
     TWIN_BASIC_COLUMNS,
+    TWIN_DEMOGRAPHICS,
+    TWIN_STRATIFY_COLUMNS,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -130,6 +133,27 @@ def test_bdm_columns_follow_the_survey_names_and_not_paraphrases():
     assert "Importance of price" not in BDM_BASIC_COLUMNS
 
 
+def test_twin_demographics_are_the_fourteen_named_items():
+    assert TWIN_BASIC_COLUMNS == tuple(f"QID{index}" for index in range(11, 25))
+    assert TWIN_STRATIFY_COLUMNS == ("QID21", "QID23")
+    assert [label for _qid, label in TWIN_DEMOGRAPHICS] == [
+        "地区",
+        "性别",
+        "年龄段",
+        "学历",
+        "种族",
+        "公民",
+        "婚姻",
+        "宗教",
+        "礼拜频率",
+        "党派",
+        "家庭收入",
+        "政治倾向",
+        "家庭人数",
+        "就业",
+    ]
+
+
 def test_bdm_text_keeps_the_column_id_when_no_stem_exists():
     card = build_card(
         {"pid": "1", "survey_q01_age": "32"},
@@ -138,10 +162,39 @@ def test_bdm_text_keeps_the_column_id_when_no_stem_exists():
         columns=("survey_q01_age",),
         question_text=None,
     )
-    assert card["basic_info"][0]["source_question_text"] is None
-    assert card["basic_info"][0]["source_question_text_status"] == "unavailable_machine_readable_wording"
-    assert "survey_q01_age: 32" in str(card["text"])
-    assert "How old" not in str(card["text"])
+    field = card["basic_info"][0]
+    assert field["source_question_text"] is None
+    assert field["source_question_text_status"] == "unavailable_machine_readable_wording"
+    assert field["qid"] is None
+    assert field["label"] is None
+    assert field["demographic_match"] == "no_counterpart"
+    assert field["evidence"]["source_column"] == "survey_q01_age"
+    text = str(card["text"])
+    assert "survey_q01_age: 32" in text
+    assert "年龄段" not in text
+    assert "How old" not in text
+    assert re.search(r"QID\d+", text) is None
+    assert "evidence" not in text
+
+
+def test_bdm_same_concept_uses_a_label_and_keeps_the_column_in_evidence():
+    card = build_card(
+        {"pid": "1", "survey_q02_sex": "Female"},
+        dataset="bdm_lettuce",
+        source_file="20240723_VFExperiment_01.csv",
+        columns=("survey_q02_sex",),
+        question_text=None,
+    )
+    field = card["basic_info"][0]
+    assert field["label"] == "性别"
+    assert field["qid"] is None
+    assert field["demographic_match"] == "same_concept_different_instrument"
+    assert field["evidence"]["source_column"] == "survey_q02_sex"
+    text = str(card["text"])
+    assert "性别: Female" in text
+    assert "survey_q02_sex" not in text
+    assert re.search(r"QID\d+", text) is None
+    assert "evidence" not in text
 
 
 def test_card_copies_cells_and_keeps_refusal_and_blank_distinct():
@@ -162,12 +215,14 @@ def test_card_copies_cells_and_keeps_refusal_and_blank_distinct():
     assert by_column["QID21"]["value"] == MISSING_TOKEN
     assert by_column["QID21"]["status"] == STATUS_MISSING
     text = str(card["text"])
-    assert "What is your current employment status?: Part-time employment" in text
-    assert "Last year, what was your total family income from all sources, before taxes?: MISSING" in text
-    assert "In politics today, do you consider yourself a: Prefer not to answer" in text
-    assert "QID24:" not in text
-    assert "QID21:" not in text
-    assert "QID20:" not in text
+    assert "就业: What is your current employment status?: Part-time employment" in text
+    assert "家庭收入: Last year, what was your total family income from all sources, before taxes?: MISSING" in text
+    assert "党派: In politics today, do you consider yourself a: Prefer not to answer" in text
+    assert by_column["QID20"]["qid"] == "QID20"
+    assert by_column["QID20"]["evidence"]["qid"] == "QID20"
+    assert by_column["QID20"]["evidence"]["source_column"] == "QID20"
+    assert re.search(r"QID\d+", text) is None
+    assert "evidence" not in text
     assert "20" not in text.split("What is your current employment status?: ", 1)[1]
     assert "over $50,000" not in text
     assert "consider yourself a Republican" not in text
@@ -318,10 +373,11 @@ def test_local_pid_1732_card_matches_the_label_file_snapshot():
     for field in found["basic_info"]:
         assert field["value"] == PID_1732[field["source_column"]]
         assert field["status"] == STATUS_PRESENT
-        assert f"{basics_label(field)}: {field['value']}" in found["text"]
-        if field["source_question_text_status"] == "copied_from_question_catalog":
-            assert f"{field['source_column']}:" not in found["text"]
-            assert field["source_question_text"] in found["text"]
+        assert basics_line(field) in found["text"]
+        assert field["qid"] == field["source_column"]
+        assert field["evidence"]["qid"] == field["source_column"]
+    assert re.search(r"QID\d+", found["text"]) is None
+    assert "evidence" not in found["text"]
     assert "South" not in found["text"]
     assert "White" not in found["text"]
     assert "Never been married" not in found["text"]

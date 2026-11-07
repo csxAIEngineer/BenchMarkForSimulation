@@ -16,6 +16,7 @@ from popbench.prepro.sample import require_int
 from popbench.prepro.serialize import dumps, sha256_file, sha256_text, write_bytes
 from popbench.prepro.sources import load_bdm_table, load_twin_tables
 from popbench.prepro.spec import (
+    CARD_VERSION,
     BDM_ADMIN_COLUMNS,
     BDM_BASIC_COLUMNS,
     BDM_DATASET,
@@ -133,7 +134,7 @@ def run_build(root: Path, config: Mapping[str, object], *, init_source_lock: boo
     cache_outputs = _write_outcomes(cache / "outcomes", twin_docs["outcomes.jsonl"], bdm_docs["outcomes.jsonl"])
     manifest = {
         "cache_outputs": cache_outputs,
-        "card_version": "basic-info-v1",
+        "card_version": CARD_VERSION,
         "committed_outputs": committed,
         "scope": (
             "Hashes name logical artifacts. They do not include output_dir, "
