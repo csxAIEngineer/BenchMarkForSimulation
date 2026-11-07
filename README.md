@@ -18,6 +18,25 @@ pip install -e ".[dev]"
 
 把 Twin-2K-500 与加拿大 BDM 生菜实验的原文基本资料抄成人物卡，并按种子 42 抽样。不调用语言模型，不补写生活史，不把空单元格写成倾向。Twin-2K 给模型看的正文只有 14 行 `标签: 题干: 答案`，标签是短英文，不含题号、中文和 Identity。题号只留在 `basic_info`。BDM 与这 14 项不是同一问卷，差异见 `experiments/prepro/README.md`。算法、列约束和源文件锁也在那里。锁文件是 `experiments/prepro/source-lock.json`。
 
+下面是 `subject_id` 为 1 的模型侧 `text`。这不是审计用的 `basic_info`；QID 和 evidence 不在这段正文里。
+
+```text
+Region: Which part of the United States do you currently live in?: Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)
+Sex: What is the sex that you were assigned at birth?: Female
+Age: How old are you?: 30-49
+Educ: What is the highest level of schooling or degree that you have completed?: Some college, no degree
+Race: What is your race or origin?: Black
+Citizen: Are you a citizen of the United States?: Yes
+Marital: Which of these best describes you?: Married
+Religion: What is your present religion, if any?: Nothing in particular
+Attend: Aside from weddings and funerals, how often do you attend religious services?: A few times a year
+Party: In politics today, do you consider yourself a: Independent
+Income: Last year, what was your total family income from all sources, before taxes?: $50,000-$75,000
+Ideology: In general, would you describe your political views as: Moderate
+HHSize: Including yourself, how many people currently live in your household?: 3
+Employ: What is your current employment status?: Part-time employment
+```
+
 ```bash
 python3 scripts/build_prepro.py
 python3 scripts/build_prepro.py --verify
