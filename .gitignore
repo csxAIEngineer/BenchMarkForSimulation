@@ -1,7 +1,14 @@
-# Dataset caches and run output. Fetch with `benchmark fetch`.
-# Do not commit Twin-2K microdata, Mega-Study exports, or SimBench downloads.
+# Local inputs, generated cards, simulation replies, and reports.
+# Regenerate with scripts/build_prepro.py, scripts/simulate.py, and scripts/evaluate.py.
 data/
+reports/
+outputs/
+artifacts/
 runs/
+
+# Columnar source extracts and row dumps, wherever they land.
+*.parquet
+*.jsonl
 
 # Python
 __pycache__/

@@ -1,0 +1,7 @@
+{
+  "responses_dir": "outputs/simulate",
+  "outcomes_dir": "data/prepro/outcomes",
+  "output": "outputs/evaluate/report.json",
+  "model": "deepseek-v4-pro",
+  "datasets": ["twin2k_500", "bdm_lettuce"]
+}

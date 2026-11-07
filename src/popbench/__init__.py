@@ -1,13 +1,8 @@
-"""Population simulation benchmark, split into three layers.
+"""Three local steps: basic-info cards, CR API simulation, and evaluation.
 
-- ``popbench.datasets`` loads Twin-2K-500, Twin-2K-500-Mega-Study, and SimBench.
-- ``popbench.models`` turns a case into a persona prompt. One directory per method.
-- ``popbench.comms`` sends that prompt to an LLM provider.
-
-The package name stays ``popbench`` so it does not shadow the Hugging Face
-``datasets`` library.
+Generated cards, outcomes, responses, and reports stay outside git.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = ["__version__"]
