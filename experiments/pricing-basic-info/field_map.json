@@ -1,0 +1,510 @@
+{
+  "bdm_lettuce": {
+    "blocked_columns": [
+      "local_field",
+      "local_greenhouse",
+      "local_vertical",
+      "nonlocal_field",
+      "nonlocal_greenhouse",
+      "nonlocal_vertical",
+      "conclusion_purchased_product",
+      "treatment",
+      "treatment3_order",
+      "cluster_order",
+      "local_order",
+      "nonlocal_order",
+      "conclusion_selected_product",
+      "conclusion_generated_price",
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5",
+      "last_page",
+      "overall_start_time",
+      "bidding_start_time",
+      "bidding_end_time",
+      "overall_end_time"
+    ],
+    "dataset": "bdm_lettuce",
+    "fields": [
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q01_age",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q01_age",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q02_sex",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q02_sex",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q03_price",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q03_price",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q03_locally_grown",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q03_locally_grown",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q03_pesticide_free",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q03_pesticide_free",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q03_brand_name",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q03_brand_name",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q04_heard_of_vertical_farming",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q04_heard_of_vertical_farming",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q05_heard_of_greenhouse_growing",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q05_heard_of_greenhouse_growing",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q06_primary_grocery",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q06_primary_grocery",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q07_primary_cook",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q07_primary_cook",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q08_leafy_green_meals",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q08_leafy_green_meals",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q09_not_prepared_meals",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q09_not_prepared_meals",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q10_try_novel_technology",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q10_try_novel_technology",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q11_grow_own_food",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q11_grow_own_food",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q12_variety_concern",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q12_variety_concern",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q13_lack_of_resources",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q13_lack_of_resources",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q14_political",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q14_political",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q15_income",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q15_income",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q16_education",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q16_education",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "survey_q17_household_size",
+        "source_file": "20240723_VFExperiment_01.csv",
+        "source_options": null,
+        "source_question_id": "survey_q17_household_size",
+        "source_question_text": null,
+        "source_question_text_status": "unavailable_machine_readable_wording",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      }
+    ],
+    "source_file": "20240723_VFExperiment_01.csv"
+  },
+  "twin2k_500": {
+    "blocked_columns": [
+      "QID9_1",
+      "QID9_2",
+      "QID9_3",
+      "QID9_4",
+      "QID9_5",
+      "QID9_6",
+      "QID9_7",
+      "QID9_8",
+      "QID9_9",
+      "QID9_10",
+      "QID9_11",
+      "QID9_12",
+      "QID9_13",
+      "QID9_14",
+      "QID9_15",
+      "QID9_16",
+      "QID9_17",
+      "QID9_18",
+      "QID9_19",
+      "QID9_20",
+      "QID9_21",
+      "QID9_22",
+      "QID9_23",
+      "QID9_24",
+      "QID9_25",
+      "QID9_26",
+      "QID9_27",
+      "QID9_28",
+      "QID9_29",
+      "QID9_30",
+      "QID9_31",
+      "QID9_32",
+      "QID9_33",
+      "QID9_34",
+      "QID9_35",
+      "QID9_36",
+      "QID9_37",
+      "QID9_38",
+      "QID9_39",
+      "QID9_40"
+    ],
+    "dataset": "twin2k_500",
+    "fields": [
+      {
+        "card_section": "Basics",
+        "source_column": "QID11",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Northeast (PA, NY, NJ, RI, CT, MA, VT, NH, ME)",
+          "Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)",
+          "South (TX, OK, AR, LA, KY, TN, MS, AL, WV, DC, MD, DE, VA, NC, SC, GA, FL)",
+          "West (WA, OR, ID, MT, WY, CA, NV, UT, CO, AZ, NM)",
+          "Pacific (HI, AK)"
+        ],
+        "source_question_id": "QID11",
+        "source_question_text": "Which part of the United States do you currently live in?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID12",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Male",
+          "Female"
+        ],
+        "source_question_id": "QID12",
+        "source_question_text": "What is the sex that you were assigned at birth?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID13",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "18-29",
+          "30-49",
+          "50-64",
+          "65+"
+        ],
+        "source_question_id": "QID13",
+        "source_question_text": "How old are you?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID14",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Less than high school",
+          "High school graduate",
+          "Some college, no degree",
+          "Associate's degree",
+          "College graduate/some postgrad",
+          "Postgraduate"
+        ],
+        "source_question_id": "QID14",
+        "source_question_text": "What is the highest level of schooling or degree that you have completed?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID15",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "White",
+          "Black",
+          "Asian",
+          "Hispanic",
+          "Other"
+        ],
+        "source_question_id": "QID15",
+        "source_question_text": "What is your race or origin?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID16",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Yes",
+          "No"
+        ],
+        "source_question_id": "QID16",
+        "source_question_text": "Are you a citizen of the United States?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID17",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Married",
+          "Living with a partner",
+          "Divorced",
+          "Separated",
+          "Widowed",
+          "Never been married"
+        ],
+        "source_question_id": "QID17",
+        "source_question_text": "Which of these best describes you?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID18",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Protestant",
+          "Roman Catholic",
+          "Mormon",
+          "Orthodox",
+          "Jewish",
+          "Muslim",
+          "Buddhist",
+          "Hindu",
+          "Atheist",
+          "Agnostic",
+          "Other",
+          "Nothing in particular"
+        ],
+        "source_question_id": "QID18",
+        "source_question_text": "What is your present religion, if any?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID19",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "More than once a week",
+          "Once a week",
+          "Once or twice a month",
+          "A few times a year",
+          "Seldom",
+          "Never"
+        ],
+        "source_question_id": "QID19",
+        "source_question_text": "Aside from weddings and funerals, how often do you attend religious services?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID20",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Republican",
+          "Democrat",
+          "Independent",
+          "Something else"
+        ],
+        "source_question_id": "QID20",
+        "source_question_text": "In politics today, do you consider yourself a",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID21",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Less than $30,000",
+          "$30,000-$50,000",
+          "$50,000-$75,000",
+          "$75,000-$100,000",
+          "$100,000 or more"
+        ],
+        "source_question_id": "QID21",
+        "source_question_text": "Last year, what was your total family income from all sources, before taxes?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID22",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Very conservative",
+          "Conservative",
+          "Moderate",
+          "Liberal",
+          "Very liberal"
+        ],
+        "source_question_id": "QID22",
+        "source_question_text": "In general, would you describe your political views as",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID23",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "More than 4"
+        ],
+        "source_question_id": "QID23",
+        "source_question_text": "Including yourself, how many people currently live in your household?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      },
+      {
+        "card_section": "Basics",
+        "source_column": "QID24",
+        "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "source_options": [
+          "Full-time employment",
+          "Part-time employment",
+          "Unemployed",
+          "Self-employed",
+          "Home-maker",
+          "Student",
+          "Retired"
+        ],
+        "source_question_id": "QID24",
+        "source_question_text": "What is your current employment status?",
+        "source_question_text_status": "copied_from_question_catalog",
+        "transform": "Copy the cell after removing only leading and trailing whitespace. A blank cell is stored as MISSING. A cell whose text is that token fails. No other value is inferred."
+      }
+    ],
+    "source_file": "question_catalog_and_human_response_csv/wave1_3_response_label.csv"
+  }
+}

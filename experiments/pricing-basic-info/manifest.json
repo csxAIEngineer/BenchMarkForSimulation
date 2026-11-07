@@ -1,0 +1,89 @@
+{
+  "cache_outputs": {
+    "bdm_lettuce/outcomes.jsonl": {
+      "bytes": 543579,
+      "committed": false,
+      "sha256": "5f94f6cf131937ebd64b06000df672a56d9a831287aadbd54e73fd44cb1e6abc"
+    },
+    "twin2k_500/outcomes.jsonl": {
+      "bytes": 37365000,
+      "committed": false,
+      "sha256": "c25aadbcde7c5b462d4316ad463f1e3dd3aef75219faf9b58a18f5358be03109"
+    }
+  },
+  "card_version": "basic-info-v1",
+  "committed_outputs": {
+    "bdm_lettuce/cards.jsonl": {
+      "bytes": 3773108,
+      "sha256": "ccbc312ef6731a24541dad0ccb7a2e768137ab4bef42a5c203392e7821c67fc9"
+    },
+    "bdm_lettuce/distribution.json": {
+      "bytes": 79402,
+      "sha256": "71854b56ebe0df3b4ee88e0f2294f080dc2b6987848a8d8bdb676782b3fddc8f"
+    },
+    "bdm_lettuce/exclusions.json": {
+      "bytes": 403,
+      "sha256": "872579573648236db395a2f2c1178fee991c22f21e004259ee0e355c17b486dc"
+    },
+    "bdm_lettuce/sample.json": {
+      "bytes": 4758,
+      "sha256": "49c4c2ae5de5b2ce6dca72ccddba4d2c584f7c53fd8ce2caddddb5002bbc2ee8"
+    },
+    "field_map.json": {
+      "bytes": 23203,
+      "sha256": "7f454c23f6a1b59197d983f5a98de9bda66d908fb3b0f71a230f2c2e5b462360"
+    },
+    "twin2k_500/cards.jsonl": {
+      "bytes": 11166716,
+      "sha256": "2a38319c75f5e765d4f84a213913c86dbe86095cffb7f67a41a1c406da62e140"
+    },
+    "twin2k_500/distribution.json": {
+      "bytes": 23439,
+      "sha256": "8bbef2a990582d55ebcd3b38e98a303d3933487ad436bebc988f5c6de0f35358"
+    },
+    "twin2k_500/exclusions.json": {
+      "bytes": 389,
+      "sha256": "cc6c757d9d4fd992b86d65e7976c75b4770fbca69f573ad69a647b3b2a2fc467"
+    },
+    "twin2k_500/sample.json": {
+      "bytes": 15773,
+      "sha256": "abc05542a2672196a1f1a3e1d563404d08a92c96e87a7ca568a8bbb12689dbfd"
+    },
+    "twin2k_500/wave_audit.json": {
+      "bytes": 396,
+      "sha256": "1778b28f6ef71911f8834b3cb16e3daa80ed7f3799c29a79c150e84347e56bee"
+    }
+  },
+  "manifest_sha256": "ebf8fc7745c0aa645be8b31d7c3e932714616ae04dbbde7ba7ae6faadd7354a1",
+  "scope": "Hashes name logical artifacts. They do not include output_dir, the machine path, or a timestamp. A match does not say the sample statistically matches the population on unstratified fields.",
+  "seed": 42,
+  "source_lock_sha256": "ff1d79515c4394920e943843d176cd79d6ac64738b795f0fb55b45306194c053",
+  "sources": {
+    "bdm_lettuce": {
+      "doi": "10.5683/SP3/CDLUEZ",
+      "files": [
+        "20240723_VFExperiment_01.csv",
+        "100A_README.txt"
+      ],
+      "license": "CC-BY-4.0",
+      "version": "V1"
+    },
+    "twin2k_500": {
+      "files": [
+        "question_catalog_and_human_response_csv/wave1_3_response_label.csv",
+        "question_catalog_and_human_response_csv/wave4_response_label.csv",
+        "question_catalog_and_human_response_csv/question_catalog.json",
+        "wave_split/chunks/wave_persona_chunk_001.parquet",
+        "wave_split/chunks/wave_persona_chunk_002.parquet",
+        "wave_split/chunks/wave_persona_chunk_003.parquet",
+        "wave_split/chunks/wave_persona_chunk_004.parquet",
+        "wave_split/chunks/wave_persona_chunk_005.parquet",
+        "wave_split/chunks/wave_persona_chunk_006.parquet",
+        "wave_split/chunks/wave_persona_chunk_007.parquet"
+      ],
+      "license": "cc-by-4.0",
+      "repo_id": "LLM-Digital-Twin/Twin-2K-500",
+      "revision": "f883165a3026fde855dfd448e0cd16443ab257b6"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "dataset": "twin2k_500",
+  "held_out_outcome": "wave4_Q_wave4_A QID9_1 through QID9_40",
+  "note": "QID9_n is the nth pricing item shown to that respondent, not a fixed product. The product and price are the question_text on the outcome record. Wave 1-3 QID9 cells are an earlier administration.",
+  "wave4_vs_wave1_3_qid9_cells_differ": 13261,
+  "wave4_vs_wave1_3_qid9_cells_equal": 69059
+}

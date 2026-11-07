@@ -1,0 +1,626 @@
+{
+  "allocation": {
+    "$100,000 or more\u001f1": 1,
+    "$100,000 or more\u001f2": 7,
+    "$100,000 or more\u001f3": 5,
+    "$100,000 or more\u001f4": 7,
+    "$100,000 or more\u001fMore than 4": 5,
+    "$30,000-$50,000\u001f1": 5,
+    "$30,000-$50,000\u001f2": 6,
+    "$30,000-$50,000\u001f3": 4,
+    "$30,000-$50,000\u001f4": 3,
+    "$30,000-$50,000\u001fMore than 4": 1,
+    "$50,000-$75,000\u001f1": 4,
+    "$50,000-$75,000\u001f2": 6,
+    "$50,000-$75,000\u001f3": 4,
+    "$50,000-$75,000\u001f4": 2,
+    "$50,000-$75,000\u001fMore than 4": 2,
+    "$75,000-$100,000\u001f1": 2,
+    "$75,000-$100,000\u001f2": 5,
+    "$75,000-$100,000\u001f3": 3,
+    "$75,000-$100,000\u001f4": 3,
+    "$75,000-$100,000\u001fMore than 4": 1,
+    "Less than $30,000\u001f1": 7,
+    "Less than $30,000\u001f2": 5,
+    "Less than $30,000\u001f3": 3,
+    "Less than $30,000\u001f4": 1,
+    "Less than $30,000\u001fMore than 4": 1
+  },
+  "dataset": "twin2k_500",
+  "joint_quota_adjustment": {
+    "applied": true,
+    "cells_abs_gap_at_least_one_after": 0,
+    "cells_abs_gap_at_least_one_before": 25,
+    "exact_cell_quota": false,
+    "l1_after": "8.00291545",
+    "l1_before": "127.40816327",
+    "max_abs_cell_gap_after": "0.70699708",
+    "max_abs_cell_gap_before": "17.82507289",
+    "note": "Each step applies one feasible 2x2 swap, forward or reverse, and only when it lowers L1 distance to n * N_cell / N. Hamilton margins stay fixed. This is not an exact cell-quota match and does not adjust unstratified fields.",
+    "swap_count": 35,
+    "swaps": [
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f2",
+          "$30,000-$50,000\u001f1",
+          "$30,000-$50,000\u001f2"
+        ],
+        "direction": "reverse",
+        "l1_after": "123.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f3",
+          "$50,000-$75,000\u001f1",
+          "$50,000-$75,000\u001f3"
+        ],
+        "direction": "reverse",
+        "l1_after": "119.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f3",
+          "$50,000-$75,000\u001f1",
+          "$50,000-$75,000\u001f3"
+        ],
+        "direction": "reverse",
+        "l1_after": "115.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f3",
+          "$50,000-$75,000\u001f1",
+          "$50,000-$75,000\u001f3"
+        ],
+        "direction": "reverse",
+        "l1_after": "111.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f3",
+          "$75,000-$100,000\u001f1",
+          "$75,000-$100,000\u001f3"
+        ],
+        "direction": "reverse",
+        "l1_after": "107.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f4",
+          "Less than $30,000\u001f1",
+          "Less than $30,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "103.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f4",
+          "Less than $30,000\u001f1",
+          "Less than $30,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "99.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f4",
+          "Less than $30,000\u001f1",
+          "Less than $30,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "95.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f4",
+          "Less than $30,000\u001f1",
+          "Less than $30,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "91.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f4",
+          "Less than $30,000\u001f1",
+          "Less than $30,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "87.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001fMore than 4",
+          "Less than $30,000\u001f1",
+          "Less than $30,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "83.40816327"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001fMore than 4",
+          "Less than $30,000\u001f1",
+          "Less than $30,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "79.40816327"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001f3",
+          "$50,000-$75,000\u001f2",
+          "$50,000-$75,000\u001f3"
+        ],
+        "direction": "reverse",
+        "l1_after": "75.40816327"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001f3",
+          "$50,000-$75,000\u001f2",
+          "$50,000-$75,000\u001f3"
+        ],
+        "direction": "reverse",
+        "l1_after": "71.40816327"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001f4",
+          "$75,000-$100,000\u001f2",
+          "$75,000-$100,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "67.40816327"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001f4",
+          "$75,000-$100,000\u001f2",
+          "$75,000-$100,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "63.40816327"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001fMore than 4",
+          "Less than $30,000\u001f2",
+          "Less than $30,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "59.40816327"
+      },
+      {
+        "cells": [
+          "$50,000-$75,000\u001f3",
+          "$50,000-$75,000\u001fMore than 4",
+          "Less than $30,000\u001f3",
+          "Less than $30,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "55.40816327"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001f3",
+          "$75,000-$100,000\u001f2",
+          "$75,000-$100,000\u001f3"
+        ],
+        "direction": "reverse",
+        "l1_after": "51.73469388"
+      },
+      {
+        "cells": [
+          "$50,000-$75,000\u001f3",
+          "$50,000-$75,000\u001f4",
+          "Less than $30,000\u001f3",
+          "Less than $30,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "48.17492711"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f4",
+          "$75,000-$100,000\u001f1",
+          "$75,000-$100,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "44.65014577"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f3",
+          "$50,000-$75,000\u001f1",
+          "$50,000-$75,000\u001f3"
+        ],
+        "direction": "reverse",
+        "l1_after": "41.60058309"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001fMore than 4",
+          "Less than $30,000\u001f2",
+          "Less than $30,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "38.61807580"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001fMore than 4",
+          "$30,000-$50,000\u001f1",
+          "$30,000-$50,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "35.60058309"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001fMore than 4",
+          "Less than $30,000\u001f2",
+          "Less than $30,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "32.61807580"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001fMore than 4",
+          "$30,000-$50,000\u001f1",
+          "$30,000-$50,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "29.60058309"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001fMore than 4",
+          "Less than $30,000\u001f2",
+          "Less than $30,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "26.61807580"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001f3",
+          "$50,000-$75,000\u001f2",
+          "$50,000-$75,000\u001f3"
+        ],
+        "direction": "reverse",
+        "l1_after": "23.65014577"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001f4",
+          "$75,000-$100,000\u001f2",
+          "$75,000-$100,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "20.76967930"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001f4",
+          "$30,000-$50,000\u001f1",
+          "$30,000-$50,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "17.65014577"
+      },
+      {
+        "cells": [
+          "$30,000-$50,000\u001f2",
+          "$30,000-$50,000\u001f4",
+          "$75,000-$100,000\u001f2",
+          "$75,000-$100,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "14.76967930"
+      },
+      {
+        "cells": [
+          "$75,000-$100,000\u001f4",
+          "$75,000-$100,000\u001fMore than 4",
+          "Less than $30,000\u001f4",
+          "Less than $30,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "12.32944606"
+      },
+      {
+        "cells": [
+          "$50,000-$75,000\u001f3",
+          "$50,000-$75,000\u001f4",
+          "Less than $30,000\u001f3",
+          "Less than $30,000\u001f4"
+        ],
+        "direction": "reverse",
+        "l1_after": "10.38483965"
+      },
+      {
+        "cells": [
+          "$50,000-$75,000\u001f2",
+          "$50,000-$75,000\u001fMore than 4",
+          "Less than $30,000\u001f2",
+          "Less than $30,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "8.92711370"
+      },
+      {
+        "cells": [
+          "$100,000 or more\u001f1",
+          "$100,000 or more\u001fMore than 4",
+          "$30,000-$50,000\u001f1",
+          "$30,000-$50,000\u001fMore than 4"
+        ],
+        "direction": "reverse",
+        "l1_after": "8.00291545"
+      }
+    ]
+  },
+  "margin_balance": {
+    "QID21": {
+      "$100,000 or more": {
+        "absolute_gap": "0.05539359",
+        "population": 552,
+        "quota": "24.94460641",
+        "sample": 25,
+        "within_hamilton_unit": true
+      },
+      "$30,000-$50,000": {
+        "absolute_gap": "0.38192420",
+        "population": 412,
+        "quota": "18.61807580",
+        "sample": 19,
+        "within_hamilton_unit": true
+      },
+      "$50,000-$75,000": {
+        "absolute_gap": "0.57288630",
+        "population": 411,
+        "quota": "18.57288630",
+        "sample": 18,
+        "within_hamilton_unit": true
+      },
+      "$75,000-$100,000": {
+        "absolute_gap": "0.27988338",
+        "population": 316,
+        "quota": "14.27988338",
+        "sample": 14,
+        "within_hamilton_unit": true
+      },
+      "Less than $30,000": {
+        "absolute_gap": "0.41545190",
+        "population": 367,
+        "quota": "16.58454810",
+        "sample": 17,
+        "within_hamilton_unit": true
+      }
+    },
+    "QID23": {
+      "1": {
+        "absolute_gap": "0.38192420",
+        "population": 412,
+        "quota": "18.61807580",
+        "sample": 19,
+        "within_hamilton_unit": true
+      },
+      "2": {
+        "absolute_gap": "0.37317784",
+        "population": 650,
+        "quota": "29.37317784",
+        "sample": 29,
+        "within_hamilton_unit": true
+      },
+      "3": {
+        "absolute_gap": "0.11516035",
+        "population": 423,
+        "quota": "19.11516035",
+        "sample": 19,
+        "within_hamilton_unit": true
+      },
+      "4": {
+        "absolute_gap": "0.09329446",
+        "population": 352,
+        "quota": "15.90670554",
+        "sample": 16,
+        "within_hamilton_unit": true
+      },
+      "More than 4": {
+        "absolute_gap": "0.01311953",
+        "population": 221,
+        "quota": "9.98688047",
+        "sample": 10,
+        "within_hamilton_unit": true
+      }
+    }
+  },
+  "marginal_allocation": {
+    "QID21": {
+      "$100,000 or more": 25,
+      "$30,000-$50,000": 19,
+      "$50,000-$75,000": 18,
+      "$75,000-$100,000": 14,
+      "Less than $30,000": 17
+    },
+    "QID23": {
+      "1": 19,
+      "2": 29,
+      "3": 19,
+      "4": 16,
+      "More than 4": 10
+    }
+  },
+  "population_size": 2058,
+  "population_stratum_counts": {
+    "$100,000 or more\u001f1": 26,
+    "$100,000 or more\u001f2": 156,
+    "$100,000 or more\u001f3": 119,
+    "$100,000 or more\u001f4": 156,
+    "$100,000 or more\u001fMore than 4": 95,
+    "$30,000-$50,000\u001f1": 107,
+    "$30,000-$50,000\u001f2": 132,
+    "$30,000-$50,000\u001f3": 86,
+    "$30,000-$50,000\u001f4": 54,
+    "$30,000-$50,000\u001fMore than 4": 33,
+    "$50,000-$75,000\u001f1": 78,
+    "$50,000-$75,000\u001f2": 146,
+    "$50,000-$75,000\u001f3": 94,
+    "$50,000-$75,000\u001f4": 57,
+    "$50,000-$75,000\u001fMore than 4": 36,
+    "$75,000-$100,000\u001f1": 39,
+    "$75,000-$100,000\u001f2": 112,
+    "$75,000-$100,000\u001f3": 70,
+    "$75,000-$100,000\u001f4": 58,
+    "$75,000-$100,000\u001fMore than 4": 37,
+    "Less than $30,000\u001f1": 162,
+    "Less than $30,000\u001f2": 104,
+    "Less than $30,000\u001f3": 54,
+    "Less than $30,000\u001f4": 27,
+    "Less than $30,000\u001fMore than 4": 20
+  },
+  "rare_level_policy": "Hamilton largest-remainder gives a level zero seats when its quota is below 1 and it loses the remainder contest. Proportional allocation does not guarantee that every rare level appears in the sample.",
+  "sample_size": 93,
+  "sample_size_rule": {
+    "margin_of_error": "0.10",
+    "method": "cochran_proportion_with_finite_population_correction",
+    "n0": 97,
+    "override": null,
+    "population": 2058,
+    "proportion": "0.5",
+    "sample_size": 93,
+    "z": "1.96"
+  },
+  "seed": 42,
+  "stratify_columns": [
+    "QID21",
+    "QID23"
+  ],
+  "subject_ids": [
+    "915",
+    "1318",
+    "1912",
+    "1076",
+    "1372",
+    "1075",
+    "727",
+    "471",
+    "843",
+    "2043",
+    "919",
+    "1761",
+    "233",
+    "664",
+    "602",
+    "1643",
+    "1005",
+    "2054",
+    "1995",
+    "1647",
+    "574",
+    "1709",
+    "933",
+    "957",
+    "1420",
+    "907",
+    "209",
+    "387",
+    "419",
+    "75",
+    "881",
+    "913",
+    "905",
+    "1018",
+    "2016",
+    "2007",
+    "605",
+    "1183",
+    "1682",
+    "1798",
+    "732",
+    "1516",
+    "78",
+    "908",
+    "1649",
+    "1044",
+    "2055",
+    "1320",
+    "833",
+    "1930",
+    "172",
+    "1715",
+    "1070",
+    "750",
+    "1467",
+    "1750",
+    "1985",
+    "1073",
+    "1990",
+    "820",
+    "537",
+    "1907",
+    "527",
+    "215",
+    "114",
+    "286",
+    "522",
+    "846",
+    "26",
+    "1576",
+    "1854",
+    "667",
+    "1923",
+    "898",
+    "1091",
+    "2013",
+    "1828",
+    "1763",
+    "236",
+    "1386",
+    "1396",
+    "1804",
+    "1786",
+    "1767",
+    "885",
+    "285",
+    "1374",
+    "803",
+    "1190",
+    "1333",
+    "1244",
+    "1976",
+    "1743"
+  ]
+}
