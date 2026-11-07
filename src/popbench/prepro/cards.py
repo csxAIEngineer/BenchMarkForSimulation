@@ -1,7 +1,7 @@
 """Copy one source row onto a basic-info card.
 
-The card has two sections, Identity and Basics. Every Basics line is one
-source column. Empty cells stay empty in the form of the MISSING token.
+The model-facing text is one line per field. Identity and question ids stay
+on the audit object, not in that text. Empty cells stay the MISSING token.
 """
 
 from __future__ import annotations
@@ -116,12 +116,7 @@ def build_card(
         "source_file": source_file,
         "source_id_column": ID_COLUMN,
         "subject_id": subject_id,
-        "text": render_text(
-            dataset=dataset,
-            subject_id=subject_id,
-            source_file=source_file,
-            fields=fields,
-        ),
+        "text": render_text(fields),
     }
     if set(card) != set(CARD_KEYS):
         raise CardBuildError(f"card keys drifted: {sorted(set(card))}")
@@ -132,9 +127,8 @@ def build_card(
 
 
 def basics_line(field: Mapping[str, object]) -> str:
-    """One Basics line for the model.
+    """One model-facing line: short label, catalog stem, and the cell.
 
-    Uses the Chinese field name and, when the catalog has one, the stem.
     Question ids and the audit key ``evidence`` stay off this line.
     """
     value = str(field["value"])
@@ -158,24 +152,9 @@ def basics_line(field: Mapping[str, object]) -> str:
     return line
 
 
-def render_text(
-    *,
-    dataset: str,
-    subject_id: str,
-    source_file: str,
-    fields: list[dict[str, object]],
-) -> str:
-    lines = [
-        "## Identity",
-        f"dataset: {dataset}",
-        f"subject_id: {subject_id}",
-        f"source_file: {source_file}",
-        f"source_id_column: {ID_COLUMN}",
-        "",
-        "## Basics",
-    ]
-    for field in fields:
-        lines.append(basics_line(field))
+def render_text(fields: list[dict[str, object]]) -> str:
+    """Dense card: one ``label: stem: value`` line per field, and nothing else."""
+    lines = [basics_line(field) for field in fields]
     text = "\n".join(lines) + "\n"
     if _QUESTION_ID.search(text) or "evidence" in text:
         raise CardBuildError("model-facing card text contains a question id or the word evidence")

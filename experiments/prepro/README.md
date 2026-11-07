@@ -1,6 +1,6 @@
 # 人物卡预处理
 
-这一步把 Twin-2K-500 定价任务和加拿大 BDM 生菜实验的原文基本资料抄成人物卡，并固定种子 42 的样本。人物卡不调用语言模型，不补写生活史，也不把空单元格写成倾向。卡片只有 `## Identity` 和 `## Basics`。
+这一步把 Twin-2K-500 定价任务和加拿大 BDM 生菜实验的原文基本资料抄成人物卡，并固定种子 42 的样本。人物卡不调用语言模型，不补写生活史，也不把空单元格写成倾向。给模型看的 `text` 只有人口学各行，没有 `## Identity` 或 `## Basics`。
 
 本目录只提交 `source-lock.json`。卡片、样本、分布、排除名单、字段图、wave 审计和 manifest 由构建写到 `outputs/prepro/`，原始文件和留出答案写到 `data/prepro/`。这些产物不入库。
 
@@ -13,11 +13,11 @@
 
 Twin-2K 的 basic info 是 QID11–QID24，取自 `wave1_3_response_label.csv`。题干和选项从 `question_catalog.json` 原样写入 `source_question_text` 和 `source_options`。目录里句子不完整的题干保持原样。回答必须落在选项列表里。
 
-这 14 项是：地区、性别、年龄段、学历、种族、公民、婚姻、宗教、礼拜频率、党派、家庭收入、政治倾向、家庭人数、就业，依次对应 QID11–QID24。`basic_info` 里每一项有中文 `label`、`qid`、`source_question_text`、`value`、`status`，以及 `evidence`（指向该 QID 和源列）。给模型看的 `text` 不写这些题号，也不写 evidence。Twin-2K 的一行是中文标签、目录原文题干、单元格。截断的题干保持原样。例如题干停在 `In politics today, do you consider yourself a` 时，行是 `党派: In politics today, do you consider yourself a: Independent`。
+这 14 项的短标签是 Region、Sex、Age、Educ、Race、Citizen、Marital、Religion、Attend、Party、Income、Ideology、HHSize、Employ，依次对应 QID11–QID24。`basic_info` 里每一项有 `label`、`qid`、`source_question_text`、`value`、`status`，以及 `evidence`（指向该 QID 和源列）。给模型看的 `text` 不写题号、evidence、中文，也不写数据集或受访者编号。一行是短标签、目录原文题干、单元格。截断的题干保持原样。例如题干停在 `In politics today, do you consider yourself a` 时，行是 `Party: In politics today, do you consider yourself a: Independent`。
 
 定价结果是 wave 4 的 QID9_1–QID9_40。`QID9_n` 是该人看到的第 n 题，不是固定商品。商品名和价格在 `question_text` 里。Wave 1–3 的同名列是更早一次作答，不进入人物卡。
 
-BDM 不是这 14 项的同一份问卷，不把列改写成 Twin 的题号。问卷 docx 只有图片，没有可抄的题干。性别、政治倾向、家庭收入、学历、家庭人数和 Twin 是同一类事实、不同工具，`text` 只用中文标签和单元格，`evidence` 仍指向 `survey_*` 列，`qid` 为空。`survey_q01_age` 是实足年龄，不是年龄段，不标成年龄段。其余购物习惯列对不上这 14 项，`text` 保留列名，例如 `survey_q03_price: ...`，并在 `basic_info` 标明无法对应。不编造问句。`last_page`、计时、练习题、处理分配和呈现顺序是行政或设计字段，不进卡片。文件里多出来的未分类列会失败，不会被静默丢掉，也不会变成 `MISSING`。缺了已映射的列同样失败。空白单元格才写成 `MISSING`。源单元格如果本来就是 `MISSING` 这个词，构建失败。
+BDM 不是这 14 项的同一份问卷，不把列改写成 Twin 的题号。问卷 docx 只有图片，没有可抄的题干。Sex、Ideology、Income、Educ、HHSize 和 Twin 是同一类事实、不同工具，`text` 只用同样的短标签和单元格，`evidence` 仍指向 `survey_*` 列，`qid` 为空。`survey_q01_age` 是实足年龄，不是 Age，不标成 Age。其余购物习惯列对不上这 14 项，`text` 保留列名，例如 `survey_q03_price: ...`，并在 `basic_info` 标明无法对应。不编造问句。`last_page`、计时、练习题、处理分配和呈现顺序是行政或设计字段，不进卡片。文件里多出来的未分类列会失败，不会被静默丢掉，也不会变成 `MISSING`。缺了已映射的列同样失败。空白单元格才写成 `MISSING`。源单元格如果本来就是 `MISSING` 这个词，构建失败。
 
 ## 抽样
 

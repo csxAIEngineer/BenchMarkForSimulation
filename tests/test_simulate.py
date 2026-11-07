@@ -87,7 +87,9 @@ def test_run_calls_cr_and_writes_local_responses(tmp_path: Path):
     assert calls and calls[0]["model"] == "deepseek-v4-pro"
     user = calls[0]["messages"][1]["content"]
     persona, _questions = user.split("## Questions", 1)
-    assert "性别: What is the sex that you were assigned at birth?: Female" in persona
+    assert "Sex: What is the sex that you were assigned at birth?: Female" in persona
+    assert "## Identity" not in persona
+    assert "## Basics" not in persona
     assert "QID" not in persona
     assert "evidence" not in user
     assert "ONLY_IN_AUDIT" not in user
@@ -145,10 +147,7 @@ def _write_inputs(root: Path) -> None:
             }
         ],
         "subject_id": "7",
-        "text": (
-            "## Identity\npid: 7\n\n## Basics\n"
-            "性别: What is the sex that you were assigned at birth?: Female\n"
-        ),
+        "text": "Sex: What is the sex that you were assigned at birth?: Female\n",
     }
     cards = root / "cards" / "twin2k_500"
     cards.mkdir(parents=True)

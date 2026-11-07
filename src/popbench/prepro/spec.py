@@ -12,20 +12,20 @@ MISSING_TOKEN = "MISSING"
 # The fourteen Twin-2K demographic items, in QID order. Labels are field names.
 # They are not rewrites of the catalog stem. Stems are copied separately.
 TWIN_DEMOGRAPHICS: tuple[tuple[str, str], ...] = (
-    ("QID11", "地区"),
-    ("QID12", "性别"),
-    ("QID13", "年龄段"),
-    ("QID14", "学历"),
-    ("QID15", "种族"),
-    ("QID16", "公民"),
-    ("QID17", "婚姻"),
-    ("QID18", "宗教"),
-    ("QID19", "礼拜频率"),
-    ("QID20", "党派"),
-    ("QID21", "家庭收入"),
-    ("QID22", "政治倾向"),
-    ("QID23", "家庭人数"),
-    ("QID24", "就业"),
+    ("QID11", "Region"),
+    ("QID12", "Sex"),
+    ("QID13", "Age"),
+    ("QID14", "Educ"),
+    ("QID15", "Race"),
+    ("QID16", "Citizen"),
+    ("QID17", "Marital"),
+    ("QID18", "Religion"),
+    ("QID19", "Attend"),
+    ("QID20", "Party"),
+    ("QID21", "Income"),
+    ("QID22", "Ideology"),
+    ("QID23", "HHSize"),
+    ("QID24", "Employ"),
 )
 TWIN_LABEL_BY_QID: dict[str, str] = dict(TWIN_DEMOGRAPHICS)
 TWIN_BASIC_COLUMNS: tuple[str, ...] = tuple(qid for qid, _label in TWIN_DEMOGRAPHICS)
@@ -33,13 +33,13 @@ TWIN_BASIC_COLUMNS: tuple[str, ...] = tuple(qid for qid, _label in TWIN_DEMOGRAP
 # BDM columns that name the same concept as one Twin item, on a different instrument.
 # The cell is not a Twin answer, so these rows do not receive a Twin qid.
 BDM_SAME_CONCEPT: dict[str, str] = {
-    "survey_q02_sex": "性别",
-    "survey_q14_political": "政治倾向",
-    "survey_q15_income": "家庭收入",
-    "survey_q16_education": "学历",
-    "survey_q17_household_size": "家庭人数",
+    "survey_q02_sex": "Sex",
+    "survey_q14_political": "Ideology",
+    "survey_q15_income": "Income",
+    "survey_q16_education": "Educ",
+    "survey_q17_household_size": "HHSize",
 }
-# survey_q01_age is age in years, not the Twin age band, so it is not 年龄段.
+# survey_q01_age is age in years, not the Twin age band, so it is not Age.
 TWIN_STRATIFY_COLUMNS: tuple[str, ...] = ("QID21", "QID23")
 TWIN_PRICING_IDS: tuple[str, ...] = tuple(f"QID9_{index}" for index in range(1, 41))
 TWIN_PUBLISHED_N = 2058

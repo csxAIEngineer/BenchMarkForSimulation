@@ -344,7 +344,7 @@ def _reject_generated_text(cards: Sequence[Mapping[str, object]]) -> None:
             if marker in text:
                 raise AssembleError(f"{card['subject_id']} card contains generated text {marker!r}")
         headings = [line for line in text.splitlines() if line.startswith("## ")]
-        if headings != ["## Identity", "## Basics"]:
+        if headings:
             raise AssembleError(f"{card['subject_id']} card has unexpected sections: {headings}")
 
 

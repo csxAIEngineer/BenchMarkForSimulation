@@ -137,20 +137,20 @@ def test_twin_demographics_are_the_fourteen_named_items():
     assert TWIN_BASIC_COLUMNS == tuple(f"QID{index}" for index in range(11, 25))
     assert TWIN_STRATIFY_COLUMNS == ("QID21", "QID23")
     assert [label for _qid, label in TWIN_DEMOGRAPHICS] == [
-        "地区",
-        "性别",
-        "年龄段",
-        "学历",
-        "种族",
-        "公民",
-        "婚姻",
-        "宗教",
-        "礼拜频率",
-        "党派",
-        "家庭收入",
-        "政治倾向",
-        "家庭人数",
-        "就业",
+        "Region",
+        "Sex",
+        "Age",
+        "Educ",
+        "Race",
+        "Citizen",
+        "Marital",
+        "Religion",
+        "Attend",
+        "Party",
+        "Income",
+        "Ideology",
+        "HHSize",
+        "Employ",
     ]
 
 
@@ -171,7 +171,8 @@ def test_bdm_text_keeps_the_column_id_when_no_stem_exists():
     assert field["evidence"]["source_column"] == "survey_q01_age"
     text = str(card["text"])
     assert "survey_q01_age: 32" in text
-    assert "年龄段" not in text
+    assert not text.startswith("Age:")
+    assert "## Identity" not in text
     assert "How old" not in text
     assert re.search(r"QID\d+", text) is None
     assert "evidence" not in text
@@ -186,12 +187,12 @@ def test_bdm_same_concept_uses_a_label_and_keeps_the_column_in_evidence():
         question_text=None,
     )
     field = card["basic_info"][0]
-    assert field["label"] == "性别"
+    assert field["label"] == "Sex"
     assert field["qid"] is None
     assert field["demographic_match"] == "same_concept_different_instrument"
     assert field["evidence"]["source_column"] == "survey_q02_sex"
     text = str(card["text"])
-    assert "性别: Female" in text
+    assert text == "Sex: Female\n"
     assert "survey_q02_sex" not in text
     assert re.search(r"QID\d+", text) is None
     assert "evidence" not in text
@@ -215,9 +216,9 @@ def test_card_copies_cells_and_keeps_refusal_and_blank_distinct():
     assert by_column["QID21"]["value"] == MISSING_TOKEN
     assert by_column["QID21"]["status"] == STATUS_MISSING
     text = str(card["text"])
-    assert "就业: What is your current employment status?: Part-time employment" in text
-    assert "家庭收入: Last year, what was your total family income from all sources, before taxes?: MISSING" in text
-    assert "党派: In politics today, do you consider yourself a: Prefer not to answer" in text
+    assert "Employ: What is your current employment status?: Part-time employment" in text
+    assert "Income: Last year, what was your total family income from all sources, before taxes?: MISSING" in text
+    assert "Party: In politics today, do you consider yourself a: Prefer not to answer" in text
     assert by_column["QID20"]["qid"] == "QID20"
     assert by_column["QID20"]["evidence"]["qid"] == "QID20"
     assert by_column["QID20"]["evidence"]["source_column"] == "QID20"
@@ -227,7 +228,11 @@ def test_card_copies_cells_and_keeps_refusal_and_blank_distinct():
     assert "over $50,000" not in text
     assert "consider yourself a Republican" not in text
     assert "Part-time employment" in text
-    assert text.index("## Identity") < text.index("## Basics")
+    assert "## Identity" not in text
+    assert "## Basics" not in text
+    assert "source_file" not in text
+    assert "subject_id" not in text
+    assert "wave1_3_response_label.csv" not in text
     assert "Prefer not to answer" in text
 
 
