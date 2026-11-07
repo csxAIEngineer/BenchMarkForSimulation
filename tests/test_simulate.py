@@ -86,6 +86,9 @@ def test_run_calls_cr_and_writes_local_responses(tmp_path: Path):
     assert summary["provider"] == "cr"
     assert calls and calls[0]["model"] == "deepseek-v4-pro"
     blob = "\n".join(message["content"] for message in calls[0]["messages"])
+    assert "What is the sex that you were assigned at birth?: Female" in blob
+    assert "ONLY_IN_AUDIT" not in blob
+    assert "QID12:" not in blob
     assert "SECRET_HUMAN_BID" not in blob
     written = Path(summary["responses"][0])
     row = json.loads(written.read_text(encoding="utf-8").splitlines()[0])
@@ -129,8 +132,19 @@ def test_unknown_model_is_rejected_before_a_call(tmp_path: Path):
 
 def _write_inputs(root: Path) -> None:
     card = {
+        "basic_info": [
+            {
+                "source_column": "QID12",
+                "source_options": ["ONLY_IN_AUDIT"],
+                "source_question_text": "What is the sex that you were assigned at birth?",
+                "value": "Female",
+            }
+        ],
         "subject_id": "7",
-        "text": "## Identity\npid: 7\n\n## Basics\nQID12: Female\n",
+        "text": (
+            "## Identity\npid: 7\n\n## Basics\n"
+            "What is the sex that you were assigned at birth?: Female\n"
+        ),
     }
     cards = root / "cards" / "twin2k_500"
     cards.mkdir(parents=True)

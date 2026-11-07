@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 
-from popbench.prepro.cards import build_card, normalize_cell
+from popbench.prepro.cards import basics_label, build_card, normalize_cell
 from popbench.prepro.columns import assert_row_columns
 from popbench.prepro.report import distribution_report
 from popbench.prepro.sample import planned_sample_size, stratified_sample
@@ -197,7 +197,7 @@ def assert_no_outcome_leak(
         text = str(card["text"])
         basics = text.split("## Basics\n", 1)[-1]
         card_tokens = set(_TOKEN.findall(basics))
-        line_values = {line.split(": ", 1)[1] for line in basics.splitlines() if ": " in line}
+        line_values = _line_values(fields, basics)
         for item in outcomes[str(card["subject_id"])]:
             for needle in _outcome_strings(item):
                 if needle in source_values:
@@ -213,6 +213,22 @@ def assert_no_outcome_leak(
                         continue
                     if token in card_tokens:
                         raise AssembleError(f"{card['subject_id']} copied outcome token {token!r} onto the card")
+
+
+def _line_values(fields: object, basics: str) -> set[str]:
+    """Values on Basics lines. A catalog stem may itself contain ``: ``."""
+    expected: dict[str, str] = {}
+    if isinstance(fields, list):
+        for field in fields:
+            if isinstance(field, dict) and "value" in field:
+                expected[f"{basics_label(field)}: {field['value']}"] = str(field["value"])
+    values: set[str] = set()
+    for line in basics.splitlines():
+        if line in expected:
+            values.add(expected[line])
+        elif ": " in line:
+            values.add(line.split(": ", 1)[1])
+    return values
 
 
 def _outcome_strings(item: Mapping[str, object]) -> list[str]:

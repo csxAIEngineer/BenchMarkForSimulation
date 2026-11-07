@@ -113,6 +113,20 @@ def build_card(
     return card
 
 
+def basics_label(field: Mapping[str, object]) -> str:
+    """Model-facing label for one Basics line.
+
+    A catalog stem is copied unchanged, including a truncated sentence.
+    When the source has no stem, the line keeps the source column id.
+    """
+    if field.get("source_question_text_status") == QUESTION_TEXT_COPIED:
+        stem = field.get("source_question_text")
+        if not isinstance(stem, str) or stem == "":
+            raise CardBuildError("copied question text is missing")
+        return stem
+    return str(field["source_column"])
+
+
 def render_text(
     *,
     dataset: str,
@@ -130,5 +144,5 @@ def render_text(
         "## Basics",
     ]
     for field in fields:
-        lines.append(f"{field['source_column']}: {field['value']}")
+        lines.append(f"{basics_label(field)}: {field['value']}")
     return "\n".join(lines) + "\n"
