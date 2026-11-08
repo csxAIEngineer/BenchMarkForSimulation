@@ -91,6 +91,38 @@ def population_std(values: list[float]) -> float | None:
     return math.sqrt(sum((value - mean) ** 2 for value in values) / len(values))
 
 
+def sample_std(values: list[float]) -> float | None:
+    """Sample standard deviation with ``ddof=1``. None when fewer than two points."""
+    if len(values) < 2:
+        return None
+    mean = sum(values) / len(values)
+    variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+    return math.sqrt(variance)
+
+
+def average_ranks(values: list[float]) -> list[float]:
+    """1-based ranks. Ties share the average of the ranks they cover."""
+    order = sorted(range(len(values)), key=lambda index: values[index])
+    ranks = [0.0] * len(values)
+    start = 0
+    while start < len(values):
+        end = start
+        while end + 1 < len(values) and values[order[end + 1]] == values[order[start]]:
+            end += 1
+        average = (start + 1 + end + 1) / 2
+        for position in range(start, end + 1):
+            ranks[order[position]] = average
+        start = end + 1
+    return ranks
+
+
+def spearman(left: list[float], right: list[float]) -> float | None:
+    """Spearman rank correlation. None when either ranking has no variance."""
+    if len(left) != len(right) or len(left) < 2:
+        raise ValueError("Spearman needs two equal-length series of at least two points")
+    return pearson(average_ranks(left), average_ranks(right))
+
+
 def fisher_z(correlation: float) -> float:
     if correlation >= 1:
         correlation = 1 - 1e-12

@@ -23,6 +23,7 @@ from popbench.evaluate.metrics import (
     sd_ratio,
     total_variation_distance,
 )
+from popbench.evaluate.person import score_pricing_persons
 from popbench.prepro.spec import BDM_OUTCOME_COLUMNS
 
 WTP_COLUMNS = tuple(column for column in BDM_OUTCOME_COLUMNS if column != "conclusion_purchased_product")
@@ -92,6 +93,9 @@ def score_dataset(
         flat_h = [human_answer for pairs in purchase.values() for human_answer, _model in pairs]
         flat_m = [model_answer for pairs in purchase.values() for _human, model_answer in pairs]
         result["purchase_accuracy"] = accuracy(flat_m, flat_h) if flat_h else None
+    pricing = score_pricing_persons(responses, outcome_rows)
+    if pricing is not None:
+        result["pricing_person"] = pricing
     return result
 
 

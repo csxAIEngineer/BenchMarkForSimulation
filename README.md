@@ -67,13 +67,26 @@ python3 scripts/simulate.py --model deepseek-v4-pro --limit-subjects 1
 
 ## 3. 评价
 
-不调用模型。把模拟回复和留出的人类答案对齐，报告分类题的 TVD 与 Top-1，以及 BDM 出价的个体准确率、MAE、Fisher z 相关、Glass Δ 和 SD 比。
+不调用模型。把模拟回复和留出的人类答案按 `dataset + subject_id + question_id` 对齐，不按行序。报告仍包含分类题的 TVD 与群体 Top-1，以及 BDM 出价的原有指标。Twin2K 定价题另外给出个人层指标。短答（`Yes` / `No` / `Would purchase`）按确定规则对齐到留出的整句选项后再编码，规则见 `popbench.evaluate.options`。对不上的答复保持未映射，算作个人准确率的错误，也不进入购买率。
+
+群体 `categorical.mean_top1_acc` 只看每一题上全体答案的众数是否重合，不是个人准确率。
+
+| 字段 | 方向 | 含义 |
+| --- | --- | --- |
+| `individual_accuracy_micro` | ↑ | 可评分的（人，题）对里，编码后与该人留出答案一致的比例 |
+| `individual_accuracy_macro` | ↑ | 每个至少有一题可评分的人先算准确率，再对人取不加权平均 |
+| `cross_person_pearson` | ↑ | 每人在同一组定价题上的购买率（Yes=1）的 Pearson 相关 |
+| `cross_person_spearman` | ↑ | 同上购买率的 Spearman 相关，并列取平均秩 |
+| `glass_delta` | →0 | `(模型购买率均值 - 人类购买率均值) / 人类购买率样本标准差`，`ddof=1`。正数表示模型比人类更倾向购买 |
+| `sd_ratio` | →1 | 模型与人类购买率的样本标准差之比，`ddof=1`。小于 1 表示人与人之间的差异被压扁 |
+
+购买率是这组共同题目上的 Yes 比例，不是出价，也不从二元选择反推 WTP。只有在共同题目上每题都能编成 0/1 的人进入相关、Glass Δ 和 SD 比；覆盖人数和未映射、解析错误、重复冲突都写在 `coverage` 里。样本标准差为 0 或完整人数少于 2 时，对应指标是 JSON `null` 并带 `reason`，不写成 0、NaN 或 Infinity。BDM 出价仍用原来的总体标准差 Glass Δ，不受这组个人购买率指标影响。
 
 ```bash
 python3 scripts/evaluate.py
 ```
 
-报告写到 `outputs/evaluate/report.json`。
+报告写到 `outputs/evaluate/report.json`。Twin2K 的个人层结果在 `datasets.twin2k_500.pricing_person`。
 
 ## 测试
 
