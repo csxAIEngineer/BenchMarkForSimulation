@@ -88,6 +88,18 @@ python3 scripts/evaluate.py
 
 报告写到 `outputs/evaluate/report.json`。Twin2K 的个人层结果在 `datasets.twin2k_500.pricing_person`。
 
+## 4. 免费价格端点
+
+不调用模型，也不读 BDM。锁定样本里的定价刺激没有单独的 `price_shown` 列。价格是 wave 4 `QuestionText` 里固定句子的 `$X.XX`，已经抄在 `outcomes.jsonl` 的 `question_text`。句子对不上就不解析，不当成免费。`$0.00` 是该商品自身最高正价的 0% 档，后面还有 10% 到 100% 共十档，四舍五入到分。不同商品的美元价格不混在一条曲线里。等权曲线先在商品内算购买率，再对有观测的商品取平均。
+
+非递增指相邻已观测档的购买率不上升。持平可以。上升才算一次向上跳。没有观测的档是缺失，不是需求为零。这是被试被分配到不同价格格子后的描述，不是同一个人的反事实需求，也不是对原论文样本或模型的复现。
+
+```bash
+python3 scripts/free_price_demand.py
+```
+
+配置是 `config/free_price.json`。汇总写到 `outputs/evaluate/free_price/`。免费档的主购买率只用双方都映射成功的报价。未映射、解析失败和冲突报价留在未知里，并同时给出把未知全部当成拒绝或全部当成购买的上下界。
+
 ## 测试
 
 ```bash
