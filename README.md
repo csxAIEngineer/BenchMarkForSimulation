@@ -63,7 +63,15 @@ python3 scripts/simulate.py
 python3 scripts/simulate.py --model deepseek-v4-pro --limit-subjects 1
 ```
 
-配置在 `config/simulate.json`。回复写到 `outputs/simulate/<model>/<dataset>/responses.jsonl`。
+配置在 `config/simulate.json`。不写 `reasoning_effort` 时，请求不带这个字段，回复仍写到 `outputs/simulate/<model>/<dataset>/responses.jsonl`，缓存键与以前相同。这不是已经证明的「推理关闭」，只是 API 默认。
+
+显式设置 `reasoning_effort`（例如 `none`、`low`、`medium`、`high`）后，字段会传给 `CRClient.chat`，并进入缓存键。文件改写到 `outputs/simulate/<model>__reasoning-<effort>/` 和 `outputs/simulate/cache/<model>__reasoning-<effort>/`，不会读取或覆盖默认目录。清单记录 `model`、`temperature` 和 `reasoning_effort`。某个取值被 API 拒绝时，换一个已记录的允许值，不要把温度偷偷改掉。
+
+```bash
+python3 scripts/simulate.py /tmp/simulate-twin-only.json
+```
+
+`/tmp` 配置里可以加 `"reasoning_effort": "none"` 或 `"low"`。温度仍由该配置的 `temperature` 决定。
 
 ## 3. 评价
 

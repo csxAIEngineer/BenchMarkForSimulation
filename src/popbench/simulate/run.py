@@ -38,6 +38,7 @@ def run_simulation(
     if model not in known_model_ids():
         raise ValueError(f"model {model!r} is not in cr_api.TEXT_MODELS")
     temperature = None if config.get("temperature") is None else float(config["temperature"])
+    reasoning_effort = _reasoning_effort(config.get("reasoning_effort"))
     timeout = float(config.get("timeout") or 300)
     attempts = int(config.get("attempts") or 3)
     if attempts < 1:
@@ -63,14 +64,21 @@ def run_simulation(
         if limit is not None:
             order = order[:limit]
         rows: list[dict[str, object]] = []
-        cache_dir = output_dir / "cache" / model / dataset
+        storage = _storage_name(model, reasoning_effort)
+        cache_dir = output_dir / "cache" / storage / dataset
         for subject_id in order:
             if subject_id not in outcomes:
                 raise ValueError(f"{dataset} subject {subject_id} has no local outcomes")
             items = outcomes[subject_id]
             questions = [(str(item["question_id"]), question_prompt(item)) for item in items]
             messages = build_messages(str(cards[subject_id]["text"]), questions)
-            raw, from_cache = _cached_or_none(cache_dir, messages, model=model, temperature=temperature)
+            raw, from_cache = _cached_or_none(
+                cache_dir,
+                messages,
+                model=model,
+                temperature=temperature,
+                reasoning_effort=reasoning_effort,
+            )
             if raw is None:
                 raw = _complete(
                     client,
@@ -80,6 +88,7 @@ def run_simulation(
                     timeout=timeout,
                     attempts=attempts,
                     sleep=sleep,
+                    reasoning_effort=reasoning_effort,
                 )
                 from_cache = False
             subject_rows = _rows(
@@ -90,9 +99,16 @@ def run_simulation(
                 raw=raw,
             )
             if not from_cache and all(row["parse_error"] is None for row in subject_rows):
-                _write_cache(cache_dir, messages, model=model, temperature=temperature, content=raw)
+                _write_cache(
+                    cache_dir,
+                    messages,
+                    model=model,
+                    temperature=temperature,
+                    content=raw,
+                    reasoning_effort=reasoning_effort,
+                )
             rows.extend(subject_rows)
-        target = output_dir / model / dataset / "responses.jsonl"
+        target = output_dir / storage / dataset / "responses.jsonl"
         _write_jsonl(target, rows)
         manifest = {
             "dataset": dataset,
@@ -100,19 +116,50 @@ def run_simulation(
             "n_questions": len(rows),
             "n_subjects": len(order),
             "provider": "cr",
+            "reasoning_effort": "default-omitted" if reasoning_effort is None else reasoning_effort,
             "responses": "responses.jsonl",
+            "temperature": temperature,
         }
         _write_json(target.parent / "manifest.json", manifest)
         written.append(str(target))
     return {"model": model, "provider": "cr", "responses": written}
 
 
-def _cache_key(messages: list[dict[str, str]], *, model: str, temperature: float | None) -> str:
-    material = json.dumps(
-        {"messages": messages, "model": model, "temperature": temperature},
-        ensure_ascii=False,
-        sort_keys=True,
-    )
+def _reasoning_effort(value: object) -> str | None:
+    """None means the request omits the field. Any other value is sent as written."""
+    if value is None:
+        return None
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    raise ValueError("reasoning_effort must be a non-empty string or null")
+
+
+def _storage_name(model: str, reasoning_effort: str | None) -> str:
+    """Keep omitted-effort runs on the historical model directory.
+
+    An explicit effort gets its own directory so it cannot read or replace
+    ``outputs/simulate/<model>/`` or ``outputs/simulate/cache/<model>/``.
+    """
+    if reasoning_effort is None:
+        return model
+    slug = reasoning_effort.strip().lower()
+    if not slug or any(character not in "abcdefghijklmnopqrstuvwxyz0-9._-" for character in slug):
+        raise ValueError(f"reasoning_effort {reasoning_effort!r} cannot be used as a directory name")
+    return f"{model}__reasoning-{slug}"
+
+
+def _cache_key(
+    messages: list[dict[str, str]],
+    *,
+    model: str,
+    temperature: float | None,
+    reasoning_effort: str | None = None,
+) -> str:
+    payload: dict[str, object] = {"messages": messages, "model": model, "temperature": temperature}
+    # Omitted effort stays out of the hash so existing cache files still match.
+    if reasoning_effort is not None:
+        payload["reasoning_effort"] = reasoning_effort
+    material = json.dumps(payload, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
 
@@ -122,8 +169,9 @@ def _cached_or_none(
     *,
     model: str,
     temperature: float | None,
+    reasoning_effort: str | None = None,
 ) -> tuple[str | None, bool]:
-    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature)}.json"
+    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature, reasoning_effort=reasoning_effort)}.json"
     if not path.is_file():
         return None, False
     cached = json.loads(path.read_text(encoding="utf-8"))
@@ -139,8 +187,9 @@ def _write_cache(
     model: str,
     temperature: float | None,
     content: str,
+    reasoning_effort: str | None = None,
 ) -> None:
-    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature)}.json"
+    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature, reasoning_effort=reasoning_effort)}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"content": content}, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -154,11 +203,15 @@ def _complete(
     timeout: float,
     attempts: int,
     sleep: Callable[[float], None],
+    reasoning_effort: str | None = None,
 ) -> str:
     last: Exception | None = None
     for index in range(attempts):
         try:
-            result = client.chat(messages, model=model, temperature=temperature, timeout=timeout)
+            kwargs: dict[str, object] = {"model": model, "temperature": temperature, "timeout": timeout}
+            if reasoning_effort is not None:
+                kwargs["reasoning_effort"] = reasoning_effort
+            result = client.chat(messages, **kwargs)
             return str(result.content or "")
         except CRError as exc:
             last = exc

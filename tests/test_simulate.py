@@ -119,6 +119,58 @@ def test_run_calls_cr_and_writes_local_responses(tmp_path: Path):
     assert again["responses"]
 
 
+def test_reasoning_effort_is_cache_isolated_and_sent(tmp_path: Path) -> None:
+    root = tmp_path
+    _write_inputs(root)
+    calls: list[dict] = []
+
+    class FakeCR:
+        def chat(self, messages, model="deepseek-v4-pro", temperature=None, timeout=300, reasoning_effort=None):
+            calls.append({"model": model, "reasoning_effort": reasoning_effort, "temperature": temperature})
+            return SimpleNamespace(
+                content=json.dumps({"answers": [{"question_id": "QID9_1", "answer": reasoning_effort or "omitted"}]})
+            )
+
+    base = {
+        "attempts": 1,
+        "cards_dir": "cards",
+        "datasets": ["twin2k_500"],
+        "limit_subjects": 1,
+        "model": "deepseek-v4-pro",
+        "outcomes_dir": "outcomes",
+        "output_dir": "out",
+        "temperature": 0,
+        "timeout": 30,
+        "use_sample": True,
+    }
+    omitted = run_simulation(root, base, client=FakeCR())
+    assert calls[-1]["reasoning_effort"] is None
+    assert Path(omitted["responses"][0]) == root / "out" / "deepseek-v4-pro" / "twin2k_500" / "responses.jsonl"
+    manifest = json.loads((root / "out" / "deepseek-v4-pro" / "twin2k_500" / "manifest.json").read_text())
+    assert manifest["reasoning_effort"] == "default-omitted"
+    assert manifest["temperature"] == 0
+    calls.clear()
+    again = run_simulation(root, base, client=FakeCR())
+    assert calls == []
+    assert again["responses"] == omitted["responses"]
+
+    none_arm = run_simulation(root, {**base, "reasoning_effort": "none"}, client=FakeCR())
+    low_arm = run_simulation(root, {**base, "reasoning_effort": "low"}, client=FakeCR())
+    assert [call["reasoning_effort"] for call in calls] == ["none", "low"]
+    assert "deepseek-v4-pro__reasoning-none" in str(none_arm["responses"][0])
+    assert "deepseek-v4-pro__reasoning-low" in str(low_arm["responses"][0])
+    legacy = root / "out" / "deepseek-v4-pro" / "twin2k_500" / "responses.jsonl"
+    none_text = Path(none_arm["responses"][0]).read_text(encoding="utf-8")
+    low_text = Path(low_arm["responses"][0]).read_text(encoding="utf-8")
+    assert legacy.read_text(encoding="utf-8") != none_text
+    assert none_text != low_text
+    calls.clear()
+    run_simulation(root, {**base, "reasoning_effort": "none"}, client=FakeCR())
+    assert calls == []
+    with pytest.raises(ValueError, match="reasoning_effort"):
+        run_simulation(root, {**base, "reasoning_effort": "not a slug"}, client=FakeCR())
+
+
 def test_unknown_model_is_rejected_before_a_call(tmp_path: Path):
     with pytest.raises(ValueError, match="TEXT_MODELS"):
         run_simulation(
