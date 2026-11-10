@@ -71,7 +71,7 @@ python3 scripts/simulate.py --model deepseek-v4-pro --limit-subjects 1
 python3 scripts/simulate.py /tmp/simulate-twin-only.json
 ```
 
-`/tmp` 配置里可以加 `"reasoning_effort": "none"` 或 `"low"`。温度仍由该配置的 `temperature` 决定。
+`/tmp` 配置里可以加 `"reasoning_effort": "none"` 或 `"medium"`。温度仍由该配置的 `temperature` 决定。2026-11-10 对这 7 个模型各发了一条短消息、温度 0：`none` 在 claude-opus-5-5、deepseek-v4-flash、MiniMax-M3.1-Flash 上返回 400。`low` 对 gemini-3.8-flash 不产生 `reasoning_content`，`medium` 对除 claude-opus-5-5 以外的模型都会产生。因此显式开启统一用 `medium`，显式关闭只用 API 接受的 `none`。省略字段的旧 93 人结果不标成关闭。
 
 ## 3. 评价
 
