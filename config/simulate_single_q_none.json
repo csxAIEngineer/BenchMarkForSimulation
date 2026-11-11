@@ -1,0 +1,13 @@
+{
+  "cards_dir": "outputs/prepro",
+  "outcomes_dir": "data/prepro/outcomes",
+  "output_dir": "outputs/simulate",
+  "datasets": ["twin2k_500"],
+  "use_sample": true,
+  "temperature": 0,
+  "timeout": 180,
+  "attempts": 3,
+  "limit_subjects": null,
+  "reasoning_effort": "none",
+  "questions_per_request": 1
+}

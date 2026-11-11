@@ -171,6 +171,74 @@ def test_reasoning_effort_is_cache_isolated_and_sent(tmp_path: Path) -> None:
         run_simulation(root, {**base, "reasoning_effort": "not a slug"}, client=FakeCR())
 
 
+def test_single_question_requests_do_not_reuse_batched_directories(tmp_path: Path) -> None:
+    root = tmp_path
+    _write_inputs(root)
+    outcome_path = root / "outcomes" / "twin2k_500" / "outcomes.jsonl"
+    outcome = json.loads(outcome_path.read_text(encoding="utf-8"))
+    outcome["items"].append(
+        {
+            "answer": "SECRET_SECOND",
+            "question_id": "QID9_2",
+            "question_text": (
+                "Please consider the following product category: Snacks. "
+                "Suppose you are in a grocery store, and you see the following product in that category: "
+                "Oats. The product is priced at: $0.00. "
+                "Would you or would you not purchase this product?"
+            ),
+        }
+    )
+    outcome_path.write_text(json.dumps(outcome) + "\n", encoding="utf-8")
+    calls: list[str] = []
+
+    class FakeCR:
+        def chat(self, messages, model="deepseek-v4-pro", temperature=None, timeout=300, reasoning_effort=None):
+            user = messages[1]["content"]
+            calls.append(user)
+            question_id = "QID9_2" if "QID9_2" in user else "QID9_1"
+            return SimpleNamespace(
+                content=json.dumps({"answers": [{"question_id": question_id, "answer": "Yes"}]}),
+                reasoning_content="thought" if reasoning_effort == "none" else "",
+            )
+
+    config = {
+        "attempts": 1,
+        "cards_dir": "cards",
+        "datasets": ["twin2k_500"],
+        "limit_subjects": 1,
+        "model": "gemini-3.8-flash",
+        "outcomes_dir": "outcomes",
+        "output_dir": "out",
+        "questions_per_request": 1,
+        "reasoning_effort": "none",
+        "temperature": 0,
+        "timeout": 30,
+        "use_sample": True,
+    }
+    summary = run_simulation(root, config, client=FakeCR())
+    assert len(calls) == 2
+    assert "QID9_1" in calls[0] and "QID9_2" not in calls[0]
+    assert "QID9_2" in calls[1] and "QID9_1" not in calls[1]
+    assert "Sex: What is the sex" in calls[0]
+    target = Path(summary["responses"][0])
+    assert target == root / "out" / "gemini-3.8-flash__reasoning-none__single-q" / "twin2k_500" / "responses.jsonl"
+    assert not (root / "out" / "gemini-3.8-flash").exists()
+    assert not (root / "out" / "gemini-3.8-flash__reasoning-none").exists()
+    requests = [
+        json.loads(line)
+        for line in (target.parent / "requests.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert [row["question_id"] for row in requests] == ["QID9_1", "QID9_2"]
+    assert requests[1]["price_usd"] == "0.00"
+    assert requests[1]["product"] == "Oats"
+    assert requests[1]["purchase_code"] == 1
+    assert requests[1]["reasoning_content"] == "thought"
+    assert requests[1]["mapped_option"] == "Yes, I would purchase the product"
+    calls.clear()
+    run_simulation(root, config, client=FakeCR())
+    assert calls == []
+
+
 def test_unknown_model_is_rejected_before_a_call(tmp_path: Path):
     with pytest.raises(ValueError, match="TEXT_MODELS"):
         run_simulation(

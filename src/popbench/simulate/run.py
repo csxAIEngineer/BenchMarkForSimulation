@@ -13,6 +13,8 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from popbench.evaluate.options import NO_OPTION, YES_OPTION, code_purchase, match_option
+from popbench.evaluate.stimulus import parse_stimulus
 from popbench.simulate.prompt import build_messages, question_prompt
 
 try:
@@ -39,6 +41,7 @@ def run_simulation(
         raise ValueError(f"model {model!r} is not in cr_api.TEXT_MODELS")
     temperature = None if config.get("temperature") is None else float(config["temperature"])
     reasoning_effort = _reasoning_effort(config.get("reasoning_effort"))
+    single_question = _single_question(config.get("questions_per_request"))
     timeout = float(config.get("timeout") or 300)
     attempts = int(config.get("attempts") or 3)
     if attempts < 1:
@@ -64,14 +67,36 @@ def run_simulation(
         if limit is not None:
             order = order[:limit]
         rows: list[dict[str, object]] = []
-        storage = _storage_name(model, reasoning_effort)
+        storage = _storage_name(model, reasoning_effort, single_question=single_question)
         cache_dir = output_dir / "cache" / storage / dataset
+        request_rows: list[dict[str, object]] = []
         for subject_id in order:
             if subject_id not in outcomes:
                 raise ValueError(f"{dataset} subject {subject_id} has no local outcomes")
             items = outcomes[subject_id]
-            questions = [(str(item["question_id"]), question_prompt(item)) for item in items]
-            messages = build_messages(str(cards[subject_id]["text"]), questions)
+            questions = [(str(item["question_id"]), question_prompt(item), item) for item in items]
+            if single_question:
+                subject_rows, subject_requests = _run_single_questions(
+                    client,
+                    cache_dir,
+                    card_text=str(cards[subject_id]["text"]),
+                    questions=questions,
+                    dataset=dataset,
+                    model=model,
+                    subject_id=subject_id,
+                    temperature=temperature,
+                    reasoning_effort=reasoning_effort,
+                    timeout=timeout,
+                    attempts=attempts,
+                    sleep=sleep,
+                )
+                rows.extend(subject_rows)
+                request_rows.extend(subject_requests)
+                continue
+            messages = build_messages(
+                str(cards[subject_id]["text"]),
+                [(question_id, prompt) for question_id, prompt, _item in questions],
+            )
             raw, from_cache = _cached_or_none(
                 cache_dir,
                 messages,
@@ -80,7 +105,7 @@ def run_simulation(
                 reasoning_effort=reasoning_effort,
             )
             if raw is None:
-                raw = _complete(
+                raw, _reasoning = _complete(
                     client,
                     messages,
                     model=model,
@@ -95,7 +120,7 @@ def run_simulation(
                 dataset=dataset,
                 model=model,
                 subject_id=subject_id,
-                question_ids=[question_id for question_id, _prompt in questions],
+                question_ids=[question_id for question_id, _prompt, _item in questions],
                 raw=raw,
             )
             if not from_cache and all(row["parse_error"] is None for row in subject_rows):
@@ -116,11 +141,14 @@ def run_simulation(
             "n_questions": len(rows),
             "n_subjects": len(order),
             "provider": "cr",
+            "questions_per_request": 1 if single_question else "all",
             "reasoning_effort": "default-omitted" if reasoning_effort is None else reasoning_effort,
             "responses": "responses.jsonl",
             "temperature": temperature,
         }
         _write_json(target.parent / "manifest.json", manifest)
+        if single_question:
+            _write_jsonl(target.parent / "requests.jsonl", request_rows)
         written.append(str(target))
     return {"model": model, "provider": "cr", "responses": written}
 
@@ -134,18 +162,34 @@ def _reasoning_effort(value: object) -> str | None:
     raise ValueError("reasoning_effort must be a non-empty string or null")
 
 
-def _storage_name(model: str, reasoning_effort: str | None) -> str:
-    """Keep omitted-effort runs on the historical model directory.
+def _single_question(value: object) -> bool:
+    """False keeps the historical one-call-per-person batch. True asks each question alone."""
+    if value is None or value == "all":
+        return False
+    if value == 1 or value == "1":
+        return True
+    raise ValueError("questions_per_request must be 1 or all")
 
-    An explicit effort gets its own directory so it cannot read or replace
-    ``outputs/simulate/<model>/`` or ``outputs/simulate/cache/<model>/``.
+
+def _storage_name(model: str, reasoning_effort: str | None, *, single_question: bool = False) -> str:
+    """Keep omitted-effort batched runs on the historical model directory.
+
+    An explicit effort, or one-question requests, get their own directory so
+    they cannot read or replace ``outputs/simulate/<model>/`` or
+    ``outputs/simulate/cache/<model>/``. ``none`` plus one question per
+    request is ``<model>__reasoning-none__single-q``.
     """
-    if reasoning_effort is None:
+    if reasoning_effort is None and not single_question:
         return model
-    slug = reasoning_effort.strip().lower()
-    if not slug or any(character not in "abcdefghijklmnopqrstuvwxyz0-9._-" for character in slug):
-        raise ValueError(f"reasoning_effort {reasoning_effort!r} cannot be used as a directory name")
-    return f"{model}__reasoning-{slug}"
+    parts = [model]
+    if reasoning_effort is not None:
+        slug = reasoning_effort.strip().lower()
+        if not slug or any(character not in "abcdefghijklmnopqrstuvwxyz0-9._-" for character in slug):
+            raise ValueError(f"reasoning_effort {reasoning_effort!r} cannot be used as a directory name")
+        parts.append(f"reasoning-{slug}")
+    if single_question:
+        parts.append("single-q")
+    return "__".join(parts)
 
 
 def _cache_key(
@@ -154,11 +198,17 @@ def _cache_key(
     model: str,
     temperature: float | None,
     reasoning_effort: str | None = None,
+    subject_id: str | None = None,
+    question_id: str | None = None,
 ) -> str:
     payload: dict[str, object] = {"messages": messages, "model": model, "temperature": temperature}
-    # Omitted effort stays out of the hash so existing cache files still match.
+    # Omitted effort stays out of the hash so existing batched cache files still match.
     if reasoning_effort is not None:
         payload["reasoning_effort"] = reasoning_effort
+    if subject_id is not None:
+        payload["subject_id"] = subject_id
+    if question_id is not None:
+        payload["question_id"] = question_id
     material = json.dumps(payload, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
@@ -204,7 +254,7 @@ def _complete(
     attempts: int,
     sleep: Callable[[float], None],
     reasoning_effort: str | None = None,
-) -> str:
+) -> tuple[str, str]:
     last: Exception | None = None
     for index in range(attempts):
         try:
@@ -212,7 +262,8 @@ def _complete(
             if reasoning_effort is not None:
                 kwargs["reasoning_effort"] = reasoning_effort
             result = client.chat(messages, **kwargs)
-            return str(result.content or "")
+            reasoning = getattr(result, "reasoning_content", "") or ""
+            return str(result.content or ""), str(reasoning)
         except CRError as exc:
             last = exc
             if "网络错误" not in str(exc) or index + 1 == attempts:
@@ -220,6 +271,137 @@ def _complete(
             sleep(0.2 * (2**index))
     assert last is not None
     raise last
+
+
+def _run_single_questions(
+    client: Any,
+    cache_dir: Path,
+    *,
+    card_text: str,
+    questions: Sequence[tuple[str, str, Mapping[str, object]]],
+    dataset: str,
+    model: str,
+    subject_id: str,
+    temperature: float | None,
+    reasoning_effort: str | None,
+    timeout: float,
+    attempts: int,
+    sleep: Callable[[float], None],
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    """Ask one pricing question per request. Cache identity includes that question."""
+    codebook = {NO_OPTION: 0, YES_OPTION: 1}
+    rows: list[dict[str, object]] = []
+    records: list[dict[str, object]] = []
+    for question_id, prompt, item in questions:
+        messages = build_messages(card_text, [(question_id, prompt)])
+        cached = _read_single_cache(
+            cache_dir,
+            messages,
+            model=model,
+            temperature=temperature,
+            reasoning_effort=reasoning_effort,
+            subject_id=subject_id,
+            question_id=question_id,
+        )
+        if cached is None:
+            content, reasoning = _complete(
+                client,
+                messages,
+                model=model,
+                temperature=temperature,
+                timeout=timeout,
+                attempts=attempts,
+                sleep=sleep,
+                reasoning_effort=reasoning_effort,
+            )
+            from_cache = False
+        else:
+            content, reasoning = cached
+            from_cache = True
+        subject_rows = _rows(
+            dataset=dataset,
+            model=model,
+            subject_id=subject_id,
+            question_ids=[question_id],
+            raw=content,
+        )
+        if not from_cache and all(row["parse_error"] is None for row in subject_rows):
+            _write_single_cache(
+                cache_dir,
+                messages,
+                model=model,
+                temperature=temperature,
+                reasoning_effort=reasoning_effort,
+                subject_id=subject_id,
+                question_id=question_id,
+                content=content,
+                reasoning_content=reasoning,
+            )
+        rows.extend(subject_rows)
+        parsed = subject_rows[0]
+        answer = "" if parsed.get("answer") is None else str(parsed.get("answer"))
+        mapped = None if parsed.get("parse_error") else match_option(answer, [NO_OPTION, YES_OPTION])
+        purchase = None if mapped is None else code_purchase(answer, codebook)
+        stimulus = parse_stimulus(str(item.get("question_text") or ""))
+        records.append(
+            {
+                "dataset": dataset,
+                "mapped_option": mapped,
+                "model": model,
+                "parse_error": parsed.get("parse_error"),
+                "price_usd": None if stimulus is None else str(stimulus["price_usd"]),
+                "product": None if stimulus is None else stimulus["product"],
+                "prompt_system": messages[0]["content"],
+                "prompt_user": messages[1]["content"],
+                "purchase_code": purchase,
+                "question_id": question_id,
+                "raw_output": content,
+                "reasoning_content": reasoning,
+                "reasoning_effort": "default-omitted" if reasoning_effort is None else reasoning_effort,
+                "subject_id": subject_id,
+                "temperature": temperature,
+                "unmapped_reason": None if mapped is not None or parsed.get("parse_error") else "not a unique match to one held-out option",
+            }
+        )
+    return rows, records
+
+
+def _read_single_cache(
+    cache_dir: Path,
+    messages: list[dict[str, str]],
+    *,
+    model: str,
+    temperature: float | None,
+    reasoning_effort: str | None,
+    subject_id: str,
+    question_id: str,
+) -> tuple[str, str] | None:
+    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature, reasoning_effort=reasoning_effort, subject_id=subject_id, question_id=question_id)}.json"
+    if not path.is_file():
+        return None
+    cached = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(cached, dict) and isinstance(cached.get("content"), str):
+        reasoning = cached.get("reasoning_content") or ""
+        return cached["content"], reasoning if isinstance(reasoning, str) else ""
+    return None
+
+
+def _write_single_cache(
+    cache_dir: Path,
+    messages: list[dict[str, str]],
+    *,
+    model: str,
+    temperature: float | None,
+    reasoning_effort: str | None,
+    subject_id: str,
+    question_id: str,
+    content: str,
+    reasoning_content: str,
+) -> None:
+    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature, reasoning_effort=reasoning_effort, subject_id=subject_id, question_id=question_id)}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"content": content, "reasoning_content": reasoning_content}
+    path.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def _rows(

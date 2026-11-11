@@ -73,6 +73,12 @@ python3 scripts/simulate.py /tmp/simulate-twin-only.json
 
 `/tmp` 配置里可以加 `"reasoning_effort": "none"` 或 `"medium"`。温度仍由该配置的 `temperature` 决定。2026-11-10 对这 7 个模型各发了一条短消息、温度 0：`none` 在 claude-opus-5-5、deepseek-v4-flash、MiniMax-M3.1-Flash 上返回 400。`low` 对 gemini-3.8-flash 不产生 `reasoning_content`，`medium` 对除 claude-opus-5-5 以外的模型都会产生。因此显式开启统一用 `medium`，显式关闭只用 API 接受的 `none`。省略字段的旧 93 人结果不标成关闭。
 
+One question per request is a separate protocol. Set `"questions_per_request": 1` with `"reasoning_effort": "none"` and `"temperature": 0`. Each call sends the persona card and that question only. Files go to `outputs/simulate/<model>__reasoning-none__single-q/` and the matching cache directory. The cache key includes the subject and question, so a resumed run skips finished items. This does not read or write `outputs/simulate/<model>/` or `outputs/simulate/<model>__reasoning-none/`. The config is `config/simulate_single_q_none.json`.
+
+```bash
+python3 scripts/simulate.py config/simulate_single_q_none.json --model gemini-3.8-flash
+```
+
 ## 3. 评价
 
 不调用模型。把模拟回复和留出的人类答案按 `dataset + subject_id + question_id` 对齐，不按行序。报告仍包含分类题的 TVD 与群体 Top-1，以及 BDM 出价的原有指标。Twin2K 定价题另外给出个人层指标。短答（`Yes` / `No` / `Would purchase`）按确定规则对齐到留出的整句选项后再编码，规则见 `popbench.evaluate.options`。对不上的答复保持未映射，算作个人准确率的错误，也不进入购买率。
