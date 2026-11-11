@@ -79,6 +79,12 @@ One question per request is a separate protocol. Set `"questions_per_request": 1
 python3 scripts/simulate.py config/simulate_single_q_none.json --model gemini-3.8-flash
 ```
 
+The three-option arm is also batched: one persona card and all 40 pricing questions, with reasoning left unset and temperature copied from the default run. Each question keeps the wave-4 stem and replaces the two purchase lines with three letters whose order is a hash of person and product. Files go to `outputs/simulate/<model>__three-option/` and the matching cache. This does not read or write the default, `__reasoning-*`, or `__single-q` directories. The config is `config/simulate_three_option.json`.
+
+```bash
+python3 scripts/simulate.py config/simulate_three_option.json --model gemini-3.8-flash
+```
+
 ## 3. 评价
 
 不调用模型。把模拟回复和留出的人类答案按 `dataset + subject_id + question_id` 对齐，不按行序。报告仍包含分类题的 TVD 与群体 Top-1，以及 BDM 出价的原有指标。Twin2K 定价题另外给出个人层指标。短答（`Yes` / `No` / `Would purchase`）按确定规则对齐到留出的整句选项后再编码，规则见 `popbench.evaluate.options`。对不上的答复保持未映射，算作个人准确率的错误，也不进入购买率。

@@ -9,13 +9,21 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from collections import defaultdict
 from collections.abc import Callable, Mapping, Sequence
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 from popbench.evaluate.options import NO_OPTION, YES_OPTION, code_purchase, match_option
 from popbench.evaluate.stimulus import parse_stimulus
 from popbench.simulate.prompt import build_messages, question_prompt
+from popbench.simulate.three_option import (
+    THREE_OPTION_SYSTEM,
+    annotate_three_option,
+    perm_for,
+    three_option_prompt,
+)
 
 try:
     from cr_api import CRClient, CRError
@@ -42,6 +50,7 @@ def run_simulation(
     temperature = None if config.get("temperature") is None else float(config["temperature"])
     reasoning_effort = _reasoning_effort(config.get("reasoning_effort"))
     single_question = _single_question(config.get("questions_per_request"))
+    three_option = _three_option_arm(config.get("arm"), reasoning_effort, single_question)
     timeout = float(config.get("timeout") or 300)
     attempts = int(config.get("attempts") or 3)
     if attempts < 1:
@@ -67,14 +76,33 @@ def run_simulation(
         if limit is not None:
             order = order[:limit]
         rows: list[dict[str, object]] = []
-        storage = _storage_name(model, reasoning_effort, single_question=single_question)
+        storage = f"{model}__three-option" if three_option else _storage_name(model, reasoning_effort, single_question=single_question)
         cache_dir = output_dir / "cache" / storage / dataset
+        product_max = _product_maxima(outcomes, order) if three_option else {}
         request_rows: list[dict[str, object]] = []
         for subject_id in order:
             if subject_id not in outcomes:
                 raise ValueError(f"{dataset} subject {subject_id} has no local outcomes")
             items = outcomes[subject_id]
             questions = [(str(item["question_id"]), question_prompt(item), item) for item in items]
+            if three_option:
+                rows.extend(
+                    _run_three_option_batch(
+                        client,
+                        cache_dir,
+                        card_text=str(cards[subject_id]["text"]),
+                        questions=questions,
+                        dataset=dataset,
+                        model=model,
+                        subject_id=subject_id,
+                        temperature=temperature,
+                        timeout=timeout,
+                        attempts=attempts,
+                        sleep=sleep,
+                        product_max=product_max,
+                    )
+                )
+                continue
             if single_question:
                 subject_rows, subject_requests = _run_single_questions(
                     client,
@@ -146,6 +174,8 @@ def run_simulation(
             "responses": "responses.jsonl",
             "temperature": temperature,
         }
+        if three_option:
+            manifest["arm"] = "three-option"
         _write_json(target.parent / "manifest.json", manifest)
         if single_question:
             _write_jsonl(target.parent / "requests.jsonl", request_rows)
@@ -160,6 +190,99 @@ def _reasoning_effort(value: object) -> str | None:
     if isinstance(value, str) and value.strip():
         return value.strip()
     raise ValueError("reasoning_effort must be a non-empty string or null")
+
+
+def _three_option_arm(value: object, reasoning_effort: str | None, single_question: bool) -> bool:
+    """True only for the batched three-option arm. Reasoning stays omitted."""
+    if value is None:
+        return False
+    if value != "three-option":
+        raise ValueError("arm must be three-option or omitted")
+    if reasoning_effort is not None:
+        raise ValueError("three-option copies the default run and must omit reasoning_effort")
+    if single_question:
+        raise ValueError("three-option asks all 40 questions in one request")
+    return True
+
+
+def _product_maxima(
+    outcomes: Mapping[str, list[dict[str, object]]],
+    order: Sequence[str],
+) -> dict[str, Decimal]:
+    prices: dict[str, list[Decimal]] = defaultdict(list)
+    for subject_id in order:
+        for item in outcomes[subject_id]:
+            stimulus = parse_stimulus(str(item.get("question_text") or ""))
+            if stimulus is None:
+                continue
+            price = stimulus["price_usd"]
+            if isinstance(price, Decimal) and price > 0:
+                prices[str(stimulus["product"])].append(price)
+    return {product: max(values) for product, values in prices.items()}
+
+
+def _run_three_option_batch(
+    client: Any,
+    cache_dir: Path,
+    *,
+    card_text: str,
+    questions: Sequence[tuple[str, str, Mapping[str, object]]],
+    dataset: str,
+    model: str,
+    subject_id: str,
+    temperature: float | None,
+    timeout: float,
+    attempts: int,
+    sleep: Callable[[float], None],
+    product_max: Mapping[str, Decimal],
+) -> list[dict[str, object]]:
+    """One persona plus every pricing question. Cache lives under ``__three-option``."""
+    prompts = []
+    items_by_question: dict[str, Mapping[str, object]] = {}
+    for question_id, stem, item in questions:
+        stimulus = parse_stimulus(stem)
+        if stimulus is None:
+            raise ValueError(f"{question_id} is not a locked pricing stimulus")
+        order = perm_for(subject_id, str(stimulus["product"]))
+        prompts.append((question_id, three_option_prompt(stem, order)))
+        items_by_question[question_id] = item
+    messages = build_messages(card_text, prompts, system=THREE_OPTION_SYSTEM)
+    raw, from_cache = _cached_or_none(
+        cache_dir,
+        messages,
+        model=model,
+        temperature=temperature,
+        reasoning_effort=None,
+    )
+    if raw is None:
+        raw, _reasoning = _complete(
+            client,
+            messages,
+            model=model,
+            temperature=temperature,
+            timeout=timeout,
+            attempts=attempts,
+            sleep=sleep,
+            reasoning_effort=None,
+        )
+        from_cache = False
+    subject_rows = _rows(
+        dataset=dataset,
+        model=model,
+        subject_id=subject_id,
+        question_ids=[question_id for question_id, _stem, _item in questions],
+        raw=raw,
+    )
+    if not from_cache and all(row["parse_error"] is None for row in subject_rows):
+        _write_cache(
+            cache_dir,
+            messages,
+            model=model,
+            temperature=temperature,
+            content=raw,
+            reasoning_effort=None,
+        )
+    return annotate_three_option(subject_rows, items_by_question, product_max, full_raw=raw)
 
 
 def _single_question(value: object) -> bool:

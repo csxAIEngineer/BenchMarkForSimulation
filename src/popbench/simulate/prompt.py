@@ -45,7 +45,12 @@ def question_prompt(item: Mapping[str, object]) -> str:
     return text
 
 
-def build_messages(card_text: str, questions: Sequence[tuple[str, str]]) -> list[dict[str, str]]:
+def build_messages(
+    card_text: str,
+    questions: Sequence[tuple[str, str]],
+    *,
+    system: str | None = None,
+) -> list[dict[str, str]]:
     """One chat request: the card, then each question id and its stimulus."""
     if not card_text.strip():
         raise ValueError("persona card text is empty")
@@ -62,6 +67,6 @@ def build_messages(card_text: str, questions: Sequence[tuple[str, str]]) -> list
         lines.extend((f"question_id: {question_id}", prompt.rstrip(), ""))
     user = "\n".join(lines).rstrip() + "\n"
     return [
-        {"role": "system", "content": SYSTEM},
+        {"role": "system", "content": SYSTEM if system is None else system},
         {"role": "user", "content": user},
     ]
