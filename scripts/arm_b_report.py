@@ -21,12 +21,12 @@ from popbench.evaluate.arm_b import (  # noqa: E402
     e7_pass,
     observation_p_buy,
     person_rates,
+    product_equal_p_buy,
 )
 from popbench.evaluate.options import NO_OPTION, YES_OPTION, code_purchase  # noqa: E402
 from popbench.simulate.need_inject import NEED_SENTENCES, inject_need, need_state, sentence_lengths_ok  # noqa: E402
 
 LOCKED_SHA = "5ab41b0772a5b26e5802a2236e0e9ae955b6cf2e4b4a72e963a36c53ca853433"
-EXPECTED = {"high": 930, "low": 930, "fill": 1860}
 
 
 def _load_jsonl(path: Path) -> list[dict]:
@@ -61,10 +61,6 @@ def _outcomes_by_question(outcomes: list[dict]) -> dict[tuple[str, str], str]:
             if isinstance(item, dict):
                 found[(subject_id, str(item.get("question_id") or ""))] = str(item.get("question_text") or "")
     return found
-
-
-def _within(count: int, expected: int) -> bool:
-    return abs(count - expected) <= expected * 0.03
 
 
 def _spot_checks(triplets: list[dict], stems: dict[tuple[str, str], str]) -> list[dict]:
@@ -118,6 +114,20 @@ def _spot_checks(triplets: list[dict], stems: dict[tuple[str, str], str]) -> lis
     return mixed or checks[:5]
 
 
+def _clarify_p50(rows: list[dict], state: str, summary: dict) -> dict:
+    """Do not describe a curve that is already under 50% at tier 0 as P50 above 200."""
+    if summary.get("reason") != "P50 > 200%":
+        return summary
+    rates = product_equal_p_buy(rows, state)
+    free = rates.get(0)
+    if free is not None and free < 0.5:
+        clarified = dict(summary)
+        clarified["p50"] = None
+        clarified["reason"] = "already under 50% at the free tier; no grid crossing"
+        return clarified
+    return summary
+
+
 def score(models: list[str], mtimes: dict[str, float]) -> int:
     triplets = read_triplets(ROOT / "outputs/evaluate/triplets.parquet")
     locked_hash = content_sha256(triplets)
@@ -130,15 +140,22 @@ def score(models: list[str], mtimes: dict[str, float]) -> int:
     e7_rows = []
     check_lines = []
     hard_fail = False
-    sentences = [
-        {
-            "injected_text": NEED_SENTENCES[need_state(str(row["pid"]), str(row["product_id"]))],
-            "need_state": need_state(str(row["pid"]), str(row["product_id"])),
-            "pid": row["pid"],
-            "product_id": row["product_id"],
-        }
-        for row in triplets
-    ]
+    sentences = []
+    for model in models:
+        response_path = ROOT / "outputs/simulate" / f"{model}__need-inject" / "twin2k_500" / "responses.jsonl"
+        if not response_path.is_file():
+            continue
+        for row in triplets:
+            state = need_state(str(row["pid"]), str(row["product_id"]))
+            sentences.append(
+                {
+                    "injected_text": NEED_SENTENCES[state],
+                    "model": model,
+                    "need_state": state,
+                    "pid": row["pid"],
+                    "product_id": row["product_id"],
+                }
+            )
     for model in models:
         path = ROOT / "outputs/simulate" / f"{model}__need-inject" / "twin2k_500" / "responses.jsonl"
         if not path.is_file():
@@ -154,8 +171,8 @@ def score(models: list[str], mtimes: dict[str, float]) -> int:
         current_base = baseline.stat().st_mtime if baseline.is_file() else None
         current_three = three.stat().st_mtime if three.is_file() else None
         boot = bootstrap_d_buy(rows, seed=42, replicates=1000)
-        high_p50 = condition_p50(rows, "high")
-        low_p50 = condition_p50(rows, "low")
+        high_p50 = _clarify_p50(rows, "high", condition_p50(rows, "high"))
+        low_p50 = _clarify_p50(rows, "low", condition_p50(rows, "low"))
         d_p50 = None
         if high_p50["p50"] is not None and low_p50["p50"] is not None:
             d_p50 = high_p50["p50"] - low_p50["p50"]
@@ -169,7 +186,7 @@ def score(models: list[str], mtimes: dict[str, float]) -> int:
             ("2 n_rows", len(rows) == 3720, str(len(rows))),
             (
                 "3 condition counts",
-                _within(counts.get("high", 0), 930) and _within(counts.get("low", 0), 930) and _within(counts.get("fill", 0), 1860),
+                counts.get("high") == 923 and counts.get("low") == 945 and counts.get("fill") == 1852,
                 f"high={counts.get('high', 0)} low={counts.get('low', 0)} fill={counts.get('fill', 0)}",
             ),
             ("4 sentence lengths", sentence_lengths_ok(), str({name: len(text) for name, text in NEED_SENTENCES.items()})),
@@ -221,7 +238,7 @@ def score(models: list[str], mtimes: dict[str, float]) -> int:
             e7_row[f"d_buy_tier_{tier}"] = value
         e7_rows.append(e7_row)
         for state in ("high", "low", "fill"):
-            summary = condition_p50(rows, state)
+            summary = _clarify_p50(rows, state, condition_p50(rows, state))
             model_rates, human_rates = person_rates(rows, humans, state)
             association = appendix_association(model_rates, human_rates)
             metric_rows.append(
