@@ -18,6 +18,7 @@ from typing import Any
 from popbench.evaluate.options import NO_OPTION, YES_OPTION, code_purchase, match_option
 from popbench.evaluate.stimulus import parse_stimulus
 from popbench.simulate.prompt import build_messages, question_prompt
+from popbench.simulate.need_inject import annotate_need_inject, inject_need, need_state
 from popbench.simulate.three_option import (
     THREE_OPTION_SYSTEM,
     annotate_three_option,
@@ -50,7 +51,9 @@ def run_simulation(
     temperature = None if config.get("temperature") is None else float(config["temperature"])
     reasoning_effort = _reasoning_effort(config.get("reasoning_effort"))
     single_question = _single_question(config.get("questions_per_request"))
-    three_option = _three_option_arm(config.get("arm"), reasoning_effort, single_question)
+    arm = _explicit_arm(config.get("arm"), reasoning_effort, single_question)
+    three_option = arm == "three-option"
+    need_inject = arm == "need-inject"
     timeout = float(config.get("timeout") or 300)
     attempts = int(config.get("attempts") or 3)
     if attempts < 1:
@@ -76,9 +79,15 @@ def run_simulation(
         if limit is not None:
             order = order[:limit]
         rows: list[dict[str, object]] = []
-        storage = f"{model}__three-option" if three_option else _storage_name(model, reasoning_effort, single_question=single_question)
+        if three_option:
+            storage = f"{model}__three-option"
+        elif need_inject:
+            storage = f"{model}__need-inject"
+        else:
+            storage = _storage_name(model, reasoning_effort, single_question=single_question)
         cache_dir = output_dir / "cache" / storage / dataset
         product_max = _product_maxima(outcomes, order) if three_option else {}
+        triplet_index = _triplet_index(root, config) if need_inject else {}
         request_rows: list[dict[str, object]] = []
         for subject_id in order:
             if subject_id not in outcomes:
@@ -100,6 +109,24 @@ def run_simulation(
                         attempts=attempts,
                         sleep=sleep,
                         product_max=product_max,
+                    )
+                )
+                continue
+            if need_inject:
+                rows.extend(
+                    _run_need_inject_batch(
+                        client,
+                        cache_dir,
+                        card_text=str(cards[subject_id]["text"]),
+                        questions=questions,
+                        dataset=dataset,
+                        model=model,
+                        subject_id=subject_id,
+                        temperature=temperature,
+                        timeout=timeout,
+                        attempts=attempts,
+                        sleep=sleep,
+                        triplets=triplet_index,
                     )
                 )
                 continue
@@ -174,8 +201,8 @@ def run_simulation(
             "responses": "responses.jsonl",
             "temperature": temperature,
         }
-        if three_option:
-            manifest["arm"] = "three-option"
+        if arm is not None:
+            manifest["arm"] = arm
         _write_json(target.parent / "manifest.json", manifest)
         if single_question:
             _write_jsonl(target.parent / "requests.jsonl", request_rows)
@@ -192,17 +219,96 @@ def _reasoning_effort(value: object) -> str | None:
     raise ValueError("reasoning_effort must be a non-empty string or null")
 
 
-def _three_option_arm(value: object, reasoning_effort: str | None, single_question: bool) -> bool:
-    """True only for the batched three-option arm. Reasoning stays omitted."""
+def _explicit_arm(value: object, reasoning_effort: str | None, single_question: bool) -> str | None:
+    """Named batched arms copy the default sampling settings and use their own directory."""
     if value is None:
-        return False
-    if value != "three-option":
-        raise ValueError("arm must be three-option or omitted")
+        return None
+    if value not in {"three-option", "need-inject"}:
+        raise ValueError("arm must be three-option, need-inject, or omitted")
     if reasoning_effort is not None:
-        raise ValueError("three-option copies the default run and must omit reasoning_effort")
+        raise ValueError(f"{value} copies the default run and must omit reasoning_effort")
     if single_question:
-        raise ValueError("three-option asks all 40 questions in one request")
-    return True
+        raise ValueError(f"{value} asks all 40 questions in one request")
+    return str(value)
+
+
+def _triplet_index(root: Path, config: Mapping[str, object]) -> dict[tuple[str, str], dict[str, object]]:
+    """Load the locked (pid, question) price assignment. Do not rebuild it."""
+    from popbench.evaluate.arm_a import content_sha256, read_triplets
+
+    path = _path(root, config.get("triplets") or "outputs/evaluate/triplets.parquet")
+    rows = read_triplets(path)
+    expected = config.get("triplet_sha256")
+    if expected is not None and content_sha256(rows) != str(expected):
+        raise ValueError("locked triplets do not match triplet_sha256")
+    index: dict[tuple[str, str], dict[str, object]] = {}
+    for row in rows:
+        index[(str(row["pid"]), str(row["question_id"]))] = row
+    return index
+
+
+def _run_need_inject_batch(
+    client: Any,
+    cache_dir: Path,
+    *,
+    card_text: str,
+    questions: Sequence[tuple[str, str, Mapping[str, object]]],
+    dataset: str,
+    model: str,
+    subject_id: str,
+    temperature: float | None,
+    timeout: float,
+    attempts: int,
+    sleep: Callable[[float], None],
+    triplets: Mapping[tuple[str, str], Mapping[str, object]],
+) -> list[dict[str, object]]:
+    """One persona plus every pricing question, with a need sentence in each stem."""
+    prompts = []
+    items_by_question: dict[str, Mapping[str, object]] = {}
+    for question_id, stem, item in questions:
+        locked = triplets.get((subject_id, question_id))
+        if locked is None:
+            raise ValueError(f"{subject_id} {question_id} is not in the locked triplets")
+        state = need_state(subject_id, str(locked["product_id"]))
+        prompts.append((question_id, inject_need(stem, state)))
+        items_by_question[question_id] = item
+    messages = build_messages(card_text, prompts)
+    raw, from_cache = _cached_or_none(
+        cache_dir,
+        messages,
+        model=model,
+        temperature=temperature,
+        reasoning_effort=None,
+    )
+    if raw is None:
+        raw, _reasoning = _complete(
+            client,
+            messages,
+            model=model,
+            temperature=temperature,
+            timeout=timeout,
+            attempts=attempts,
+            sleep=sleep,
+            reasoning_effort=None,
+        )
+        from_cache = False
+    subject_rows = _rows(
+        dataset=dataset,
+        model=model,
+        subject_id=subject_id,
+        question_ids=[question_id for question_id, _stem, _item in questions],
+        raw=raw,
+    )
+    if not from_cache and all(row["parse_error"] is None for row in subject_rows):
+        _write_cache(
+            cache_dir,
+            messages,
+            model=model,
+            temperature=temperature,
+            content=raw,
+            reasoning_effort=None,
+        )
+    return annotate_need_inject(subject_rows, items_by_question, triplets, full_raw=raw)
 
 
 def _product_maxima(

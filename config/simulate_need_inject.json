@@ -1,0 +1,15 @@
+{
+  "cards_dir": "outputs/prepro",
+  "outcomes_dir": "data/prepro/outcomes",
+  "output_dir": "outputs/simulate",
+  "datasets": ["twin2k_500"],
+  "use_sample": true,
+  "temperature": 0,
+  "timeout": 300,
+  "attempts": 3,
+  "limit_subjects": null,
+  "arm": "need-inject",
+  "questions_per_request": "all",
+  "triplets": "outputs/evaluate/triplets.parquet",
+  "triplet_sha256": "5ab41b0772a5b26e5802a2236e0e9ae955b6cf2e4b4a72e963a36c53ca853433"
+}

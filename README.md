@@ -85,6 +85,12 @@ The three-option arm is also batched: one persona card and all 40 pricing questi
 python3 scripts/simulate.py config/simulate_three_option.json --model gemini-3.8-flash
 ```
 
+The need-inject arm is batched the same way as the default two-option run. Reasoning stays unset and temperature stays 0. Each stem keeps the official Yes/No options. One need sentence, chosen by a hash of person and product, is inserted between the price and `Would you`. Files go to `outputs/simulate/<model>__need-inject/` and the matching cache. The locked triplets in `outputs/evaluate/triplets.parquet` are not resampled. The config is `config/simulate_need_inject.json`.
+
+```bash
+python3 scripts/simulate.py config/simulate_need_inject.json --model gemini-3.8-flash
+```
+
 ## 3. 评价
 
 不调用模型。把模拟回复和留出的人类答案按 `dataset + subject_id + question_id` 对齐，不按行序。报告仍包含分类题的 TVD 与群体 Top-1，以及 BDM 出价的原有指标。Twin2K 定价题另外给出个人层指标。短答（`Yes` / `No` / `Would purchase`）按确定规则对齐到留出的整句选项后再编码，规则见 `popbench.evaluate.options`。对不上的答复保持未映射，算作个人准确率的错误，也不进入购买率。
