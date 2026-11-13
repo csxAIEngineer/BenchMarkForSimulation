@@ -18,6 +18,7 @@ from typing import Any
 from popbench.evaluate.options import NO_OPTION, YES_OPTION, code_purchase, match_option
 from popbench.evaluate.stimulus import parse_stimulus
 from popbench.simulate.prompt import build_messages, question_prompt
+from popbench.simulate.need_dose import DOSE_SENTENCES, annotate_need_dose, assert_dose_lengths, inject_dose
 from popbench.simulate.need_inject import annotate_need_inject, inject_need, need_state
 from popbench.simulate.three_option import (
     THREE_OPTION_SYSTEM,
@@ -54,6 +55,10 @@ def run_simulation(
     arm = _explicit_arm(config.get("arm"), reasoning_effort, single_question)
     three_option = arm == "three-option"
     need_inject = arm == "need-inject"
+    need_dose = arm == "need-dose"
+    dose_arm = _dose_arm(config.get("need_arm")) if need_dose else None
+    if need_dose:
+        assert_dose_lengths()
     timeout = float(config.get("timeout") or 300)
     attempts = int(config.get("attempts") or 3)
     if attempts < 1:
@@ -83,11 +88,18 @@ def run_simulation(
             storage = f"{model}__three-option"
         elif need_inject:
             storage = f"{model}__need-inject"
+        elif need_dose and dose_arm == "BUD":
+            storage = f"{model}__budget"
+        elif need_dose:
+            storage = f"{model}__need-dose"
         else:
             storage = _storage_name(model, reasoning_effort, single_question=single_question)
+        dose_subdir = dose_arm if need_dose and dose_arm != "BUD" else None
         cache_dir = output_dir / "cache" / storage / dataset
+        if dose_subdir is not None:
+            cache_dir = output_dir / "cache" / storage / dose_subdir / dataset
         product_max = _product_maxima(outcomes, order) if three_option else {}
-        triplet_index = _triplet_index(root, config) if need_inject else {}
+        triplet_index = _triplet_index(root, config) if need_inject or need_dose else {}
         request_rows: list[dict[str, object]] = []
         for subject_id in order:
             if subject_id not in outcomes:
@@ -127,6 +139,25 @@ def run_simulation(
                         attempts=attempts,
                         sleep=sleep,
                         triplets=triplet_index,
+                    )
+                )
+                continue
+            if need_dose:
+                rows.extend(
+                    _run_need_dose_batch(
+                        client,
+                        cache_dir,
+                        card_text=str(cards[subject_id]["text"]),
+                        questions=questions,
+                        dataset=dataset,
+                        model=model,
+                        subject_id=subject_id,
+                        temperature=temperature,
+                        timeout=timeout,
+                        attempts=attempts,
+                        sleep=sleep,
+                        triplets=triplet_index,
+                        need_arm=dose_arm,
                     )
                 )
                 continue
@@ -189,6 +220,8 @@ def run_simulation(
                 )
             rows.extend(subject_rows)
         target = output_dir / storage / dataset / "responses.jsonl"
+        if dose_subdir is not None:
+            target = output_dir / storage / dataset / dose_subdir / "responses.jsonl"
         _write_jsonl(target, rows)
         manifest = {
             "dataset": dataset,
@@ -201,7 +234,11 @@ def run_simulation(
             "responses": "responses.jsonl",
             "temperature": temperature,
         }
-        if arm is not None:
+        if need_dose:
+            manifest["arm"] = dose_arm
+            manifest["need_arm"] = dose_arm
+            manifest["sentence"] = DOSE_SENTENCES[dose_arm]
+        elif arm is not None:
             manifest["arm"] = arm
         _write_json(target.parent / "manifest.json", manifest)
         if single_question:
@@ -223,12 +260,18 @@ def _explicit_arm(value: object, reasoning_effort: str | None, single_question: 
     """Named batched arms copy the default sampling settings and use their own directory."""
     if value is None:
         return None
-    if value not in {"three-option", "need-inject"}:
-        raise ValueError("arm must be three-option, need-inject, or omitted")
+    if value not in {"three-option", "need-inject", "need-dose"}:
+        raise ValueError("arm must be three-option, need-inject, need-dose, or omitted")
     if reasoning_effort is not None:
         raise ValueError(f"{value} copies the default run and must omit reasoning_effort")
     if single_question:
         raise ValueError(f"{value} asks all 40 questions in one request")
+    return str(value)
+
+
+def _dose_arm(value: object) -> str:
+    if value not in {"N1", "N2", "N3", "N4", "BUD"}:
+        raise ValueError("need_arm must be N1, N2, N3, N4, or BUD")
     return str(value)
 
 
@@ -309,6 +352,71 @@ def _run_need_inject_batch(
             reasoning_effort=None,
         )
     return annotate_need_inject(subject_rows, items_by_question, triplets, full_raw=raw)
+
+
+def _run_need_dose_batch(
+    client: Any,
+    cache_dir: Path,
+    *,
+    card_text: str,
+    questions: Sequence[tuple[str, str, Mapping[str, object]]],
+    dataset: str,
+    model: str,
+    subject_id: str,
+    temperature: float | None,
+    timeout: float,
+    attempts: int,
+    sleep: Callable[[float], None],
+    triplets: Mapping[tuple[str, str], Mapping[str, object]],
+    need_arm: str,
+) -> list[dict[str, object]]:
+    """One persona and all 40 questions, every stem carrying the same dose sentence."""
+    prompts = []
+    items_by_question: dict[str, Mapping[str, object]] = {}
+    for question_id, stem, item in questions:
+        if (subject_id, question_id) not in triplets:
+            raise ValueError(f"{subject_id} {question_id} is not in the locked triplets")
+        prompts.append((question_id, inject_dose(stem, need_arm)))
+        items_by_question[question_id] = item
+    messages = build_messages(card_text, prompts)
+    raw, from_cache = _cached_or_none(
+        cache_dir,
+        messages,
+        model=model,
+        temperature=temperature,
+        reasoning_effort=None,
+        need_arm=need_arm,
+    )
+    if raw is None:
+        raw, _reasoning = _complete(
+            client,
+            messages,
+            model=model,
+            temperature=temperature,
+            timeout=timeout,
+            attempts=attempts,
+            sleep=sleep,
+            reasoning_effort=None,
+        )
+        from_cache = False
+    subject_rows = _rows(
+        dataset=dataset,
+        model=model,
+        subject_id=subject_id,
+        question_ids=[question_id for question_id, _stem, _item in questions],
+        raw=raw,
+    )
+    if not from_cache and all(row["parse_error"] is None for row in subject_rows):
+        _write_cache(
+            cache_dir,
+            messages,
+            model=model,
+            temperature=temperature,
+            content=raw,
+            reasoning_effort=None,
+            need_arm=need_arm,
+        )
+    return annotate_need_dose(subject_rows, items_by_question, triplets, need_arm=need_arm, full_raw=raw)
 
 
 def _product_maxima(
@@ -429,6 +537,7 @@ def _cache_key(
     reasoning_effort: str | None = None,
     subject_id: str | None = None,
     question_id: str | None = None,
+    need_arm: str | None = None,
 ) -> str:
     payload: dict[str, object] = {"messages": messages, "model": model, "temperature": temperature}
     # Omitted effort stays out of the hash so existing batched cache files still match.
@@ -438,6 +547,8 @@ def _cache_key(
         payload["subject_id"] = subject_id
     if question_id is not None:
         payload["question_id"] = question_id
+    if need_arm is not None:
+        payload["need_arm"] = need_arm
     material = json.dumps(payload, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
@@ -449,8 +560,9 @@ def _cached_or_none(
     model: str,
     temperature: float | None,
     reasoning_effort: str | None = None,
+    need_arm: str | None = None,
 ) -> tuple[str | None, bool]:
-    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature, reasoning_effort=reasoning_effort)}.json"
+    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature, reasoning_effort=reasoning_effort, need_arm=need_arm)}.json"
     if not path.is_file():
         return None, False
     cached = json.loads(path.read_text(encoding="utf-8"))
@@ -467,8 +579,9 @@ def _write_cache(
     temperature: float | None,
     content: str,
     reasoning_effort: str | None = None,
+    need_arm: str | None = None,
 ) -> None:
-    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature, reasoning_effort=reasoning_effort)}.json"
+    path = cache_dir / f"{_cache_key(messages, model=model, temperature=temperature, reasoning_effort=reasoning_effort, need_arm=need_arm)}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"content": content}, ensure_ascii=False) + "\n", encoding="utf-8")
 

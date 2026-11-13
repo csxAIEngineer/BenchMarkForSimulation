@@ -29,12 +29,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("config", nargs="?", default=str(ROOT / "config" / "simulate.json"))
     parser.add_argument("--limit-subjects", type=int, default=None)
     parser.add_argument("--model", default=None, help="CR text model id; default is the config value")
+    parser.add_argument("--need-arm", default=None, help="Dose arm N1, N2, N3, N4, or BUD")
     args = parser.parse_args(argv)
     config = json.loads(Path(args.config).read_text(encoding="utf-8"))
     if args.limit_subjects is not None:
         config["limit_subjects"] = args.limit_subjects
     if args.model:
         config["model"] = args.model
+    if args.need_arm:
+        config["need_arm"] = args.need_arm
     try:
         summary = run_simulation(ROOT, config)
     except (OSError, ValueError, KeyError, CRError) as exc:

@@ -91,6 +91,12 @@ The need-inject arm is batched the same way as the default two-option run. Reaso
 python3 scripts/simulate.py config/simulate_need_inject.json --model gemini-3.8-flash
 ```
 
+The need-dose arms reuse that two-option batch. Each arm inserts one fixed sentence into all 3,720 questions. N1 through N4 write `outputs/simulate/<model>__need-dose/twin2k_500/<arm>/`. BUD writes `outputs/simulate/<model>__budget/`. Temperature stays 0 and `reasoning_effort` stays omitted. The cache key includes `need_arm`. The config is `config/simulate_need_dose.json`.
+
+```bash
+python3 scripts/simulate.py config/simulate_need_dose.json --model gemini-3.8-flash --need-arm N1
+```
+
 ## 3. 评价
 
 不调用模型。把模拟回复和留出的人类答案按 `dataset + subject_id + question_id` 对齐，不按行序。报告仍包含分类题的 TVD 与群体 Top-1，以及 BDM 出价的原有指标。Twin2K 定价题另外给出个人层指标。短答（`Yes` / `No` / `Would purchase`）按确定规则对齐到留出的整句选项后再编码，规则见 `popbench.evaluate.options`。对不上的答复保持未映射，算作个人准确率的错误，也不进入购买率。
