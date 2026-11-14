@@ -30,7 +30,7 @@ from popbench.simulate.need_dose import DOSE_SENTENCES, PRICE_CLAUSE, inject_dos
 
 LOCKED_SHA = "5ab41b0772a5b26e5802a2236e0e9ae955b6cf2e4b4a72e963a36c53ca853433"
 DOSE_ARMS = ("N1", "N2", "N3", "N4")
-MODELS = ("deepseek-flash", "deepseek-v4-flash")
+MODELS = ("gemini-3.8-flash", "deepseek-flash", "deepseek-v4-flash")
 FLOOR_LEVEL = 0.03
 FLOOR_GAP = 0.02
 
@@ -130,24 +130,7 @@ def main() -> int:
     replications = []
     budgets = []
     lengths = []
-    checks: list[str] = [
-        "gemini-3.8-flash was stopped mid-run and is excluded from the main analysis.",
-    ]
-    gemini_root = ROOT / "outputs/simulate"
-    for arm in ("N1", "N2", "N3", "N4"):
-        cache = gemini_root / "cache" / "gemini-3.8-flash__need-dose" / arm / "twin2k_500"
-        response = gemini_root / "gemini-3.8-flash__need-dose" / "twin2k_500" / arm / "responses.jsonl"
-        n_cache = len(list(cache.glob("*.json"))) if cache.is_dir() else 0
-        checks.append(f"gemini-3.8-flash {arm}: cache={n_cache} responses={'yes' if response.is_file() else 'no'}")
-    bud_cache = gemini_root / "cache" / "gemini-3.8-flash__budget" / "twin2k_500"
-    bud_response = gemini_root / "gemini-3.8-flash__budget" / "twin2k_500" / "responses.jsonl"
-    checks.append(
-        "gemini-3.8-flash BUD: cache="
-        + str(len(list(bud_cache.glob("*.json"))) if bud_cache.is_dir() else 0)
-        + " responses="
-        + ("yes" if bud_response.is_file() else "no")
-    )
-    checks.append("")
+    checks: list[str] = []
     unmapped_rows = []
     for model in MODELS:
         loaded = {arm: _load_jsonl(_arm_path(model, arm)) for arm in (*DOSE_ARMS, "BUD")}
